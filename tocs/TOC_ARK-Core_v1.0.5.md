@@ -1,0 +1,31 @@
+# TOC ARK-Core v1.0.5
+
+- `README.md`
+- `SCHEMAS/gate_report.schema.json`
+- `SCHEMAS/prov_min.schema.json`
+- `SCHEMAS/report_evidence_profile.schema.json`
+- `SCHEMAS/testvector.schema.json`
+- `SPECS/ALGORITHM_CATALOG_v1.md`
+- `SPECS/ARCHIVE_CONFORMANCE_v1.md`
+- `SPECS/BASELINE_POLICY_v1.md`
+- `SPECS/CALIBRATION_v1.md`
+- `SPECS/CONTRADICTION_RULES_DSL_v1.md`
+- `SPECS/EVENT_FINDING_v1.md`
+- `SPECS/HYSTERESIS_FSM_v1.md`
+- `SPECS/NEG_SEVERITY_MAPPING_v1.md`
+- `SPECS/PROVENANCE_MINIMAL_v1.md`
+- `SPECS/REGISTRY_POLICY_v1.md`
+- `SPECS/REPORTING_POLICY_v1.md`
+- `SPECS/ROOT_FINDING_v1.md`
+- `SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md`
+- `SPECS/TESTVECTOR_SCHEMA_v1.md`
+- `TESTVECTORS/baseline/baseline_missing.json`
+- `TESTVECTORS/report/schema_invalid.json`
+- `TESTVECTORS/severity/prov_warning.json`
+- `TOOLS/contradiction_rules.py`
+- `TOOLS/event_hysteresis.py`
+- `TOOLS/provenance_validate.py`
+- `TOOLS/root_finding.py`
+- `TOOLS/severity_mapping.py`
+- `TOOLS/validate_run.py`
+- `docs/architecture_overview.md`

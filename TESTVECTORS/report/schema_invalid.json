@@ -1,0 +1,19 @@
+{
+  "name": "schema_invalid_report",
+  "inputs": {
+    "report": {
+      "run_id": "R1",
+      "status": "REJECT"
+    }
+  },
+  "expected": {
+    "status": "REJECT",
+    "neg_ids": [
+      "NEG.REPORT.SCHEMA_INVALID"
+    ]
+  },
+  "tags": [
+    "report",
+    "schema"
+  ]
+}

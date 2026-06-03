@@ -1,0 +1,166 @@
+{
+  "artifact": "ARK-Core_v1.0.5_freeze",
+  "created_utc": "2026-03-11T00:09:47.757189+00:00",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "4a71e0ae99f5ee397191e67dcad0d726e06e5df98aff924aad6a537971bfdff6",
+      "bytes": 200
+    },
+    {
+      "path": "SCHEMAS/gate_report.schema.json",
+      "sha256": "c4b5489107675c87c130d4e68f69ac034424a2677f4d9c243f319d65a734034f",
+      "bytes": 1350
+    },
+    {
+      "path": "SCHEMAS/prov_min.schema.json",
+      "sha256": "cc265953a330b6f7c2ed3d32b9612726a8234350aab8b5e2676c8f0563cd35b3",
+      "bytes": 2981
+    },
+    {
+      "path": "SCHEMAS/report_evidence_profile.schema.json",
+      "sha256": "b6931f345ee5eafddd2edcfde4fa2f2f2f7868330812a09179987ca1e78b0785",
+      "bytes": 1364
+    },
+    {
+      "path": "SCHEMAS/testvector.schema.json",
+      "sha256": "5874fc38347c8dcc2bdcae3146c42a4158fdb6d377881d3107cdfb37c7201e1f",
+      "bytes": 1262
+    },
+    {
+      "path": "SPECS/ALGORITHM_CATALOG_v1.md",
+      "sha256": "81ef06f82f752e6c0fdb692e5443a0e42ef982c0319cab995a8458734e845289",
+      "bytes": 375
+    },
+    {
+      "path": "SPECS/ARCHIVE_CONFORMANCE_v1.md",
+      "sha256": "8e423bad01bf45fdbcbea8dc0d0ecdea158e9d399ea31970fcfc195cc4879469",
+      "bytes": 160
+    },
+    {
+      "path": "SPECS/BASELINE_POLICY_v1.md",
+      "sha256": "74cf2aadbc19767c34846d9f54b48d996ed39854fab54fdd124e85414d72a75e",
+      "bytes": 441
+    },
+    {
+      "path": "SPECS/CALIBRATION_v1.md",
+      "sha256": "55cc1891e9a696134bbd9c43221fd31cf436267452f9d82ca1084c56f35b5f66",
+      "bytes": 206
+    },
+    {
+      "path": "SPECS/CONTRADICTION_RULES_DSL_v1.md",
+      "sha256": "708200b2c57e5c716c67457598a0973f8d1a42bf3bd632a824075b63016f9008",
+      "bytes": 268
+    },
+    {
+      "path": "SPECS/EVENT_FINDING_v1.md",
+      "sha256": "7ea58a84a5f7dee94b2dbc06f733587b516d8bdc98c6798deda4402940f32861",
+      "bytes": 232
+    },
+    {
+      "path": "SPECS/HYSTERESIS_FSM_v1.md",
+      "sha256": "50ad193b1f2364088696bc9b7d42461237ee0612c999b673faa973aa638c59c9",
+      "bytes": 311
+    },
+    {
+      "path": "SPECS/NEG_SEVERITY_MAPPING_v1.md",
+      "sha256": "108795e2bf7718ca28fb5b15400947d746f274cf61020394acf16ca518b7d2e9",
+      "bytes": 204
+    },
+    {
+      "path": "SPECS/PROVENANCE_MINIMAL_v1.md",
+      "sha256": "197bb74872dd81756d92d15c92307e20fc1b4b7ecd0ffcbc0210a3627b49a016",
+      "bytes": 332
+    },
+    {
+      "path": "SPECS/REGISTRY_POLICY_v1.md",
+      "sha256": "002c839eece9b6756ef0772cb32f83ffcd4271fc3b5647552e2cccae37a47343",
+      "bytes": 362
+    },
+    {
+      "path": "SPECS/REPORTING_POLICY_v1.md",
+      "sha256": "8d5285d4172638cfcfab0020480b6ede40925c95c0ad89c47eaa64137ba6c780",
+      "bytes": 250
+    },
+    {
+      "path": "SPECS/ROOT_FINDING_v1.md",
+      "sha256": "fe75b70fa95b27d11b1a54b3028e0f6c6846b942c6ced0d0a68951fc710ef82b",
+      "bytes": 157
+    },
+    {
+      "path": "SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md",
+      "sha256": "2cfcb091aad0c127fd8f001df0a1868ea18729e621127750e740c8f520eafbd0",
+      "bytes": 282
+    },
+    {
+      "path": "SPECS/TESTVECTOR_SCHEMA_v1.md",
+      "sha256": "a7f68051f68eb7d1faae9501f9c7d9fe4b24bbff366faff1c663ae6c471dadf6",
+      "bytes": 286
+    },
+    {
+      "path": "TESTVECTORS/baseline/baseline_missing.json",
+      "sha256": "1e5fc441a723f60e8c2569b55d58c4787394928066f30f300a23942ff8d54589",
+      "bytes": 246
+    },
+    {
+      "path": "TESTVECTORS/report/schema_invalid.json",
+      "sha256": "93ca23a3bd525b88d2742f286e0324e9a1e482897020e2f4bf51de3e7d95bfc2",
+      "bytes": 272
+    },
+    {
+      "path": "TESTVECTORS/severity/prov_warning.json",
+      "sha256": "a4ed7bef954b0b6ac831bdd16006c1f96952034bda2d3760849d8c75c7d229da",
+      "bytes": 290
+    },
+    {
+      "path": "TOOLS/contradiction_rules.py",
+      "sha256": "1b166ba12332f52774dac590ffdf639beb6d69cfd40028e3f9f474e70326b6c1",
+      "bytes": 5734
+    },
+    {
+      "path": "TOOLS/event_hysteresis.py",
+      "sha256": "b11cd680a9178b05d6e892394688a6dc5af47bb42e31871b4eddadbd09e0f56a",
+      "bytes": 1694
+    },
+    {
+      "path": "TOOLS/provenance_validate.py",
+      "sha256": "73c1caa07e67dee9d39fd47ab4dfbc1b341ba5e5115a34f3e5535fe9e5ed9566",
+      "bytes": 1346
+    },
+    {
+      "path": "TOOLS/root_finding.py",
+      "sha256": "a6b9f1c1981444c4cb735185e08db6306389ac9d2d0f3e395881075e31f804a4",
+      "bytes": 1267
+    },
+    {
+      "path": "TOOLS/severity_mapping.py",
+      "sha256": "7b8cf780e31f2d3666f1aa7e7861d52fce8bca2e7eb7dacdafc7810cef32aa5b",
+      "bytes": 1956
+    },
+    {
+      "path": "TOOLS/validate_run.py",
+      "sha256": "be1fadfc25c7d08338ea759329dc90245b572d10fe8e64ac64215b40e0321d82",
+      "bytes": 3456
+    },
+    {
+      "path": "artifacts/FREEZE_MANIFEST_v1.0.5.json",
+      "sha256": "2ed4402be7658c7ad1b432d8ae74112b7e013b0d597b60202223a32b45640fab",
+      "bytes": 4851
+    },
+    {
+      "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",
+      "sha256": "f7e7b05f95cde35982bcbe45d90ed3f5af0c64d1179546e365cc0144429ce122",
+      "bytes": 326
+    },
+    {
+      "path": "docs/architecture_overview.md",
+      "sha256": "4ca92f930b199e51cc8573fb48ea79acc0590c886443a18a9b0f2bde8ac6e3e5",
+      "bytes": 343
+    },
+    {
+      "path": "tocs/TOC_ARK-Core_v1.0.5.md",
+      "sha256": "4f6258ec44ebb97e0e39d773771c1cb6764a2b8c4e4cd4e91dc56d201adbdf38",
+      "bytes": 1010
+    }
+  ]
+}

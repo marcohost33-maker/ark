@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://testvector.schema.json",
+  "type": "object",
+  "required": [
+    "name",
+    "inputs",
+    "expected"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inputs": {
+      "type": "object"
+    },
+    "baseline": {
+      "type": "object"
+    },
+    "policy": {
+      "type": "object"
+    },
+    "expected": {
+      "type": "object",
+      "required": [
+        "status",
+        "neg_ids"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ACCEPT",
+            "ACCEPT_WITH_NOTES",
+            "REVIEW",
+            "REJECT"
+          ]
+        },
+        "neg_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "outputs": {
+          "type": "object"
+        },
+        "metrics": {
+          "type": "object"
+        },
+        "gates": {
+          "type": "object"
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

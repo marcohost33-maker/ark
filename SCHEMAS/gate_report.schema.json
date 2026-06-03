@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schema://gate_report.schema.json",
+  "type": "object",
+  "required": [
+    "run_id",
+    "status",
+    "hard_fail",
+    "soft_fail",
+    "warnings",
+    "known_issues",
+    "metrics",
+    "gate_results",
+    "created_utc"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ACCEPT",
+        "ACCEPT_WITH_NOTES",
+        "REVIEW",
+        "REJECT"
+      ]
+    },
+    "created_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "hard_fail": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "soft_fail": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "known_issues": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "gate_results": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
+  }
+}

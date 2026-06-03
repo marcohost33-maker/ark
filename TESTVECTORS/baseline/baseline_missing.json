@@ -1,0 +1,17 @@
+{
+  "name": "baseline_missing",
+  "inputs": {
+    "kernel_plan": {
+      "baseline_id": "BASE_UNKNOWN"
+    }
+  },
+  "expected": {
+    "status": "REJECT",
+    "neg_ids": [
+      "NEG.BASELINE.NOT_FOUND"
+    ]
+  },
+  "tags": [
+    "baseline"
+  ]
+}
