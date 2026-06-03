@@ -24,6 +24,18 @@ KI-Coding-Agent-Anweisungen für dieses Repo. Reihenfolge: §1 Working agreement
 - Tests neben Änderungen; Testvektoren in `TESTVECTORS/` pflegen.
 - Specs in `SPECS/` sind die Vertrags-Quelle; Code folgt der Spec, nicht umgekehrt.
 
+## Branch & PR conventions (agents)
+
+- **One agent = one branch prefix:** `claude/<task>` (Claude Code), `codex/<task>`
+  (OpenAI Codex), `bot/<task>` (CI/automation). Human-led work: `feat|fix|docs/<task>`.
+- **Agent output opens as a Draft PR** and stays draft until Definition-of-Done is
+  verified; then mark ready.
+- **Label agent PRs:** `agent:claude` / `agent:codex` / `agent:bot`.
+- **Auto-merge over manual merge:** enable `gh pr merge --auto --squash` once required
+  checks exist; a second concurrent PR must rebase on the updated main.
+- **No concurrent agent pushes** to the same repo: serialize, or split work by branch
+  namespace and let auto-merge order the merges.
+
 ## Don't
 - Don't merge mit `ruff`/`pytest` rot.
 - Don't use `--no-verify`, `--no-gpg-sign`, `--force` ohne explizites User1-OK.
