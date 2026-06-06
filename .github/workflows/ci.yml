@@ -23,7 +23,7 @@ jobs:
       - name: install
         run: |
           python -m pip install --upgrade pip
-          pip install ruff pytest jsonschema
+          pip install ruff pytest jsonschema scipy
       - name: ruff critical
         run: ruff check TOOLS tests --select=F,E9
       - name: compile
