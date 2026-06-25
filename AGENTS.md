@@ -50,7 +50,7 @@ KI-Coding-Agent-Anweisungen für dieses Repo. Reihenfolge: §1 Working agreement
 |---|---|---|
 | 1 | `ruff check .` clean | CI |
 | 2 | `pytest -q` grün | CI |
-| 3 | Freeze-Manifest konsistent | manual |
+| 3 | Freeze-Manifest konsistent | CI |
 | 4 | Neue Behaviour hat Test (fails-before/passes-after) | review |
 
 ---
