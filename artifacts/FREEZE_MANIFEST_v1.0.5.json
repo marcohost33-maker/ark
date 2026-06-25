@@ -1,11 +1,11 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-03-11T00:09:47.757189+00:00",
+  "created_utc": "2026-06-25T09:06:16.580716+00:00",
   "files": [
     {
       "path": "README.md",
-      "sha256": "4a71e0ae99f5ee397191e67dcad0d726e06e5df98aff924aad6a537971bfdff6",
-      "bytes": 200
+      "sha256": "8a635e0a6064d8e95af139b06cfdac61c375d5e916de3848400d19af02e51479",
+      "bytes": 1384
     },
     {
       "path": "SCHEMAS/gate_report.schema.json",
@@ -139,13 +139,8 @@
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "be1fadfc25c7d08338ea759329dc90245b572d10fe8e64ac64215b40e0321d82",
-      "bytes": 3456
-    },
-    {
-      "path": "artifacts/FREEZE_MANIFEST_v1.0.5.json",
-      "sha256": "2ed4402be7658c7ad1b432d8ae74112b7e013b0d597b60202223a32b45640fab",
-      "bytes": 4851
+      "sha256": "6ec6f2db50d74bef6cdd5b8d3bb089c2564071bd6bbb67ef9521c49f1cacb47e",
+      "bytes": 3882
     },
     {
       "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",

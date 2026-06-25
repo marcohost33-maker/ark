@@ -1,0 +1,20 @@
+# Enforce LF line endings repo-wide so the freeze-manifest (ARK-NG-002) hashes
+# the SAME bytes on every platform. Without this, Windows checkouts (autocrlf)
+# produce CRLF working-tree bytes while Linux CI checks out LF -> SHA/byte
+# mismatch -> NEG.ARCHIVE.MANIFEST_MISMATCH. Determinism is load-bearing here.
+* text=auto eol=lf
+
+# Binary types: never normalize (no files of these tracked today; defensive for
+# future additions so a binary blob is never CRLF/LF-mangled).
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.gz   binary
+*.zip  binary
+*.woff  binary
+*.woff2 binary
+*.so   binary
+*.dll  binary

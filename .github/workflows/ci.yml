@@ -28,5 +28,7 @@ jobs:
         run: ruff check TOOLS tests --select=F,E9
       - name: compile
         run: python -m compileall -q TOOLS tests
+      - name: freeze-manifest gate (ARK-NG-002, fail-closed)
+        run: python TOOLS/freeze_manifest.py
       - name: pytest
         run: pytest -q

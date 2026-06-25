@@ -13,7 +13,7 @@
 - [ ] `pytest`-Smoke je Validator (mind. 1 Positiv- + 1 Negativ-Testvektor pro Tool).
 
 ## Phase 2 — Provenance & Integrität
-- [ ] Freeze-Manifest-Check als CI-Gate (Datei-SHA gegen Manifest verifizieren).
+- [x] Freeze-Manifest-Check als CI-Gate (Datei-SHA gegen Manifest verifizieren). _(NG-002 enforced, PR #8)_
 - [ ] Provenance-Minimal-Spec gegen einen echten End-to-End-Pipeline-Lauf prüfen.
 
 ## Phase 3 — Konsumierbarkeit
