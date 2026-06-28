@@ -9,6 +9,11 @@ any mismatch / missing / extra tracked file yields a non-empty NEG list, which t
 The manifest file cannot hash itself (writing the digest changes the digest), so the
 manifest's own path is excluded from the ``files`` list by construction; the verifier
 treats that exclusion as expected, not as drift.
+
+Coverage is extended with ``--add PATH ...`` (tool-native, fail-closed) rather than by
+hand-editing the JSON: this is how the integrity tool, its tests, and other
+integrity-relevant files get pinned by their own gate (closing the self-trust gap of
+ARK-NG-002). See ``docs/FREEZE_COVERAGE_POLICY.md`` for which file classes MUST be pinned.
 """
 from __future__ import annotations
 
@@ -112,6 +117,35 @@ def regenerate_manifest(manifest_path: str, root: str | None = None) -> Dict[str
     return manifest
 
 
+def add_paths(
+    manifest_path: str, new_paths: List[str], root: str | None = None
+) -> Dict[str, object]:
+    """Extend manifest coverage by ``new_paths``, then re-freeze every entry.
+
+    Fail-closed: adding a non-existent file, or attempting to pin the manifest's own
+    path, raises rather than silently writing a bad manifest. Idempotent: re-adding an
+    already-covered path is a no-op (paths are de-duplicated and sorted).
+    """
+    root = root or _repo_root()
+    manifest = load_manifest(manifest_path)
+    covered = {
+        e["path"]
+        for e in manifest.get("files", [])
+        if isinstance(e, dict) and isinstance(e.get("path"), str)
+    }
+    for raw in new_paths:
+        rel = raw.replace(os.sep, "/")
+        if rel in SELF_EXCLUDE:
+            raise ValueError(f"refusing to pin the manifest's own path: {rel}")
+        abs_path = os.path.join(root, rel.replace("/", os.sep))
+        if not os.path.isfile(abs_path):
+            raise FileNotFoundError(f"cannot add non-existent file: {rel}")
+        covered.add(rel)
+    manifest["files"] = compute_entries(root, sorted(covered))
+    manifest["created_utc"] = datetime.now(timezone.utc).isoformat()
+    return manifest
+
+
 if __name__ == "__main__":
     import argparse
     import sys
@@ -123,7 +157,21 @@ if __name__ == "__main__":
         action="store_true",
         help="Re-freeze the manifest against the current working tree.",
     )
+    ap.add_argument(
+        "--add",
+        nargs="+",
+        metavar="PATH",
+        help="Add repo-relative path(s) to manifest coverage, then re-freeze all entries.",
+    )
     args = ap.parse_args()
+
+    if args.add:
+        new_manifest = add_paths(args.manifest, args.add)
+        with open(args.manifest, "w", encoding="utf-8") as f:
+            json.dump(new_manifest, f, indent=2)
+            f.write("\n")
+        print(f"added {len(args.add)} path(s); manifest now pins {len(new_manifest['files'])} files")
+        sys.exit(0)
 
     if args.regenerate:
         new_manifest = regenerate_manifest(args.manifest)
