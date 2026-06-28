@@ -1,17 +1,15 @@
 # zizmor — static analysis for GitHub Actions workflows (Fleet-Standard, 2026-06-06)
 # Docs: https://docs.zizmor.sh + https://github.com/zizmorcore/zizmor-action
+# NOTE (2026-06-28): paths-Filter entfernt. "zizmor workflow audit" ist in dieser
+# Repo-Branch-Protection ein REQUIRED check; mit paths-Filter lief er nur bei
+# Workflow-Diffs -> jeder Nicht-Workflow-PR blieb dauerhaft BLOCKED. zizmor laeuft
+# nun auf jedem PR (billig, ~20s) und liefert den Required-Context immer.
 name: Workflow Security Audit (zizmor)
 
 on:
   push:
     branches: ["main"]
-    paths:
-      - ".github/workflows/**"
-      - ".github/dependabot.yml"
   pull_request:
-    paths:
-      - ".github/workflows/**"
-      - ".github/dependabot.yml"
   schedule:
     - cron: "13 6 * * 1"   # Mondays 06:13 UTC
 

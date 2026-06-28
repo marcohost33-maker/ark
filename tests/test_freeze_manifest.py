@@ -118,3 +118,56 @@ def test_regenerate_then_verify_roundtrip(freeze_mod, tmp_path):
     mpath.write_text(json.dumps(new_manifest), encoding="utf-8")
     negs = freeze_mod.verify_manifest(str(mpath), root=str(repo))
     assert negs == []
+
+
+def test_add_paths_extends_coverage_then_verify_green(freeze_mod, tmp_path):
+    """add_paths pins a previously-untracked file; the gate is green afterward."""
+    repo = _mini_repo(freeze_mod, tmp_path)
+    extra = repo / "extra.txt"
+    extra.write_text("more content\n", encoding="utf-8")
+    mpath = repo / "artifacts" / "manifest.json"
+    new_manifest = freeze_mod.add_paths(str(mpath), ["extra.txt"], root=str(repo))
+    mpath.write_text(json.dumps(new_manifest), encoding="utf-8")
+    pinned = {e["path"] for e in new_manifest["files"]}
+    assert {"data.txt", "extra.txt"} <= pinned
+    assert freeze_mod.verify_manifest(str(mpath), root=str(repo)) == []
+
+
+def test_add_paths_rejects_nonexistent_file(freeze_mod, tmp_path):
+    """Fail-closed: adding a path with no working-tree file raises (no silent skip)."""
+    repo = _mini_repo(freeze_mod, tmp_path)
+    mpath = repo / "artifacts" / "manifest.json"
+    with pytest.raises(FileNotFoundError):
+        freeze_mod.add_paths(str(mpath), ["ghost.txt"], root=str(repo))
+
+
+def test_add_paths_refuses_to_pin_the_manifest_itself(freeze_mod, tmp_path):
+    """Fail-closed: the manifest must never pin its own path (chicken/egg)."""
+    repo = _mini_repo(freeze_mod, tmp_path)
+    mpath = repo / "artifacts" / "manifest.json"
+    with pytest.raises(ValueError):
+        freeze_mod.add_paths(str(mpath), [freeze_mod.DEFAULT_MANIFEST], root=str(repo))
+
+
+def test_add_paths_is_idempotent(freeze_mod, tmp_path):
+    """Re-adding an already-covered path does not duplicate entries."""
+    repo = _mini_repo(freeze_mod, tmp_path)
+    mpath = repo / "artifacts" / "manifest.json"
+    new_manifest = freeze_mod.add_paths(str(mpath), ["data.txt"], root=str(repo))
+    paths = [e["path"] for e in new_manifest["files"]]
+    assert paths.count("data.txt") == 1
+
+
+def test_committed_manifest_pins_the_integrity_tool_itself(freeze_mod):
+    """Issue #9 regression: the freeze tool + its tests are pinned by their own gate."""
+    manifest = freeze_mod.load_manifest(
+        str(ROOT / "artifacts" / "FREEZE_MANIFEST_v1.0.5.json")
+    )
+    pinned = {e["path"] for e in manifest["files"]}
+    for required in (
+        "TOOLS/freeze_manifest.py",
+        "tests/test_freeze_manifest.py",
+        "tests/test_semver.py",
+        "tests/test_tools_smoke.py",
+    ):
+        assert required in pinned, f"self-trust gap: {required} not pinned"
