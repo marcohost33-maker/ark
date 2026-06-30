@@ -1,11 +1,11 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-06-28T05:19:10.195148+00:00",
+  "created_utc": "2026-06-30T03:56:44.720415+00:00",
   "files": [
     {
       "path": "README.md",
-      "sha256": "8a635e0a6064d8e95af139b06cfdac61c375d5e916de3848400d19af02e51479",
-      "bytes": 1384
+      "sha256": "f91bed0237e44b018dc4442e0fd9abd4eda604c3d6e175cbd37c54fe1e07e96d",
+      "bytes": 1501
     },
     {
       "path": "SCHEMAS/gate_report.schema.json",
