@@ -4,14 +4,15 @@
 Contradiction- und Governance-Kernel für **reproduzierbare wissenschaftliche und Engineering-Pipelines**.
 Deterministische Python-Tools + JSON-Schemas. Coworker-Research Governance-Stack (Säule 2/4).
 
-**Status:** v1.0.5 (Freeze). Code-valide (6/6 Tools `py_compile` OK, verifiziert 2026-06-02). Push-ready Staging.
+**Status:** v1.0.5 (Freeze). Gepusht, CI grün — `ruff F,E9` clean, `compileall` OK, Freeze-Manifest-Gate (NG-002) in sync, `pytest` 34/34 PASS (verifiziert 2026-06-30).
 
 ## Inhalt
 - `SCHEMAS/` — 4 JSON-Schemas (gate_report, prov_min, report_evidence_profile, testvector).
 - `SPECS/` — 14 Spezifikationen (Archive-Conformance, Baseline-Policy, Hysteresis-FSM, Provenance-Minimal,
   Contradiction-Rules-DSL, Reporting-Policy, Strict-JSON-Schema-Hardening, …).
 - `TOOLS/` — 6 deterministische Python-Validatoren: `validate_run`, `provenance_validate`,
-  `event_hysteresis`, `severity_mapping`, `root_finding`, `contradiction_rules`.
+  `event_hysteresis`, `severity_mapping`, `root_finding`, `contradiction_rules`;
+  plus `freeze_manifest` (Integritäts-Tool, NG-002-Gate).
 - `TESTVECTORS/` — baseline/report/severity-Testfälle.
 - `artifacts/FREEZE_MANIFEST_v1.0.5.json` — SHA-256 je Datei (Integritäts-Anker).
 
