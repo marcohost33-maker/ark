@@ -3,8 +3,8 @@
 
 Deterministic, stdlib-only. The manifest is the integrity truth for the freeze line:
 each listed file is pinned by SHA-256 + byte length. ``verify_manifest`` is fail-closed —
-any mismatch / missing / extra tracked file yields a non-empty NEG list, which the CI gate
-(and ``__main__`` exit code) treats as a hard failure.
+any mismatch / missing required file / unpinned required coverage file yields a non-empty
+NEG list, which the CI gate (and ``__main__`` exit code) treats as a hard failure.
 
 The manifest file cannot hash itself (writing the digest changes the digest), so the
 manifest's own path is excluded from the ``files`` list by construction; the verifier
@@ -21,7 +21,8 @@ import hashlib
 import json
 import os
 from datetime import datetime, timezone
-from typing import Dict, List
+from fnmatch import fnmatch
+from typing import Dict, List, Set
 
 # Default freeze manifest, relative to the repository root.
 DEFAULT_MANIFEST = os.path.join("artifacts", "FREEZE_MANIFEST_v1.0.5.json")
@@ -31,9 +32,32 @@ DEFAULT_MANIFEST = os.path.join("artifacts", "FREEZE_MANIFEST_v1.0.5.json")
 # not drift.
 SELF_EXCLUDE = {DEFAULT_MANIFEST.replace(os.sep, "/")}
 
+# Coverage policy: every existing file matching one of these rules MUST be pinned.
+# Keep this in sync with docs/FREEZE_COVERAGE_POLICY.md.
+REQUIRED_EXACT_PATHS = {
+    ".gitattributes",
+    "README.md",
+    "docs/FREEZE_COVERAGE_POLICY.md",
+    "docs/architecture_overview.md",
+}
+REQUIRED_GLOBS = {
+    "TOOLS/*.py",
+    "tests/*.py",
+    "SCHEMAS/*.json",
+    "SPECS/*.md",
+    "TESTVECTORS/**",
+    "artifacts/FREEZE_SUMMARY_*.md",
+    "tocs/*",
+}
+IGNORED_DIRS = {".git", "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache"}
+
 
 def _repo_root() -> str:
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _rel_posix(root: str, path: str) -> str:
+    return os.path.relpath(path, root).replace(os.sep, "/")
 
 
 def sha256_file(path: str) -> str:
@@ -42,6 +66,36 @@ def sha256_file(path: str) -> str:
         for chunk in iter(lambda: f.read(65536), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+def _matches_required_glob(rel: str) -> bool:
+    return any(fnmatch(rel, pattern) for pattern in REQUIRED_GLOBS)
+
+
+def discover_required_paths(root: str) -> Set[str]:
+    """Return repo-relative paths that the coverage policy requires to be pinned.
+
+    This intentionally uses an explicit allowlist of integrity-relevant file classes,
+    not "all files in the repo": roadmap/process/support files may change outside the
+    frozen ARK v1.0.5 evidence surface, while validators, specs, schemas, testvectors,
+    freeze docs, and LF normalization are load-bearing and must trip NG-002 if unpinned.
+    """
+    required: Set[str] = set()
+    for rel in REQUIRED_EXACT_PATHS:
+        abs_path = os.path.join(root, rel.replace("/", os.sep))
+        if os.path.isfile(abs_path):
+            required.add(rel)
+
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in IGNORED_DIRS]
+        for filename in filenames:
+            abs_path = os.path.join(dirpath, filename)
+            rel = _rel_posix(root, abs_path)
+            if rel in SELF_EXCLUDE:
+                continue
+            if _matches_required_glob(rel):
+                required.add(rel)
+    return required
 
 
 def compute_entries(root: str, paths: List[str]) -> List[Dict[str, object]]:
@@ -67,7 +121,7 @@ def load_manifest(manifest_path: str) -> Dict[str, object]:
 
 
 def verify_manifest(manifest_path: str, root: str | None = None) -> List[str]:
-    """Verify every manifest entry against the working tree. Fail-closed.
+    """Verify every manifest entry and every required coverage path. Fail-closed.
 
     Returns a sorted, de-duplicated list of NEG IDs. Empty list == in sync.
     """
@@ -82,11 +136,18 @@ def verify_manifest(manifest_path: str, root: str | None = None) -> List[str]:
     if not isinstance(files, list) or not files:
         return ["NEG.ARCHIVE.MANIFEST_MISMATCH"]
 
+    pinned_paths: Set[str] = set()
     for entry in files:
+        if not isinstance(entry, dict):
+            neg.append("NEG.ARCHIVE.MANIFEST_MISMATCH")
+            continue
         rel = entry.get("path")
         if not isinstance(rel, str):
             neg.append("NEG.ARCHIVE.MANIFEST_MISMATCH")
             continue
+        if rel in pinned_paths:
+            neg.append("NEG.ARCHIVE.MANIFEST_MISMATCH")
+        pinned_paths.add(rel)
         if rel in SELF_EXCLUDE:
             # The manifest must not pin itself.
             neg.append("NEG.ARCHIVE.MANIFEST_MISMATCH")
@@ -99,20 +160,25 @@ def verify_manifest(manifest_path: str, root: str | None = None) -> List[str]:
         actual_bytes = os.path.getsize(abs_path)
         if actual_sha != entry.get("sha256") or actual_bytes != entry.get("bytes"):
             neg.append("NEG.ARCHIVE.MANIFEST_MISMATCH")
+
+    missing_required = discover_required_paths(root) - pinned_paths
+    if missing_required:
+        neg.append("NEG.ARCHIVE.UNPINNED_REQUIRED_FILE")
+
     return sorted(set(neg))
 
 
 def regenerate_manifest(manifest_path: str, root: str | None = None) -> Dict[str, object]:
-    """Re-freeze: rebuild the ``files`` list from the current working tree, preserving
-    the manifest's existing paths (minus the self-reference) and other top-level keys."""
+    """Re-freeze from current manifest paths plus all required policy paths."""
     root = root or _repo_root()
     manifest = load_manifest(manifest_path)
-    paths = [
+    paths = {
         e["path"]
         for e in manifest.get("files", [])
         if isinstance(e, dict) and isinstance(e.get("path"), str)
-    ]
-    manifest["files"] = compute_entries(root, paths)
+    }
+    paths.update(discover_required_paths(root))
+    manifest["files"] = compute_entries(root, sorted(paths))
     manifest["created_utc"] = datetime.now(timezone.utc).isoformat()
     return manifest
 
@@ -141,6 +207,7 @@ def add_paths(
         if not os.path.isfile(abs_path):
             raise FileNotFoundError(f"cannot add non-existent file: {rel}")
         covered.add(rel)
+    covered.update(discover_required_paths(root))
     manifest["files"] = compute_entries(root, sorted(covered))
     manifest["created_utc"] = datetime.now(timezone.utc).isoformat()
     return manifest
