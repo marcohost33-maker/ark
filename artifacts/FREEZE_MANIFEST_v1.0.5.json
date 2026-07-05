@@ -1,7 +1,12 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-06-30T03:56:44.720415+00:00",
+  "created_utc": "2026-07-05T10:00:00+00:00",
   "files": [
+    {
+      "path": ".gitattributes",
+      "sha256": "883eb95971748b602c6c573f64beb99e848242ff6b9bb19150f3984496145026",
+      "bytes": 645
+    },
     {
       "path": "README.md",
       "sha256": "f91bed0237e44b018dc4442e0fd9abd4eda604c3d6e175cbd37c54fe1e07e96d",
@@ -124,8 +129,8 @@
     },
     {
       "path": "TOOLS/freeze_manifest.py",
-      "sha256": "5e267c0da679421c70d3eb1ae4a8ff6b10932cc0d7994f328daa9669ee0361d9",
-      "bytes": 7250
+      "sha256": "067335a2fc1d10b8b854d6ddee83a61be70ce550552df97ea7feb3a3d4c712e7",
+      "bytes": 9621
     },
     {
       "path": "TOOLS/provenance_validate.py",
@@ -154,8 +159,8 @@
     },
     {
       "path": "docs/FREEZE_COVERAGE_POLICY.md",
-      "sha256": "8fb6063d8961811ffdc974914a30301de36aa26fe7955a45a14d8d5e76dd2dbd",
-      "bytes": 2041
+      "sha256": "31f36e38bed69537e0e0e4c76e96b7c4cdab757a691b92fdf2f59fa3d04d61b0",
+      "bytes": 2890
     },
     {
       "path": "docs/architecture_overview.md",
@@ -164,8 +169,8 @@
     },
     {
       "path": "tests/test_freeze_manifest.py",
-      "sha256": "226cf0dfe360bcc52b44d5d630868b28c1e6ed745f643d70cf6fd94e940e5e06",
-      "bytes": 7113
+      "sha256": "01cbe81d668a20a823820f7ee6da4e92e2d8ff2bfc034c2a7d1f9b62c5b896a8",
+      "bytes": 9995
     },
     {
       "path": "tests/test_semver.py",

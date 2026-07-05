@@ -44,6 +44,29 @@ def _mini_repo(freeze_mod, tmp_path: Path) -> Path:
     return repo
 
 
+def _policy_repo_with_unpinned_required_file(freeze_mod, tmp_path: Path) -> Path:
+    """Build a tiny repo where one required coverage file is not pinned."""
+    repo = tmp_path / "policy-repo"
+    (repo / "artifacts").mkdir(parents=True)
+    (repo / "TOOLS").mkdir()
+    pinned = repo / "TOOLS" / "known.py"
+    unpinned = repo / "TOOLS" / "unpinned.py"
+    pinned.write_text("VALUE = 1\n", encoding="utf-8")
+    unpinned.write_text("VALUE = 2\n", encoding="utf-8")
+    manifest = {
+        "artifact": "mini-policy",
+        "files": [
+            {
+                "path": "TOOLS/known.py",
+                "sha256": freeze_mod.sha256_file(str(pinned)),
+                "bytes": pinned.stat().st_size,
+            }
+        ],
+    }
+    (repo / "artifacts" / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    return repo
+
+
 def test_freeze_gate_green_when_synced(freeze_mod, tmp_path):
     repo = _mini_repo(freeze_mod, tmp_path)
     negs = freeze_mod.verify_manifest(str(repo / "artifacts" / "manifest.json"), root=str(repo))
@@ -72,6 +95,24 @@ def test_freeze_gate_red_on_byte_only_drift(freeze_mod, tmp_path):
     mpath = repo / "artifacts" / "manifest.json"
     manifest = json.loads(mpath.read_text(encoding="utf-8"))
     manifest["files"][0]["bytes"] = 9999  # tamper recorded length only
+    mpath.write_text(json.dumps(manifest), encoding="utf-8")
+    negs = freeze_mod.verify_manifest(str(mpath), root=str(repo))
+    assert "NEG.ARCHIVE.MANIFEST_MISMATCH" in negs
+
+
+def test_freeze_gate_red_on_unpinned_required_coverage_file(freeze_mod, tmp_path):
+    """Coverage case -> RED: a required file class exists but is not pinned."""
+    repo = _policy_repo_with_unpinned_required_file(freeze_mod, tmp_path)
+    negs = freeze_mod.verify_manifest(str(repo / "artifacts" / "manifest.json"), root=str(repo))
+    assert "NEG.ARCHIVE.UNPINNED_REQUIRED_FILE" in negs
+
+
+def test_freeze_gate_red_on_duplicate_manifest_path(freeze_mod, tmp_path):
+    """Duplicate path entries are ambiguous and must fail closed."""
+    repo = _mini_repo(freeze_mod, tmp_path)
+    mpath = repo / "artifacts" / "manifest.json"
+    manifest = json.loads(mpath.read_text(encoding="utf-8"))
+    manifest["files"].append(dict(manifest["files"][0]))
     mpath.write_text(json.dumps(manifest), encoding="utf-8")
     negs = freeze_mod.verify_manifest(str(mpath), root=str(repo))
     assert "NEG.ARCHIVE.MANIFEST_MISMATCH" in negs
@@ -118,6 +159,17 @@ def test_regenerate_then_verify_roundtrip(freeze_mod, tmp_path):
     mpath.write_text(json.dumps(new_manifest), encoding="utf-8")
     negs = freeze_mod.verify_manifest(str(mpath), root=str(repo))
     assert negs == []
+
+
+def test_regenerate_adds_missing_required_policy_paths(freeze_mod, tmp_path):
+    """Regenerate must close required coverage gaps, not only refresh existing entries."""
+    repo = _policy_repo_with_unpinned_required_file(freeze_mod, tmp_path)
+    mpath = repo / "artifacts" / "manifest.json"
+    new_manifest = freeze_mod.regenerate_manifest(str(mpath), root=str(repo))
+    pinned = {e["path"] for e in new_manifest["files"]}
+    assert {"TOOLS/known.py", "TOOLS/unpinned.py"} <= pinned
+    mpath.write_text(json.dumps(new_manifest), encoding="utf-8")
+    assert freeze_mod.verify_manifest(str(mpath), root=str(repo)) == []
 
 
 def test_add_paths_extends_coverage_then_verify_green(freeze_mod, tmp_path):
@@ -171,3 +223,13 @@ def test_committed_manifest_pins_the_integrity_tool_itself(freeze_mod):
         "tests/test_tools_smoke.py",
     ):
         assert required in pinned, f"self-trust gap: {required} not pinned"
+
+
+def test_committed_manifest_covers_every_required_policy_path(freeze_mod):
+    """ARK-NG-002 coverage-policy regression: no required class may be silently unpinned."""
+    manifest = freeze_mod.load_manifest(
+        str(ROOT / "artifacts" / "FREEZE_MANIFEST_v1.0.5.json")
+    )
+    pinned = {e["path"] for e in manifest["files"]}
+    required = freeze_mod.discover_required_paths(str(ROOT))
+    assert required <= pinned, f"unpinned required files: {sorted(required - pinned)}"
