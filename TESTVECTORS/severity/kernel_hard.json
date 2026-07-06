@@ -1,0 +1,11 @@
+{
+  "name": "severity_kernel_hard",
+  "inputs": {
+    "neg_ids": ["NEG.KERNEL.MISSING_HASH"]
+  },
+  "expected": {
+    "status": "REJECT",
+    "neg_ids": ["NEG.KERNEL.MISSING_HASH"]
+  },
+  "tags": ["severity", "negative"]
+}

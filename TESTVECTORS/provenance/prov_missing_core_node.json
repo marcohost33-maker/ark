@@ -1,0 +1,16 @@
+{
+  "name": "prov_missing_core_node",
+  "inputs": {
+    "prov": {
+      "entities": [],
+      "activities": [],
+      "agents": [],
+      "edges": []
+    }
+  },
+  "expected": {
+    "status": "ACCEPT_WITH_NOTES",
+    "neg_ids": ["NEG.PROV.MISSING_CORE_NODE"]
+  },
+  "tags": ["provenance", "negative"]
+}

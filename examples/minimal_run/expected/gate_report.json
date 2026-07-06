@@ -1,0 +1,11 @@
+{
+  "created_utc": "__NORMALIZED__",
+  "gate_results": [],
+  "hard_fail": [],
+  "known_issues": [],
+  "metrics": [],
+  "run_id": "minimal_run",
+  "soft_fail": [],
+  "status": "ACCEPT",
+  "warnings": []
+}

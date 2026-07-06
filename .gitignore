@@ -11,3 +11,6 @@ build/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# Generated example pipeline outputs (replayable; see examples/README.md)
+examples/minimal_run/reports/

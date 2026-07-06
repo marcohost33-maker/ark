@@ -1,0 +1,9 @@
+{
+  "content_hash": "sha256:2a1f0c4e8b7d6a5c3e9f1b2d4a6c8e0f2b4d6a8c0e2f4b6d8a0c2e4f6b8d0a2c",
+  "version": "1.0.0",
+  "payload": {
+    "kind": "model",
+    "name": "example.linear",
+    "params": {"slope": 2.0, "intercept": 1.0}
+  }
+}

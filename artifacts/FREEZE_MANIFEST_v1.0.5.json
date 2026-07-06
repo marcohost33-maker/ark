@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-07-05T20:40:00+00:00",
+  "created_utc": "2026-07-06T06:00:46.443125+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -108,9 +108,39 @@
       "bytes": 246
     },
     {
+      "path": "TESTVECTORS/contradiction/rule_fires.json",
+      "sha256": "77525ca2807708cedf640ae42e513ec293687c58b45d48270b705f7ac96cf354",
+      "bytes": 540
+    },
+    {
+      "path": "TESTVECTORS/contradiction/rule_malformed.json",
+      "sha256": "e25f67a4f55e6dafca3b3c14fd098fd6adb7fda1df6c327f5ba25abd12cf018a",
+      "bytes": 548
+    },
+    {
+      "path": "TESTVECTORS/provenance/prov_missing_core_node.json",
+      "sha256": "8791fec7ce769363a2a3c2632220db9b26ca5c9346ba8f145260f77c4c31c61e",
+      "bytes": 302
+    },
+    {
+      "path": "TESTVECTORS/provenance/prov_valid.json",
+      "sha256": "82cb99fcf287e66a09d5e62b75ff49f2fd65fa0c9853293c6a5aefd9d10d5c20",
+      "bytes": 702
+    },
+    {
       "path": "TESTVECTORS/report/schema_invalid.json",
       "sha256": "93ca23a3bd525b88d2742f286e0324e9a1e482897020e2f4bf51de3e7d95bfc2",
       "bytes": 272
+    },
+    {
+      "path": "TESTVECTORS/severity/kernel_hard.json",
+      "sha256": "43065af0fe3162ad8ddbc420968c63eece3f21e408e6f9848c9f622cf1c5daa0",
+      "bytes": 223
+    },
+    {
+      "path": "TESTVECTORS/severity/override_downgrade.json",
+      "sha256": "bc4678daabf7788c95ffcf9c232d362cc4653a660948243d440c35d6d957da12",
+      "bytes": 326
     },
     {
       "path": "TESTVECTORS/severity/prov_warning.json",
@@ -149,8 +179,8 @@
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "6ec6f2db50d74bef6cdd5b8d3bb089c2564071bd6bbb67ef9521c49f1cacb47e",
-      "bytes": 3882
+      "sha256": "4531fd71a15122b31964657576426b369e413cf2a495ac80ad662c5e724b0bcf",
+      "bytes": 9930
     },
     {
       "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",
@@ -163,9 +193,79 @@
       "bytes": 2890
     },
     {
+      "path": "docs/POLICY_LOADING.md",
+      "sha256": "3c6cacaf2997a626130b7868d75cab64649292255fddcdd46611950ee95d6e32",
+      "bytes": 2174
+    },
+    {
+      "path": "docs/RELEASE_HARDENING.md",
+      "sha256": "a0ac4357e18c200cbe72b31424040acd6ad629d643e190c85a83657d362c4a57",
+      "bytes": 4534
+    },
+    {
       "path": "docs/architecture_overview.md",
-      "sha256": "4ca92f930b199e51cc8573fb48ea79acc0590c886443a18a9b0f2bde8ac6e3e5",
-      "bytes": 343
+      "sha256": "06482a20bc636551410c8260c2bd55b1eaa3e155cae1b82387df310039949f50",
+      "bytes": 627
+    },
+    {
+      "path": "examples/README.md",
+      "sha256": "9fca2955e6d5171618975e9dbae29620dd71516a1261968fe74a788bdc1d1d85",
+      "bytes": 1846
+    },
+    {
+      "path": "examples/minimal_run/expected/evidence_profile.json",
+      "sha256": "f176e004f88373b04d13561933675b6c1cc431e9d2ce68d57101f742aa98ca0f",
+      "bytes": 485
+    },
+    {
+      "path": "examples/minimal_run/expected/gate_report.json",
+      "sha256": "dc144780b95781fc642a37a24c02401f954c19d1159b664030efbfd256f0a5f6",
+      "bytes": 204
+    },
+    {
+      "path": "examples/minimal_run/kernels/kernel.env.json",
+      "sha256": "0749888c87c0cf41a922b793feedb10601bd782896a4cea676caa686331eeae8",
+      "bytes": 207
+    },
+    {
+      "path": "examples/minimal_run/kernels/kernel.events.json",
+      "sha256": "8a8c18cb00742ed1fdb3904c76e445305ab7f799401c2aa2196c5d7e86e6279d",
+      "bytes": 240
+    },
+    {
+      "path": "examples/minimal_run/kernels/kernel.model.json",
+      "sha256": "edc80834dd4b0ec9fedcb7adf0ebe8c12204d7990d29b44a6e48fa361bb52182",
+      "bytes": 236
+    },
+    {
+      "path": "examples/minimal_run/kernels/kernel.plan.json",
+      "sha256": "ebe5d1feff02de6a7894b2ec2598ba548fdc2aea666bf5d9ecff42310c2fa77c",
+      "bytes": 272
+    },
+    {
+      "path": "examples/minimal_run/kernels/kernel.schema.json",
+      "sha256": "20b6ab7d620a56b31b7e6b245f48be85042bee461df0f2bc69b7c684c55dbe86",
+      "bytes": 206
+    },
+    {
+      "path": "examples/minimal_run/provenance/prov.json",
+      "sha256": "bea7eb93b2e07900490a04c89fd6e45b73ef5f27c7dc81c210af102872feec91",
+      "bytes": 576
+    },
+    {
+      "path": "examples/run_pipeline.py",
+      "sha256": "368c71c843c3a4d13943cb7b48ea9c41ad5b8b9306a2ef210b8b99ef2ea466f5",
+      "bytes": 4014
+    },
+    {
+      "path": "requirements-ci.txt",
+      "sha256": "42d74ccd8d558cc03fdd05f1f0a4846b2da6b2cab4e925ec51151329b3138885",
+      "bytes": 441
+    },
+    {
+      "path": "tests/test_example_minimal_run.py",
+      "sha256": "ab6090368dadc98c8ad0268c46b7be5146c37f44a15726ad7bcfcd61bdc5a786",
+      "bytes": 3337
     },
     {
       "path": "tests/test_freeze_manifest.py",
@@ -183,9 +283,19 @@
       "bytes": 1851
     },
     {
+      "path": "tests/test_tool_behaviors.py",
+      "sha256": "8b40ad96cde5f4dcd915cb43852635816673ea4e5f7052bfaea508004a2baa7c",
+      "bytes": 7488
+    },
+    {
       "path": "tests/test_tools_smoke.py",
       "sha256": "18f54aa98b43dfe3cdee77ecf32514c41ecdd1a34707b2f7eeadc6fb0c9ff54c",
       "bytes": 844
+    },
+    {
+      "path": "tests/test_validate_run_hardening.py",
+      "sha256": "b869806215a329a96461e63f0b008849109abd0b5c1d39ee8121dc4574571e4f",
+      "bytes": 4413
     },
     {
       "path": "tocs/TOC_ARK-Core_v1.0.5.md",

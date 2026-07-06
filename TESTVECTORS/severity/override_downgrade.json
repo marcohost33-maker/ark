@@ -1,0 +1,14 @@
+{
+  "name": "severity_override_downgrade",
+  "inputs": {
+    "neg_ids": ["NEG.EVENT.NO_BRACKET"]
+  },
+  "policy": {
+    "severity_overrides": {"NEG.EVENT.NO_BRACKET": "WARNING"}
+  },
+  "expected": {
+    "status": "ACCEPT_WITH_NOTES",
+    "neg_ids": ["NEG.EVENT.NO_BRACKET"]
+  },
+  "tags": ["severity", "positive", "policy"]
+}

@@ -1,0 +1,9 @@
+# Pinned CI / test dependencies (issue #19 — dependency pinning strategy).
+# ARK has no packaged distribution; these are the tools that run the gates.
+# All pins support the CI Python matrix (>=3.11). Bump deliberately, re-run the
+# gate suite, then re-freeze the manifest. Rationale: reproducible CI + a single
+# reviewable choke point for supply-chain review of test tooling.
+ruff==0.15.18
+pytest==9.1.0
+jsonschema==4.26.0
+scipy==1.17.1

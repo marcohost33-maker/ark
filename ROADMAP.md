@@ -15,15 +15,17 @@
 ## Phase 1 — Repo-Init & CI-Härtung
 - [x] Initial-Push, CI grün (`ruff F,E9` + `compileall` aller TOOLS/tests). _(verifiziert 2026-06-30)_
 - [ ] CI erweitern: Schema-Validierung der TESTVECTORS gegen SCHEMAS bei jedem Push.
-- [~] `pytest`-Smoke je Validator: 34 Tests grün (Import-Smoke aller 6 Validatoren +
-  Negativ-Fälle für `validate_run`/Freeze/SemVer). Offen: je 1 Positiv- + 1 Negativ-Testvektor **pro** Tool.
+- [x] `pytest`-Smoke je Validator + je 1 Positiv- + 1 Negativ-Behavioral-Testvektor **pro** Tool
+  (`tests/test_tool_behaviors.py` + `TESTVECTORS/{provenance,severity,contradiction}/`). _(issue #16)_
 
 ## Phase 2 — Provenance & Integrität
 - [x] Freeze-Manifest-Check als CI-Gate (Datei-SHA gegen Manifest verifizieren). _(NG-002 enforced, PR #8)_
-- [ ] Provenance-Minimal-Spec gegen einen echten End-to-End-Pipeline-Lauf prüfen.
+- [x] Provenance-Minimal-Spec gegen einen echten End-to-End-Pipeline-Lauf geprüft (`examples/minimal_run`). _(issue #17)_
+- [x] Explizites Policy-Laden + `format: date-time`-Enforcement in `validate_run.py`. _(issue #18, `docs/POLICY_LOADING.md`)_
 
 ## Phase 3 — Konsumierbarkeit
-- [ ] `examples/` mit lauffähigem Minimal-Pipeline-Run (validate_run → provenance → report).
+- [x] `examples/` mit lauffähigem Minimal-Pipeline-Run (validate_run → provenance → report). _(issue #17)_
+- [x] Release-Härtung: Release-Workflow + SBOM + Attestation-Design + Dependency-Pinning. _(issue #19, `docs/RELEASE_HARDENING.md`)_
 - [ ] API-Doku der 6 Validatoren (Ein-/Ausgabe-Verträge) in `docs/`.
 
 ## Offen / zu entscheiden
