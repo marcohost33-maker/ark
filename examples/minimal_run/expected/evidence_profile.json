@@ -1,0 +1,23 @@
+{
+  "created_utc": "__NORMALIZED__",
+  "items": [
+    {
+      "evidence_refs": [
+        "reports/gate_report.json"
+      ],
+      "gate_id": "ARK-KERNEL",
+      "neg_ids": [],
+      "summary": "five kernel files present and payload-valid"
+    },
+    {
+      "evidence_refs": [
+        "provenance/prov.json"
+      ],
+      "gate_id": "ARK-PROV",
+      "neg_ids": [],
+      "summary": "provenance minimal graph is complete"
+    }
+  ],
+  "run_id": "minimal_run",
+  "status": "ACCEPT"
+}

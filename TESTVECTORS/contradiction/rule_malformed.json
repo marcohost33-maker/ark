@@ -1,0 +1,21 @@
+{
+  "name": "contradiction_rule_malformed",
+  "inputs": {
+    "rules": [
+      {
+        "rule_id": "R-BAD-SHAPE",
+        "when": {"gt": ["METRIC.error"]},
+        "neg_id": "NEG.CONTRADICTION.REGRESSION",
+        "severity": "SOFT_FAIL",
+        "summary": "gt with a single operand is structurally invalid"
+      }
+    ],
+    "metrics": {"METRIC.error": 0.5},
+    "baseline": {"METRIC.error": 0.2}
+  },
+  "expected": {
+    "status": "REVIEW",
+    "neg_ids": ["NEG.CONTRADICTION.INVALID_STRUCTURE"]
+  },
+  "tags": ["contradiction", "negative"]
+}

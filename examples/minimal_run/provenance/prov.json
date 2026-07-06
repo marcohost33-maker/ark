@@ -1,0 +1,15 @@
+{
+  "entities": [
+    {"id": "entity:gate_report", "kind": "gate_report", "hash": null, "location_ref": "reports/gate_report.json"}
+  ],
+  "activities": [
+    {"id": "activity:validate_run", "kind": "validation", "start_utc": null, "end_utc": null, "tool_version": "1.0.5"}
+  ],
+  "agents": [
+    {"id": "agent:ark", "kind": "tool", "name": "ARK-Core", "version": "1.0.5"}
+  ],
+  "edges": [
+    {"type": "wasGeneratedBy", "src": "entity:gate_report", "dst": "activity:validate_run"},
+    {"type": "wasAssociatedWith", "src": "activity:validate_run", "dst": "agent:ark"}
+  ]
+}

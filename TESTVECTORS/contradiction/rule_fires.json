@@ -1,0 +1,21 @@
+{
+  "name": "contradiction_rule_fires",
+  "inputs": {
+    "rules": [
+      {
+        "rule_id": "R-REGRESSION",
+        "when": {"gt": ["METRIC.error", "baseline.METRIC.error"]},
+        "neg_id": "NEG.CONTRADICTION.REGRESSION",
+        "severity": "SOFT_FAIL",
+        "summary": "error rose above baseline"
+      }
+    ],
+    "metrics": {"METRIC.error": 0.5},
+    "baseline": {"METRIC.error": 0.2}
+  },
+  "expected": {
+    "status": "REVIEW",
+    "neg_ids": ["NEG.CONTRADICTION.REGRESSION"]
+  },
+  "tags": ["contradiction", "positive"]
+}
