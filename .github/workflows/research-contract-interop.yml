@@ -26,22 +26,64 @@ jobs:
       - name: Ruff candidate integration
         run: ruff check integration/research_contract_v1 --select=F,E9
       - name: Run normalization falsification suite
-        run: pytest -q integration/research_contract_v1/test_normalize.py
-      - name: Materialize real DDE normalization output
+        run: pytest -q integration/research_contract_v1/test_*.py
+
+      - name: Materialize legacy DDE normalization regression
         run: |
           python integration/research_contract_v1/normalize.py \
             integration/research_contract_v1/fixtures/dde_scalar_linear_real.json \
             --identity-policy integration/research_contract_v1/policies/dde_producer_local_legacy_v1.json \
-            --out /tmp/dde-ark-normalized.json
+            --out /tmp/dde-ark-normalized-legacy.json
           python - <<'PY'
           import json
           from pathlib import Path
-          p = Path('/tmp/dde-ark-normalized.json')
+          p = Path('/tmp/dde-ark-normalized-legacy.json')
           x = json.loads(p.read_text())
           assert x['blocking'] is False
           assert x['contradictions'] == []
           assert x['contract_bindings']['evidence_identity_policy']['valid'] is True
           assert x['contract_bindings']['evidence_identity_policy']['policy_id'] == 'DDE-PRODUCER-LOCAL-LEGACY-v1'
-          assert x['output_digest'].startswith('sha256:')
-          print(x['output_digest'])
+          assert x['output_digest'] == 'sha256:cca370c6bec5ceae8b50b82b59c26cd8fe8d6e3fca5535c1edc6b172ece39f06'
+          print(json.dumps({'legacy_output_digest': x['output_digest']}, sort_keys=True))
           PY
+
+      - name: Materialize real DDE v1.1 normalization output
+        run: |
+          python integration/research_contract_v1/normalize_v1_1.py \
+            integration/research_contract_v1/fixtures/dde_v1_1_real.json \
+            --identity-policy integration/research_contract_v1/policies/dde_v1_1_candidate.json \
+            --out /tmp/dde-v1_1-ark-normalized.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('/tmp/dde-v1_1-ark-normalized.json')
+          x = json.loads(p.read_text())
+          assert x['schema_version'] == '1.3.0-candidate'
+          assert x['blocking'] is False
+          assert x['contradictions'] == []
+          assert x['source']['workflow_artifact'] == 9465277007
+          assert x['source']['workflow_artifact_sha256'] == 'da22dcdbfec5e6282032aaa91a9fa07f432aca114e46ee83e4f3f400a4bddda1'
+          assert x['input_digest'] == 'sha256:25006ea40e83c5eb1b8426319edda4f5b47f763a57f6ec3945b4b29ad0d43a43'
+          policy = x['contract_bindings']['evidence_identity_policy']
+          assert policy['valid'] is True
+          assert policy['policy_id'] == 'DDE-EVIDENCE-IDENTITY-v1.1'
+          assert policy['policy_digest'] == 'sha256:96f59bf15745d2c50c58e76fe607e69c01673cce9b680228cdb3f18332d2e1be'
+          bindings = x['contract_bindings']['gate_input_materialization']
+          assert len(bindings) == 1
+          assert bindings[0]['verified'] is True
+          assert bindings[0]['input_digest'] == 'sha256:994f8b45fcd249fd0dceecd7fd3a94c4323c8588cee5a5d0661c88c00c02b25c'
+          assert bindings[0]['input_count'] == 7
+          print(json.dumps({
+              'input_digest': x['input_digest'],
+              'output_digest': x['output_digest'],
+              'gate_binding': bindings[0],
+          }, sort_keys=True))
+          PY
+
+      - name: Upload ARK v1.1 normalization evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ark-dde-v1_1-normalization
+          path: /tmp/dde-v1_1-ark-normalized.json
+          if-no-files-found: error
+          retention-days: 30
