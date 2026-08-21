@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from typing import Any
 
 _SHA256_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+_SHARED_POLICY_SCHEMA = "EvidenceIdentityPolicy"
+_ARK_LEGACY_POLICY_SCHEMA = "ARKEvidenceIdentityPolicy"
 
 
 @dataclass(frozen=True)
@@ -39,7 +41,8 @@ def validate_policy(policy: Mapping[str, Any] | None) -> tuple[str, ...]:
     if policy is None:
         return ("identity-policy-missing",)
     reasons: list[str] = []
-    if policy.get("schema_name") != "ARKEvidenceIdentityPolicy":
+    schema_name = policy.get("schema_name")
+    if schema_name not in {_SHARED_POLICY_SCHEMA, _ARK_LEGACY_POLICY_SCHEMA}:
         reasons.append("identity-policy-schema-name-invalid")
     if policy.get("schema_version") != "1.0.0":
         reasons.append("identity-policy-schema-version-invalid")
@@ -62,6 +65,12 @@ def validate_policy(policy: Mapping[str, Any] | None) -> tuple[str, ...]:
         reasons.append("identity-policy-revision-binding-invalid")
     if policy.get("legacy_mode") not in {"DISABLED", "DDE_PRODUCER_LOCAL_EXPLICIT"}:
         reasons.append("identity-policy-legacy-mode-invalid")
+
+    # Shared HQST/DDE v1.1 policies use a different legacy binding vocabulary and
+    # must never be repurposed to authorize ARK's v1.0 compatibility seam. The
+    # ARK-specific dialect is retained only for the historical producer-local pilot.
+    if schema_name == _SHARED_POLICY_SCHEMA and policy.get("legacy_mode") != "DISABLED":
+        reasons.append("identity-policy-shared-schema-cannot-enable-ark-legacy-mode")
     return tuple(reasons)
 
 
@@ -133,7 +142,9 @@ def evaluate_evidence_identity(
 
     if schema_version == "1.0.0":
         # v1.0 cannot generically distinguish run/evidence/verifier revisions.
-        # It is accepted only through the explicit producer-local DDE profile.
+        # It is accepted only through ARK's explicit producer-local DDE profile.
+        if policy.get("schema_name") != _ARK_LEGACY_POLICY_SCHEMA:
+            reasons.append("legacy-v1.0-requires-ark-compatibility-policy")
         if policy.get("legacy_mode") != "DDE_PRODUCER_LOCAL_EXPLICIT":
             reasons.append("legacy-v1.0-identity-underspecified")
         expected_repo = policy.get("legacy_source_repository")
