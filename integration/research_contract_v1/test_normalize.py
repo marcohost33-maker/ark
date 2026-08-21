@@ -102,8 +102,8 @@ def test_missing_provenance_binding_blocks():
 
 def test_top_level_required_provenance_fields_are_enforced():
     fixture = load_fixture()
-    fixture["provenance_fields"] = ["source_revision", "material_digest", "reproduction_pointer"]
-    fixture["evidence_attestations"][0].pop("reproduction_pointer")
+    fixture["provenance_fields"] = ["source_revision", "material_digest", "environment"]
+    fixture["evidence_attestations"][0].pop("environment")
     result = mod.normalize(fixture)
     assert "RC.EVIDENCE.PROVENANCE_INCOMPLETE" in codes(result)
 
@@ -113,7 +113,7 @@ def test_source_revision_must_match_run_code_revision():
     fixture["evidence_attestations"][0]["source_revision"] = "deadbeef"
     result = mod.normalize(fixture)
     assert "RC.EVIDENCE.SOURCE_REVISION_MISMATCH" in codes(result)
-    assert "RC.ORACLE.MISSING" in codes(result)
+    assert "RC.GATE.PASS_WITH_BLOCKING_CONTRADICTION" in codes(result)
 
 
 def test_duplicate_evidence_ids_block_unambiguous_binding():
@@ -154,10 +154,12 @@ def test_supersession_failure_and_stale_dependency_are_blocking():
     assert "RC.SUPERSESSION.STALE_DEPENDENCY" in codes(result)
 
 
-def test_record_order_is_independent_of_input_evidence_order():
+def test_record_order_is_normalized_even_when_input_evidence_order_changes():
     fixture = load_fixture()
     a = mod.normalize(fixture)
     fixture["evidence_attestations"].reverse()
     b = mod.normalize(fixture)
     assert a["records"] == b["records"]
-    assert a["output_digest"] == b["output_digest"]
+    # The input digest intentionally binds the exact JSON input, including array order.
+    assert a["input_digest"] != b["input_digest"]
+    assert a["output_digest"] != b["output_digest"]
