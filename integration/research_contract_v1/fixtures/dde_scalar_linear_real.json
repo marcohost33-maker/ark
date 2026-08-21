@@ -1,0 +1,95 @@
+{
+  "source": {
+    "producer_repository": "marcohost33-maker/coworker-dde",
+    "producer_revision": "189fe90f3b3777a07a3fe14d36ec2ed5c11bd915",
+    "producer_pr": 34,
+    "workflow_run": 32437743187,
+    "workflow_artifact": 9431347905,
+    "workflow_artifact_sha256": "8579d682adaae6a46131bbee9db47a7b9bdd648df9c272997700c805265bb0d6",
+    "downstream_fixture_source": "marcohost33-maker/USK PR #44"
+  },
+  "run_plan": {
+    "schema_name": "RunPlan",
+    "schema_version": "1.0.0",
+    "run_id": "RUN-DDE-scalar_linear_constant_delay-2026-08-21T015139Z",
+    "model_id": "dde.scalar_linear_constant_delay",
+    "model_revision": "189fe90f3b3777a07a3fe14d36ec2ed5c11bd915",
+    "code_revision": "189fe90f3b3777a07a3fe14d36ec2ed5c11bd915",
+    "parameters": {"a": 0.5, "tau": 1.0, "t0": 0.0, "t_end": 2.0},
+    "tolerances": {"atol": 0.0005, "rtol": 0.0005},
+    "required_oracles": ["dde-analytic-reference"]
+  },
+  "claim_card": {
+    "schema_name": "ClaimCard",
+    "schema_version": "1.0.0",
+    "claim_id": "CLM-DDE-scalar_linear_constant_delay-cross-solver",
+    "statement": "The stdlib method-of-steps RK4 and JiTCDDE routes both match the case analytical reference within declared tolerances and their cross-route discrepancy is within the recorded agreement bound.",
+    "family": "DDE",
+    "claim_class": "numerical",
+    "status": "SUPPORTED",
+    "model_id": "dde.scalar_linear_constant_delay",
+    "evidence_ids": [
+      "EVID-DDE-scalar_linear_constant_delay-python_method_of_steps_rk4",
+      "EVID-DDE-scalar_linear_constant_delay-jitcdde_adaptive_rk"
+    ],
+    "claim_ceiling": "cross-solver/reference-case numerical validation; no general DDE, stability, bifurcation, or physical-system claim",
+    "supersedes": [],
+    "superseded_by": []
+  },
+  "evidence_attestations": [
+    {
+      "schema_name": "EvidenceAttestation",
+      "schema_version": "1.0.0",
+      "evidence_id": "EVID-DDE-scalar_linear_constant_delay-python_method_of_steps_rk4",
+      "subject": {
+        "artifact_id": "ART-DDE-scalar_linear_constant_delay-python_method_of_steps_rk4",
+        "claim_id": "CLM-DDE-scalar_linear_constant_delay-cross-solver",
+        "run_id": "RUN-DDE-scalar_linear_constant_delay-2026-08-21T015139Z"
+      },
+      "source_revision": "189fe90f3b3777a07a3fe14d36ec2ed5c11bd915",
+      "material_digest": "sha256:523c1663d07a44d327b52b96d8c6f9910e6bbd32d2482a23994790379f6680c9",
+      "verifier": {"id": "dde-analytic-reference", "version": "3DDE_CANON_v1_2", "kind": "analytic-oracle"},
+      "method": "L-infinity error 1.510e-14 <= threshold 1.563e-03 vs analytical reference",
+      "oracle_id": "dde-analytic-reference",
+      "verdict": "PASS",
+      "stale": false,
+      "timestamp": "2026-08-21T01:51:39Z",
+      "environment": {"python": "3.12.14", "platform": "Linux"}
+    },
+    {
+      "schema_name": "EvidenceAttestation",
+      "schema_version": "1.0.0",
+      "evidence_id": "EVID-DDE-scalar_linear_constant_delay-jitcdde_adaptive_rk",
+      "subject": {
+        "artifact_id": "ART-DDE-scalar_linear_constant_delay-jitcdde_adaptive_rk",
+        "claim_id": "CLM-DDE-scalar_linear_constant_delay-cross-solver",
+        "run_id": "RUN-DDE-scalar_linear_constant_delay-2026-08-21T015139Z"
+      },
+      "source_revision": "189fe90f3b3777a07a3fe14d36ec2ed5c11bd915",
+      "material_digest": "sha256:13785fe851e85206e62344e105438533774381e8b318531e63d240ba8c633763",
+      "verifier": {"id": "dde-analytic-reference", "version": "3DDE_CANON_v1_2", "kind": "analytic-oracle"},
+      "method": "L-infinity error 3.553e-15 <= threshold 1.563e-03 vs analytical reference",
+      "oracle_id": "dde-analytic-reference",
+      "verdict": "PASS",
+      "stale": false,
+      "timestamp": "2026-08-21T01:51:39Z",
+      "environment": {"python": "3.12.14", "platform": "Linux"}
+    }
+  ],
+  "gate_reports": [
+    {
+      "schema_name": "GateReport",
+      "schema_version": "1.0.0",
+      "gate_id": "GATE-DDE-PILOT-001",
+      "subject_id": "CLM-DDE-scalar_linear_constant_delay-cross-solver",
+      "evaluator_id": "coworker-dde.materialize_research_contracts",
+      "evaluator_revision": "189fe90f3b3777a07a3fe14d36ec2ed5c11bd915",
+      "result": "PASS",
+      "blocking": true,
+      "reasons": [],
+      "input_digest": "sha256:b65396d386fd408db10e9a75a5291453d0f2804a0294321a6f1aac724485d31c",
+      "evaluated_at": "2026-08-21T01:51:39Z"
+    }
+  ],
+  "supersession_reports": []
+}
