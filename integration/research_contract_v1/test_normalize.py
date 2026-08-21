@@ -25,7 +25,9 @@ def test_real_dde_fixture_normalizes_without_blocker():
     result = mod.normalize(load_fixture())
     assert result["blocking"] is False
     assert result["contradictions"] == []
+    assert result["input_digest"].startswith("sha256:")
     assert result["output_digest"].startswith("sha256:")
+    assert result["schema_version"] == "1.1.0-candidate"
     assert len(result["records"]) == 3
     assert result["trust_boundary"].endswith("not scientific truth.")
 
@@ -35,7 +37,19 @@ def test_output_digest_is_stable_for_identical_input():
     a = mod.normalize(fixture)
     b = mod.normalize(copy.deepcopy(fixture))
     assert a == b
+    assert a["input_digest"] == b["input_digest"]
     assert a["output_digest"] == b["output_digest"]
+
+
+def test_output_digest_binds_claim_and_run_content():
+    fixture = load_fixture()
+    a = mod.normalize(fixture)
+    changed = copy.deepcopy(fixture)
+    changed["run_plan"]["tolerances"]["atol"] = 0.0006
+    b = mod.normalize(changed)
+    assert a["input_digest"] != b["input_digest"]
+    assert a["contract_bindings"]["run_plan_digest"] != b["contract_bindings"]["run_plan_digest"]
+    assert a["output_digest"] != b["output_digest"]
 
 
 def test_source_ids_revisions_and_digests_are_preserved():
@@ -57,6 +71,13 @@ def test_stale_pass_evidence_blocks_and_invalidates_pass_gate():
     assert "RC.GATE.PASS_WITH_BLOCKING_CONTRADICTION" in codes(result)
 
 
+def test_missing_explicit_freshness_is_fail_closed():
+    fixture = load_fixture()
+    fixture["evidence_attestations"][0].pop("stale")
+    result = mod.normalize(fixture)
+    assert "RC.EVIDENCE.STALE" in codes(result)
+
+
 def test_unavailable_evidence_cannot_be_promoted():
     fixture = load_fixture()
     fixture["evidence_attestations"][0]["verdict"] = "UNAVAILABLE"
@@ -76,13 +97,46 @@ def test_missing_provenance_binding_blocks():
     fixture["evidence_attestations"][0].pop("material_digest")
     result = mod.normalize(fixture)
     assert "RC.EVIDENCE.PROVENANCE_INCOMPLETE" in codes(result)
+    assert "RC.EVIDENCE.DIGEST_INVALID" in codes(result)
 
 
-def test_required_oracle_must_have_current_passing_evidence():
+def test_top_level_required_provenance_fields_are_enforced():
+    fixture = load_fixture()
+    fixture["provenance_fields"] = ["source_revision", "material_digest", "reproduction_pointer"]
+    fixture["evidence_attestations"][0].pop("reproduction_pointer")
+    result = mod.normalize(fixture)
+    assert "RC.EVIDENCE.PROVENANCE_INCOMPLETE" in codes(result)
+
+
+def test_source_revision_must_match_run_code_revision():
+    fixture = load_fixture()
+    fixture["evidence_attestations"][0]["source_revision"] = "deadbeef"
+    result = mod.normalize(fixture)
+    assert "RC.EVIDENCE.SOURCE_REVISION_MISMATCH" in codes(result)
+    assert "RC.ORACLE.MISSING" in codes(result)
+
+
+def test_duplicate_evidence_ids_block_unambiguous_binding():
+    fixture = load_fixture()
+    fixture["evidence_attestations"].append(copy.deepcopy(fixture["evidence_attestations"][0]))
+    result = mod.normalize(fixture)
+    assert "RC.EVIDENCE.DUPLICATE_ID" in codes(result)
+
+
+def test_required_oracle_must_have_current_passing_bound_evidence():
     fixture = load_fixture()
     fixture["run_plan"]["required_oracles"] = ["dde-analytic-reference", "independent-oracle-B"]
     result = mod.normalize(fixture)
     assert "RC.ORACLE.MISSING" in codes(result)
+
+
+def test_pass_gate_must_bind_claim_and_have_valid_digest():
+    fixture = load_fixture()
+    fixture["gate_reports"][0]["subject_id"] = "CLM-WRONG"
+    fixture["gate_reports"][0]["input_digest"] = "not-a-digest"
+    result = mod.normalize(fixture)
+    assert "RC.GATE.UNBOUND" in codes(result)
+    assert "RC.GATE.INPUT_DIGEST_INVALID" in codes(result)
 
 
 def test_supersession_failure_and_stale_dependency_are_blocking():
