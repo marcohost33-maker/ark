@@ -31,6 +31,7 @@ jobs:
         run: |
           python integration/research_contract_v1/normalize.py \
             integration/research_contract_v1/fixtures/dde_scalar_linear_real.json \
+            --identity-policy integration/research_contract_v1/policies/dde_producer_local_legacy_v1.json \
             --out /tmp/dde-ark-normalized.json
           python - <<'PY'
           import json
@@ -39,6 +40,8 @@ jobs:
           x = json.loads(p.read_text())
           assert x['blocking'] is False
           assert x['contradictions'] == []
+          assert x['contract_bindings']['evidence_identity_policy']['valid'] is True
+          assert x['contract_bindings']['evidence_identity_policy']['policy_id'] == 'DDE-PRODUCER-LOCAL-LEGACY-v1'
           assert x['output_digest'].startswith('sha256:')
           print(x['output_digest'])
           PY
