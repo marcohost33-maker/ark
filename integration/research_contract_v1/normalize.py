@@ -8,6 +8,13 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
+# Support both direct CLI execution and importlib-based tests without installing a package.
+HERE = Path(__file__).resolve().parent
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
+from identity_policy import IdentityEvaluation, evaluate_evidence_identity, validate_policy  # noqa: E402
+
 PROMOTED = {"PROVEN", "BENCHMARKED", "SUPPORTED", "PASS", "VERIFIED"}
 PASS_EVIDENCE = {"PASS", "VERIFIED"}
 EX_NOINPUT = 66
@@ -39,16 +46,29 @@ def _record(kind: str, obj: dict[str, Any]) -> dict[str, Any]:
         "record_type": kind,
         "source_id": _id(obj),
         "source_schema": obj.get("schema_name") or obj.get("type") or "unknown",
+        "source_schema_version": obj.get("schema_version"),
         "source_object": obj,
     }
     if "source_revision" in obj:
         rec["source_revision"] = obj["source_revision"]
     elif "evaluator_revision" in obj:
         rec["source_revision"] = obj["evaluator_revision"]
+    elif isinstance(obj.get("provenance"), Mapping):
+        evidence_producer = obj["provenance"].get("evidence_producer")
+        if isinstance(evidence_producer, Mapping) and evidence_producer.get("revision"):
+            rec["source_revision"] = evidence_producer["revision"]
     if "material_digest" in obj:
         rec["material_digest"] = obj["material_digest"]
     elif "input_digest" in obj:
         rec["material_digest"] = obj["input_digest"]
+    if kind == "provenance.evidence_attestation":
+        rec["identity"] = {
+            "provenance": obj.get("provenance"),
+            "verifier": obj.get("verifier"),
+            "oracle_binding": obj.get("oracle_binding"),
+            "legacy_oracle_id": obj.get("oracle_id"),
+            "attestation_signer": obj.get("attestation_signer"),
+        }
     return rec
 
 
@@ -77,9 +97,34 @@ def _valid_sha256(value: Any) -> bool:
     return len(digest) == 64 and all(c in "0123456789abcdef" for c in digest)
 
 
-def normalize(bundle: dict[str, Any]) -> dict[str, Any]:
+def _identity_code(reason: str) -> str:
+    if reason == "identity-policy-missing":
+        return "RC.IDENTITY.POLICY_MISSING"
+    if reason == "legacy-source-revision-mismatch":
+        return "RC.EVIDENCE.SOURCE_REVISION_MISMATCH"
+    if reason in {"legacy-oracle-verifier-mismatch", "oracle-verifier-mismatch"}:
+        return "RC.ORACLE.VERIFIER_MISMATCH"
+    if reason in {
+        "oracle-verifier-not-authorized",
+        "oracle-policy-id-mismatch",
+        "oracle-policy-version-mismatch",
+        "oracle-policy-digest-mismatch",
+    }:
+        return "RC.ORACLE.POLICY_REJECTED"
+    if reason.startswith("identity-policy-"):
+        return "RC.IDENTITY.POLICY_INVALID"
+    if reason == "legacy-v1.0-identity-underspecified":
+        return "RC.IDENTITY.LEGACY_UNVERIFIED"
+    return "RC.EVIDENCE.IDENTITY_INVALID"
+
+
+def normalize(
+    bundle: dict[str, Any],
+    identity_policy: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     claim = bundle.get("claim_card") or {}
     run = bundle.get("run_plan") or {}
+    source = bundle.get("source") if isinstance(bundle.get("source"), Mapping) else {}
     evidence = [x for x in bundle.get("evidence_attestations", []) if isinstance(x, dict)]
     gates = [x for x in bundle.get("gate_reports", []) if isinstance(x, dict)]
     supersession = [x for x in bundle.get("supersession_reports", []) if isinstance(x, dict)]
@@ -129,7 +174,12 @@ def normalize(bundle: dict[str, Any]) -> dict[str, Any]:
 
     referenced = _string_list(claim.get("evidence_ids", []))
     required_provenance_fields = set(_string_list(bundle.get("provenance_fields", [])))
-    required_provenance_fields.update({"material_digest", "source_revision"})
+    # source_revision is no longer a universal field in v1.1; identity evaluation
+    # enforces the correct revision fields according to the selected profile.
+    required_provenance_fields.add("material_digest")
+
+    identity_by_id: dict[str, IdentityEvaluation] = {}
+    covered_oracles: set[str] = set()
 
     if promoted:
         if not referenced:
@@ -145,6 +195,7 @@ def normalize(bundle: dict[str, Any]) -> dict[str, Any]:
                     f"Promoted claim references missing evidence {evid}.", [claim_id, evid]
                 ))
                 continue
+
             subject = item.get("subject") if isinstance(item.get("subject"), Mapping) else {}
             verdict = str(item.get("verdict", "")).upper()
             if verdict not in PASS_EVIDENCE:
@@ -159,52 +210,57 @@ def normalize(bundle: dict[str, Any]) -> dict[str, Any]:
                     f"Promoted claim references evidence {evid} that is stale or lacks explicit freshness=false.",
                     [claim_id, evid],
                 ))
-            if subject.get("claim_id") != claim_id or subject.get("run_id") != run_id:
+            subject_bound = subject.get("claim_id") == claim_id and subject.get("run_id") == run_id
+            if not subject_bound:
                 contradictions.append(_contradiction(
                     "RC.EVIDENCE.UNBOUND", claim_id,
                     f"Evidence {evid} is not bound to claim={claim_id} and run={run_id}.",
                     [claim_id, run_id, evid],
                 ))
+
             missing_fields = sorted(
                 field for field in required_provenance_fields if not item.get(field)
             )
             if missing_fields:
                 contradictions.append(_contradiction(
                     "RC.EVIDENCE.PROVENANCE_INCOMPLETE", claim_id,
-                    f"Evidence {evid} lacks required provenance fields: {missing_fields}.",
+                    f"Evidence {evid} lacks required top-level provenance fields: {missing_fields}.",
                     [claim_id, evid],
                 ))
-            if item.get("source_revision") != code_revision:
-                contradictions.append(_contradiction(
-                    "RC.EVIDENCE.SOURCE_REVISION_MISMATCH", claim_id,
-                    f"Evidence {evid} source_revision does not match RunPlan code_revision.",
-                    [claim_id, run_id, evid],
-                ))
-            if not _valid_sha256(item.get("material_digest")):
+
+            digest_valid = _valid_sha256(item.get("material_digest"))
+            if not digest_valid:
                 contradictions.append(_contradiction(
                     "RC.EVIDENCE.DIGEST_INVALID", claim_id,
                     f"Evidence {evid} material_digest is not a canonical sha256:<64 hex> digest.",
                     [claim_id, evid],
                 ))
 
+            identity = evaluate_evidence_identity(item, run, source, identity_policy)
+            identity_by_id[evid] = identity
+            for reason in identity.reasons:
+                contradictions.append(_contradiction(
+                    _identity_code(reason),
+                    claim_id,
+                    f"Evidence {evid} identity policy rejected: {reason}.",
+                    [claim_id, run_id, evid],
+                ))
+
+            if (
+                verdict in PASS_EVIDENCE
+                and item.get("stale") is False
+                and subject_bound
+                and digest_valid
+                and identity.ok
+                and identity.authorized_oracle
+            ):
+                covered_oracles.add(identity.authorized_oracle)
+
         required_oracles = set(_string_list(run.get("required_oracles", [])))
-        covered = {
-            str(x.get("oracle_id"))
-            for x in evidence
-            if x.get("evidence_id") in referenced
-            and str(x.get("verdict", "")).upper() in PASS_EVIDENCE
-            and x.get("stale") is False
-            and isinstance(x.get("subject"), Mapping)
-            and x["subject"].get("claim_id") == claim_id
-            and x["subject"].get("run_id") == run_id
-            and x.get("source_revision") == code_revision
-            and _valid_sha256(x.get("material_digest"))
-            and x.get("oracle_id")
-        }
-        for oracle in sorted(required_oracles - covered):
+        for oracle in sorted(required_oracles - covered_oracles):
             contradictions.append(_contradiction(
                 "RC.ORACLE.MISSING", claim_id,
-                f"Required oracle {oracle} has no current passing, bound, revision-matching evidence.",
+                f"Required oracle {oracle} has no current passing, bound, identity-authorized evidence.",
                 [claim_id, run_id, oracle],
             ))
 
@@ -256,9 +312,20 @@ def normalize(bundle: dict[str, Any]) -> dict[str, Any]:
 
     records.sort(key=lambda r: (r["record_type"], r["source_id"]))
     contradictions.sort(key=lambda c: (c["code"], c["subject_id"], c["detail"]))
+
+    policy_errors = validate_policy(identity_policy)
+    policy_binding = None
+    if identity_policy is not None:
+        policy_binding = {
+            "policy_id": identity_policy.get("policy_id"),
+            "policy_version": identity_policy.get("policy_version"),
+            "policy_digest": identity_policy.get("policy_digest"),
+            "valid": not policy_errors,
+        }
+
     payload = {
         "schema_name": "ARKResearchContractNormalization",
-        "schema_version": "1.1.0-candidate",
+        "schema_version": "1.2.0-candidate",
         "source": bundle.get("source", {}),
         "input_digest": _digest(bundle),
         "claim_id": claim.get("claim_id"),
@@ -267,6 +334,7 @@ def normalize(bundle: dict[str, Any]) -> dict[str, Any]:
             "claim_card_digest": _digest(claim),
             "run_plan_digest": _digest(run),
             "code_revision": code_revision,
+            "evidence_identity_policy": policy_binding,
         },
         "records": records,
         "contradictions": contradictions,
@@ -278,19 +346,23 @@ def normalize(bundle: dict[str, Any]) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Normalize Research Contract v1 evidence into deterministic ARK records.")
+    parser = argparse.ArgumentParser(
+        description="Normalize Research Contract evidence into deterministic ARK records."
+    )
     parser.add_argument("input", type=Path)
+    parser.add_argument("--identity-policy", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
         bundle = json.loads(args.input.read_text(encoding="utf-8"))
+        identity_policy = json.loads(args.identity_policy.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return EX_NOINPUT
-    if not isinstance(bundle, dict):
-        print("error: input must be a JSON object", file=sys.stderr)
+    if not isinstance(bundle, dict) or not isinstance(identity_policy, dict):
+        print("error: input and identity policy must be JSON objects", file=sys.stderr)
         return EX_NOINPUT
-    result = normalize(bundle)
+    result = normalize(bundle, identity_policy)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(
         json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
@@ -301,6 +373,7 @@ def main(argv: list[str] | None = None) -> int:
         "input_digest": result["input_digest"],
         "blocking": result["blocking"],
         "contradictions": len(result["contradictions"]),
+        "identity_policy": result["contract_bindings"]["evidence_identity_policy"],
     }, sort_keys=True))
     return 2 if result["blocking"] else 0
 
