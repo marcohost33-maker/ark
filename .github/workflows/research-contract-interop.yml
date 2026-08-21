@@ -1,0 +1,44 @@
+name: research-contract-interop
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install test tools
+        run: python -m pip install pytest==9.1.1 ruff==0.14.0
+      - name: Compile candidate integration
+        run: python -m compileall -q integration/research_contract_v1
+      - name: Ruff candidate integration
+        run: ruff check integration/research_contract_v1 --select=F,E9
+      - name: Run normalization falsification suite
+        run: pytest -q integration/research_contract_v1/test_normalize.py
+      - name: Materialize real DDE normalization output
+        run: |
+          python integration/research_contract_v1/normalize.py \
+            integration/research_contract_v1/fixtures/dde_scalar_linear_real.json \
+            --out /tmp/dde-ark-normalized.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('/tmp/dde-ark-normalized.json')
+          x = json.loads(p.read_text())
+          assert x['blocking'] is False
+          assert x['contradictions'] == []
+          assert x['output_digest'].startswith('sha256:')
+          print(x['output_digest'])
+          PY
