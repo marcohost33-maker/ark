@@ -1,0 +1,177 @@
+{
+  "source": {
+    "producer_repository": "marcohost33-maker/coworker-dde",
+    "producer_revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300",
+    "producer_pr": 34,
+    "workflow_run": 32535496857,
+    "workflow_artifact": 9465277007,
+    "workflow_artifact_sha256": "da22dcdbfec5e6282032aaa91a9fa07f432aca114e46ee83e4f3f400a4bddda1",
+    "contract_line": "Research Contract v1.1 candidate",
+    "case": "scalar_linear_constant_delay"
+  },
+  "run_plan": {
+    "schema_name": "RunPlan",
+    "schema_version": "1.0.0",
+    "run_id": "RUN-DDE-scalar_linear_constant_delay-2026-08-21T230449Z",
+    "model_id": "dde.scalar_linear_constant_delay",
+    "model_revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300",
+    "code_revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300",
+    "parameters": {"a": 0.5, "tau": 1.0, "t0": 0.0, "t_end": 2.0},
+    "seed_policy": {"mode": "not-applicable"},
+    "tolerances": {"atol": 0.0005, "rtol": 0.0005},
+    "fidelity": {
+      "evaluation_grid_step_rule": "min(min_positive_delay/200, 0.005)",
+      "minimum_positive_delay": 1.0,
+      "evaluation_grid_step": 0.005,
+      "declared_breaking_points": [0.0, 1.0, 2.0]
+    },
+    "budget": {"kind": "runs", "value": 1, "notes": "one cross-solver execution over this case"},
+    "negative_controls": [
+      "wrong numerical RHS/reference must fail the analytical-oracle gate",
+      "missing analytical reference must become ERROR, never PASS",
+      "unavailable optional solver route must remain UNAVAILABLE, never PASS",
+      "missing declared-positive route material must downgrade route evidence to ERROR and block the process gate"
+    ],
+    "required_oracles": ["dde-analytic-reference"],
+    "acceptance_criteria": [
+      "python_method_of_steps_rk4 effective evidence status == PASS against analytical reference",
+      "every available solver route is independently gated against the analytical reference",
+      "cross-solver SUPPORTED requires explicit positive cross-route evidence",
+      "FAIL/ERROR on any wired available solver evidence blocks the process gate"
+    ],
+    "determinism_tier": "L3",
+    "environment_requirements": ["Python 3.12 reference CI lane", "JiTCDDE may be UNAVAILABLE outside the reference CI lane"]
+  },
+  "claim_card": {
+    "schema_name": "ClaimCard",
+    "schema_version": "1.0.0",
+    "claim_id": "CLM-DDE-scalar_linear_constant_delay-cross-solver",
+    "statement": "The stdlib method-of-steps RK4 and JiTCDDE routes both match the analytical reference within declared tolerances, and the explicitly attested cross-route discrepancy is within its recorded bound.",
+    "family": "DDE",
+    "claim_class": "numerical",
+    "status": "SUPPORTED",
+    "model_id": "dde.scalar_linear_constant_delay",
+    "scope": "3DDE seed case scalar_linear_constant_delay; retarded constant-discrete-delay scope only",
+    "evidence_ids": [
+      "EVID-DDE-scalar_linear_constant_delay-python_method_of_steps_rk4",
+      "EVID-DDE-scalar_linear_constant_delay-jitcdde_adaptive_rk",
+      "EVID-DDE-scalar_linear_constant_delay-cross-route-agreement"
+    ],
+    "claim_ceiling": "cross-solver/reference-case numerical validation; no general DDE, stability, bifurcation, or physical-system claim",
+    "falsifiers": [
+      "required RK4 route exceeds manifest tolerance against analytical reference",
+      "any wired available solver evidence returns FAIL or ERROR",
+      "cross-solver promotion lacks positive explicit cross-route evidence"
+    ],
+    "supersedes": [],
+    "superseded_by": [],
+    "external_validation": false,
+    "limitations": ["neutral_dde", "distributed_delay", "state_dependent_delay", "vanishing_delay", "stability_or_bifurcation_claim"]
+  },
+  "evidence_attestations": [
+    {
+      "schema_name": "EvidenceAttestation",
+      "schema_version": "1.1.0",
+      "evidence_id": "EVID-DDE-scalar_linear_constant_delay-cross-route-agreement",
+      "subject": {"artifact_id": "ART-DDE-scalar_linear_constant_delay-cross-route-agreement", "claim_id": "CLM-DDE-scalar_linear_constant_delay-cross-solver", "run_id": "RUN-DDE-scalar_linear_constant_delay-2026-08-21T230449Z"},
+      "material_digest": "sha256:33dc281595035bc3e6ccd5563a772736d74630cac2440f3f2dd8861af4cbb1d8",
+      "provenance": {
+        "run_producer": {"id": "marcohost33-maker/coworker-dde", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"},
+        "evidence_producer": {"id": "marcohost33-maker/coworker-dde:materialize-research-contracts-v1.1", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"}
+      },
+      "verifier": {"id": "dde-cross-route-comparator", "kind": "cross-backend", "implementation": {"id": "coworker-dde.cross-route-comparator", "version": "1", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"}},
+      "method": "cross-route L-infinity error 1.199040866595169e-14 <= bound 0.003125",
+      "verdict": "PASS",
+      "stale": false,
+      "timestamp": "2026-08-21T23:04:49Z",
+      "environment": {"source": "cross-route-agreement.json"},
+      "limitations": ["Cross-route agreement is corroborating numerical evidence, not an analytic oracle.", "Common-mode model/reference defects remain possible and are controlled separately by the analytical reference."],
+      "reproduction_pointer": "tools/run_cross_solver.py"
+    },
+    {
+      "schema_name": "EvidenceAttestation",
+      "schema_version": "1.1.0",
+      "evidence_id": "EVID-DDE-scalar_linear_constant_delay-external_cross_solver_optional",
+      "subject": {"artifact_id": "ART-DDE-scalar_linear_constant_delay-external_cross_solver_optional", "claim_id": "CLM-DDE-scalar_linear_constant_delay-cross-solver", "run_id": "RUN-DDE-scalar_linear_constant_delay-2026-08-21T230449Z"},
+      "material_digest": "sha256:5f464dd29116be3443e86a2de22bd4d5761ae3069fac3910bbc74024d6aef40f",
+      "provenance": {
+        "run_producer": {"id": "marcohost33-maker/coworker-dde", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"},
+        "evidence_producer": {"id": "marcohost33-maker/coworker-dde:materialize-research-contracts-v1.1", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"}
+      },
+      "verifier": {"id": "dde-route-availability", "kind": "validator", "implementation": {"id": "coworker-dde.route-availability-check", "version": "1", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"}},
+      "method": "no Julia/R/Wolfram adapter configured (canon §8 routes A, C, D, E); this is not a pass",
+      "verdict": "UNAVAILABLE",
+      "stale": false,
+      "timestamp": "2026-08-21T23:04:49Z",
+      "environment": {"python": "3.12.14", "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39"},
+      "limitations": ["Evidence supports only the declared retarded constant-discrete-delay reference-case scope.", "Schema or CI PASS is not a general DDE theorem or stability/bifurcation result.", "Route was unavailable and contributes no positive solver evidence."],
+      "reproduction_pointer": "tools/run_cross_solver.py"
+    },
+    {
+      "schema_name": "EvidenceAttestation",
+      "schema_version": "1.1.0",
+      "evidence_id": "EVID-DDE-scalar_linear_constant_delay-jitcdde_adaptive_rk",
+      "subject": {"artifact_id": "ART-DDE-scalar_linear_constant_delay-jitcdde_adaptive_rk", "claim_id": "CLM-DDE-scalar_linear_constant_delay-cross-solver", "run_id": "RUN-DDE-scalar_linear_constant_delay-2026-08-21T230449Z"},
+      "material_digest": "sha256:13785fe851e85206e62344e105438533774381e8b318531e63d240ba8c633763",
+      "provenance": {
+        "run_producer": {"id": "marcohost33-maker/coworker-dde", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"},
+        "evidence_producer": {"id": "marcohost33-maker/coworker-dde:materialize-research-contracts-v1.1", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"}
+      },
+      "verifier": {"id": "jitcdde", "kind": "independent-solver", "implementation": {"id": "coworker-dde.solver-vs-analytic-reference.jitcdde", "version": "1.8.3", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"}},
+      "method": "L-infinity error 3.553e-15 <= threshold 1.563e-03 (atol=0.0005, rtol=0.0005) vs analytical reference; initial discontinuity absorbed via adjust_diff, ascending sampling on the shared grid (max_step=0.05)",
+      "verdict": "PASS",
+      "stale": false,
+      "timestamp": "2026-08-21T23:04:49Z",
+      "environment": {"python": "3.12.14", "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39"},
+      "limitations": ["Evidence supports only the declared retarded constant-discrete-delay reference-case scope.", "Schema or CI PASS is not a general DDE theorem or stability/bifurcation result."],
+      "reproduction_pointer": "tools/run_cross_solver.py",
+      "oracle_binding": {"oracle_id": "dde-analytic-reference", "mode": "POLICY", "policy_ref": {"policy_id": "DDE-EVIDENCE-IDENTITY-v1.1", "policy_version": "1.0.0", "policy_digest": "sha256:96f59bf15745d2c50c58e76fe607e69c01673cce9b680228cdb3f18332d2e1be"}}
+    },
+    {
+      "schema_name": "EvidenceAttestation",
+      "schema_version": "1.1.0",
+      "evidence_id": "EVID-DDE-scalar_linear_constant_delay-python_method_of_steps_rk4",
+      "subject": {"artifact_id": "ART-DDE-scalar_linear_constant_delay-python_method_of_steps_rk4", "claim_id": "CLM-DDE-scalar_linear_constant_delay-cross-solver", "run_id": "RUN-DDE-scalar_linear_constant_delay-2026-08-21T230449Z"},
+      "material_digest": "sha256:523c1663d07a44d327b52b96d8c6f9910e6bbd32d2482a23994790379f6680c9",
+      "provenance": {
+        "run_producer": {"id": "marcohost33-maker/coworker-dde", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"},
+        "evidence_producer": {"id": "marcohost33-maker/coworker-dde:materialize-research-contracts-v1.1", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"}
+      },
+      "verifier": {"id": "stdlib_method_of_steps_rk4", "kind": "independent-solver", "implementation": {"id": "coworker-dde.solver-vs-analytic-reference.stdlib_method_of_steps_rk4", "version": "0.1", "revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300"}},
+      "method": "L-infinity error 1.510e-14 <= threshold 1.563e-03 (atol=0.0005, rtol=0.0005) vs analytical reference; breaking points aligned with the evaluation grid",
+      "verdict": "PASS",
+      "stale": false,
+      "timestamp": "2026-08-21T23:04:49Z",
+      "environment": {"python": "3.12.14", "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39"},
+      "limitations": ["Evidence supports only the declared retarded constant-discrete-delay reference-case scope.", "Schema or CI PASS is not a general DDE theorem or stability/bifurcation result."],
+      "reproduction_pointer": "tools/run_cross_solver.py",
+      "oracle_binding": {"oracle_id": "dde-analytic-reference", "mode": "POLICY", "policy_ref": {"policy_id": "DDE-EVIDENCE-IDENTITY-v1.1", "policy_version": "1.0.0", "policy_digest": "sha256:96f59bf15745d2c50c58e76fe607e69c01673cce9b680228cdb3f18332d2e1be"}}
+    }
+  ],
+  "gate_reports": [
+    {
+      "schema_name": "GateReport",
+      "schema_version": "1.1.0",
+      "gate_id": "GATE-DDE-PILOT-001",
+      "subject_id": "CLM-DDE-scalar_linear_constant_delay-cross-solver",
+      "evaluator_id": "coworker-dde.materialize_research_contracts_v1_1",
+      "evaluator_revision": "422406a1c33487c114c9d96a83a61ed0cc1b8300",
+      "result": "PASS",
+      "blocking": true,
+      "reasons": [],
+      "input_materialization_profile": {"profile_id": "DDE.GATE-EVID-001.scalar_linear_constant_delay", "profile_version": "1.0.0"},
+      "input_manifest": [
+        {"kind": "ModelSpec", "id": "dde.scalar_linear_constant_delay"},
+        {"kind": "RunPlan", "id": "RUN-DDE-scalar_linear_constant_delay-2026-08-21T230449Z"},
+        {"kind": "EvidenceAttestation", "id": "EVID-DDE-scalar_linear_constant_delay-cross-route-agreement"},
+        {"kind": "EvidenceAttestation", "id": "EVID-DDE-scalar_linear_constant_delay-external_cross_solver_optional"},
+        {"kind": "EvidenceAttestation", "id": "EVID-DDE-scalar_linear_constant_delay-jitcdde_adaptive_rk"},
+        {"kind": "EvidenceAttestation", "id": "EVID-DDE-scalar_linear_constant_delay-python_method_of_steps_rk4"},
+        {"kind": "ClaimCard", "id": "CLM-DDE-scalar_linear_constant_delay-cross-solver"}
+      ],
+      "input_digest": "sha256:994f8b45fcd249fd0dceecd7fd3a94c4323c8588cee5a5d0661c88c00c02b25c",
+      "evaluated_at": "2026-08-21T23:04:49Z"
+    }
+  ],
+  "supersession_reports": []
+}
