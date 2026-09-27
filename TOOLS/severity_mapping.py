@@ -39,15 +39,22 @@ NON_DOWNGRADABLE = {
     "NEG.ARCHIVE.SCHEMATRON_FAIL",
 }
 
+OVERRIDE_SEVERITIES = {"HARD_FAIL", "SOFT_FAIL", "WARNING"}
+
 def classify_neg_id(neg_id: str, policy: Dict|None=None, known_issue_ids: Iterable[str]=(), waived_issue_ids: Iterable[str]=(), strict_mode: bool=True) -> str:
     policy = policy or {}
-    if neg_id in waived_issue_ids:
-        return "WAIVED_ISSUE"
-    if neg_id in known_issue_ids:
-        return "KNOWN_ISSUE"
-    overrides = policy.get("severity_overrides", {})
-    if neg_id in overrides and neg_id not in NON_DOWNGRADABLE:
-        return overrides[neg_id]
+    # NON_DOWNGRADABLE ids are immune to every policy lever: a waiver or a
+    # known-issue entry is a downgrade just like a severity override.
+    if neg_id not in NON_DOWNGRADABLE:
+        if neg_id in waived_issue_ids:
+            return "WAIVED_ISSUE"
+        if neg_id in known_issue_ids:
+            return "KNOWN_ISSUE"
+        overrides = policy.get("severity_overrides", {})
+        if neg_id in overrides:
+            if overrides[neg_id] not in OVERRIDE_SEVERITIES:
+                raise ValueError(f"invalid severity override for {neg_id}: {overrides[neg_id]!r}")
+            return overrides[neg_id]
     if neg_id in HARD_EXACT or neg_id.startswith(HARD_PREFIXES):
         return "HARD_FAIL"
     if neg_id in SOFT_EXACT or neg_id.startswith(SOFT_PREFIXES):

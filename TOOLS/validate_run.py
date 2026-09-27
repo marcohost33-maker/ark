@@ -92,8 +92,9 @@ def validate_policy_shape(policy):
 
     Allowed keys: ``severity_overrides`` (map neg_id -> severity in
     {HARD_FAIL, SOFT_FAIL, WARNING}), ``known_issues`` (list[str]),
-    ``waivers`` (list[str]). Overriding a NON_DOWNGRADABLE neg id is refused
-    (fail-closed): such ids must never be softened by policy.
+    ``waivers`` (list[str]). Overriding, waiving or known-issue-listing a
+    NON_DOWNGRADABLE neg id is refused (fail-closed): such ids must never be
+    softened by policy.
     """
     if not isinstance(policy, dict):
         raise PolicyError(f"policy must be an object, got {type(policy).__name__}")
@@ -118,6 +119,9 @@ def validate_policy_shape(policy):
         value = policy.get(key, [])
         if not isinstance(value, list) or not all(isinstance(x, str) and x for x in value):
             raise PolicyError(f"{key} must be a list of non-empty strings")
+        locked = sorted(set(value) & NON_DOWNGRADABLE)
+        if locked:
+            raise PolicyError(f"refusing {key} entry for non-downgradable id(s): {locked}")
     return policy
 
 
@@ -166,12 +170,14 @@ def check_kernel_files(run_dir):
 
 
 def check_kernel_payload(obj):
+    if not isinstance(obj, dict):
+        return ["NEG.KERNEL.UNREADABLE"]
     neg = []
     if not obj.get("content_hash"):
         neg.append("NEG.KERNEL.MISSING_HASH")
     if not obj.get("version"):
         neg.append("NEG.KERNEL.MISSING_VERSION")
-    elif not SEMVER_RE.match(obj["version"]):
+    elif not isinstance(obj["version"], str) or not SEMVER_RE.match(obj["version"]):
         neg.append("NEG.KERNEL.INVALID_SEMVER")
     if "payload" not in obj:
         neg.append("NEG.KERNEL.MISSING_PAYLOAD")
@@ -216,7 +222,11 @@ def validate_run(run_dir, policy=None):
     if os.path.isdir(kernels_dir):
         for fn in sorted(os.listdir(kernels_dir)):
             if fn.startswith("kernel.") and fn.endswith(".json"):
-                obj = read_json(os.path.join(kernels_dir, fn))
+                try:
+                    obj = read_json(os.path.join(kernels_dir, fn))
+                except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+                    # Fail closed with a report instead of crashing without one.
+                    obj = None
                 for neg in check_kernel_payload(obj):
                     route(neg)
     for neg in check_root_policy(policy):
