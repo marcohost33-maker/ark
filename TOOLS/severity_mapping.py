@@ -39,13 +39,20 @@ NON_DOWNGRADABLE = {
     "NEG.ARCHIVE.SCHEMATRON_FAIL",
 }
 
+# Kernel integrity is the reproducibility anchor: missing kernel files are
+# already unroutable HARD failures, so their payload findings (hash, version,
+# readability) are locked with the same strictness.
+NON_DOWNGRADABLE_PREFIXES = ("NEG.KERNEL.",)
 OVERRIDE_SEVERITIES = {"HARD_FAIL", "SOFT_FAIL", "WARNING"}
+
+def is_non_downgradable(neg_id: str) -> bool:
+    return neg_id in NON_DOWNGRADABLE or neg_id.startswith(NON_DOWNGRADABLE_PREFIXES)
 
 def classify_neg_id(neg_id: str, policy: Dict|None=None, known_issue_ids: Iterable[str]=(), waived_issue_ids: Iterable[str]=(), strict_mode: bool=True) -> str:
     policy = policy or {}
     # NON_DOWNGRADABLE ids are immune to every policy lever: a waiver or a
     # known-issue entry is a downgrade just like a severity override.
-    if neg_id not in NON_DOWNGRADABLE:
+    if not is_non_downgradable(neg_id):
         if neg_id in waived_issue_ids:
             return "WAIVED_ISSUE"
         if neg_id in known_issue_ids:

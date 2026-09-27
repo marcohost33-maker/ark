@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
-from severity_mapping import NON_DOWNGRADABLE, classify_neg_id
+from severity_mapping import classify_neg_id, is_non_downgradable
 
 # Official SemVer 2.0.0 regex (semver.org, "Backus-Naur Form Grammar" appendix).
 # Forbids leading zeros in numeric prerelease identifiers and empty identifiers,
@@ -93,8 +93,8 @@ def validate_policy_shape(policy):
     Allowed keys: ``severity_overrides`` (map neg_id -> severity in
     {HARD_FAIL, SOFT_FAIL, WARNING}), ``known_issues`` (list[str]),
     ``waivers`` (list[str]). Overriding, waiving or known-issue-listing a
-    NON_DOWNGRADABLE neg id is refused (fail-closed): such ids must never be
-    softened by policy.
+    non-downgradable neg id (NON_DOWNGRADABLE set or ``NEG.KERNEL.*``) is
+    refused (fail-closed): such ids must never be softened by policy.
     """
     if not isinstance(policy, dict):
         raise PolicyError(f"policy must be an object, got {type(policy).__name__}")
@@ -112,14 +112,14 @@ def validate_policy_shape(policy):
             raise PolicyError(
                 f"severity_overrides[{neg_id}] = {severity!r} not in {sorted(ALLOWED_SEVERITIES)}"
             )
-        if neg_id in NON_DOWNGRADABLE:
+        if is_non_downgradable(neg_id):
             raise PolicyError(f"refusing non-downgradable override of {neg_id}")
 
     for key in ("known_issues", "waivers"):
         value = policy.get(key, [])
         if not isinstance(value, list) or not all(isinstance(x, str) and x for x in value):
             raise PolicyError(f"{key} must be a list of non-empty strings")
-        locked = sorted(set(value) & NON_DOWNGRADABLE)
+        locked = sorted(x for x in set(value) if is_non_downgradable(x))
         if locked:
             raise PolicyError(f"refusing {key} entry for non-downgradable id(s): {locked}")
     return policy
@@ -155,9 +155,20 @@ def validate_json_against_schema(instance, schema_path):
     Draft202012Validator(schema, format_checker=strict_format_checker()).validate(instance)
 
 
-def check_root_policy(policy):
-    method = policy.get("ROOT", {}).get("METHOD", "brentq")
-    return [] if method in ROOT_ALLOWED_METHODS else ["NEG.ROOT.UNKNOWN_METHOD"]
+def check_root_plan(plan):
+    """Check the root-finding method pinned in ``kernel.plan.json``.
+
+    The method is part of the run's reproducible execution plan (REGISTRY_POLICY:
+    exact pinning in kernel.plan wins), not of the gate policy. Absent
+    ``payload.root`` keeps the default ``brentq``; a present but malformed or
+    non-allowlisted entry is a hard error (ROOT_FINDING_v1).
+    """
+    payload = plan.get("payload") if isinstance(plan, dict) else None
+    if not isinstance(payload, dict) or "root" not in payload:
+        return []
+    root = payload["root"]
+    method = root.get("METHOD", "brentq") if isinstance(root, dict) else None
+    return [] if isinstance(method, str) and method in ROOT_ALLOWED_METHODS else ["NEG.ROOT.UNKNOWN_METHOD"]
 
 
 def check_kernel_files(run_dir):
@@ -229,8 +240,9 @@ def validate_run(run_dir, policy=None):
                     obj = None
                 for neg in check_kernel_payload(obj):
                     route(neg)
-    for neg in check_root_policy(policy):
-        route(neg)
+                if fn == "kernel.plan.json":
+                    for neg in check_root_plan(obj):
+                        route(neg)
 
     if hard_fail:
         report["status"] = "REJECT"

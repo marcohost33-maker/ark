@@ -10,6 +10,11 @@ Each test pins one defect that reproduced on main before the fix:
 4. ``provenance_validate`` ignored ``used`` / ``wasDerivedFrom`` edges although
    PROVENANCE_MINIMAL_v1 requires every referenced node id to exist.
 5. ``event_hysteresis`` accepted a negative delta (inverted band).
+6. ``NEG.ROOT.UNKNOWN_METHOD`` was unreachable through ``validate_run``: the
+   method was read from a ``ROOT`` policy key that policy validation rejects.
+   It is now read from ``kernel.plan.json`` (``payload.root.METHOD``).
+7. ``NEG.KERNEL.*`` payload findings were waivable although missing kernel
+   files are unroutable HARD failures; kernel integrity is now locked.
 """
 from __future__ import annotations
 
@@ -28,6 +33,7 @@ validate_run = importlib.import_module("validate_run")
 contradiction_rules = importlib.import_module("contradiction_rules")
 provenance_validate = importlib.import_module("provenance_validate")
 event_hysteresis = importlib.import_module("event_hysteresis")
+root_finding = importlib.import_module("root_finding")
 
 LOCKED = "NEG.ROOT.UNKNOWN_METHOD"
 
@@ -189,3 +195,68 @@ def test_prov_unknown_edge_type_and_duplicate_and_missing_id():
 def test_hysteresis_rejects_invalid_parameters(kwargs):
     with pytest.raises(ValueError):
         event_hysteresis.hysteresis_windows([0.0, 1.0], [0.0, 1.0], threshold=0.5, **kwargs)
+
+
+# --------------------------------------------------------------------------- #
+# 6. root-finding method is pinned in kernel.plan.json and enforced
+# --------------------------------------------------------------------------- #
+def _set_plan_root(kdir: Path, root) -> None:
+    plan = {"content_hash": "sha256:plan", "version": "1.0.0", "payload": {"kind": "plan"}}
+    if root is not _ABSENT:
+        plan["payload"]["root"] = root
+    (kdir / "kernel.plan.json").write_text(json.dumps(plan), encoding="utf-8")
+
+
+_ABSENT = object()
+
+
+@pytest.mark.parametrize("root", [{"METHOD": "newton"}, {"METHOD": 3}, "brentq", None])
+def test_unknown_or_malformed_plan_root_method_rejects(tmp_path, root):
+    kdir = _write_kernels(tmp_path / "run")
+    _set_plan_root(kdir, root)
+    report = validate_run.validate_run(str(tmp_path / "run"))
+    assert report["status"] == "REJECT"
+    assert report["hard_fail"] == ["NEG.ROOT.UNKNOWN_METHOD"]
+
+
+@pytest.mark.parametrize("root", [_ABSENT, {}, {"METHOD": "toms748"}])
+def test_allowed_or_default_plan_root_method_accepts(tmp_path, root):
+    kdir = _write_kernels(tmp_path / "run")
+    _set_plan_root(kdir, root)
+    assert validate_run.validate_run(str(tmp_path / "run"))["status"] == "ACCEPT"
+
+
+def test_unknown_root_method_cannot_be_waived_via_policy_file(tmp_path):
+    kdir = _write_kernels(tmp_path / "run")
+    _set_plan_root(kdir, {"METHOD": "newton"})
+    (tmp_path / "run" / "policy.json").write_text(json.dumps({"waivers": [LOCKED]}), encoding="utf-8")
+    with pytest.raises(validate_run.PolicyError):
+        validate_run.validate_run(str(tmp_path / "run"))
+
+
+def test_root_method_allowlists_do_not_drift():
+    # validate_run keeps its own copy to stay importable without SciPy.
+    assert validate_run.ROOT_ALLOWED_METHODS == root_finding.ROOT_ALLOWED_METHODS
+
+
+# --------------------------------------------------------------------------- #
+# 7. kernel integrity findings are non-downgradable
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("neg_id", ["NEG.KERNEL.INVALID_SEMVER", "NEG.KERNEL.UNREADABLE",
+                                    "NEG.KERNEL.MISSING_HASH"])
+def test_kernel_findings_are_locked(neg_id):
+    assert severity_mapping.is_non_downgradable(neg_id)
+    assert severity_mapping.classify_neg_id(
+        neg_id, {"severity_overrides": {neg_id: "WARNING"}},
+        known_issue_ids=[neg_id], waived_issue_ids=[neg_id]) == "HARD_FAIL"
+    with pytest.raises(validate_run.PolicyError, match="non-downgradable"):
+        validate_run.validate_policy_shape({"waivers": [neg_id]})
+
+
+def test_other_hard_prefixes_stay_waivable():
+    # Only kernel integrity is locked; e.g. a deprecated-plugin contract finding
+    # remains an explicit, reviewable waiver decision.
+    neg_id = "NEG.CONTRACT.DEPRECATED_PLUGIN_USED"
+    assert not severity_mapping.is_non_downgradable(neg_id)
+    assert severity_mapping.classify_neg_id(neg_id, {}, waived_issue_ids=[neg_id]) == "WAIVED_ISSUE"
+    validate_run.validate_policy_shape({"waivers": [neg_id]})

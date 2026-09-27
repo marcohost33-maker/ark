@@ -20,7 +20,8 @@ CLI: `python TOOLS/validate_run.py --run DIR [--out FILE] [--policy FILE]`
 (default output `DIR/reports/gate_report.json`, prints the path).
 
 **Input.** `run_dir/kernels/kernel.{model,plan,events,schema,env}.json`, each an
-object with `content_hash`, `version` (SemVer 2.0.0) and `payload`.
+object with `content_hash`, `version` (SemVer 2.0.0) and `payload`. The plan may
+pin the root-finding method as `payload.root.METHOD` (default `brentq`).
 Policy: `policy=None` loads `run_dir/policy.json` if present, else `{}`; an
 explicit dict is validated the same way. See `docs/POLICY_LOADING.md`.
 
@@ -34,16 +35,13 @@ explicit dict is validated the same way. See `docs/POLICY_LOADING.md`.
 | `NEG.KERNEL.UNREADABLE` | kernel file is not valid UTF-8 JSON or not an object |
 | `NEG.KERNEL.MISSING_HASH` / `MISSING_VERSION` / `MISSING_PAYLOAD` | field missing or empty |
 | `NEG.KERNEL.INVALID_SEMVER` | `version` is not a SemVer 2.0.0 string |
+| `NEG.ROOT.UNKNOWN_METHOD` | `kernel.plan.json` pins a malformed or non-allowlisted root method |
 | `NEG.REPORT.SCHEMA_INVALID` | the report fails its own schema (forces `REJECT`) |
 
 **Errors.** `PolicyError` (fail-closed) for a missing/unreadable/malformed policy:
 unknown keys, override values outside {HARD_FAIL, SOFT_FAIL, WARNING}, non-string
-list entries, or any lever that names a NON_DOWNGRADABLE id.
-
-*Known limitation:* `check_root_policy` reads `policy["ROOT"]["METHOD"]`, but
-`ROOT` is not an allowed policy key, so `NEG.ROOT.UNKNOWN_METHOD` cannot be
-raised through `validate_run` today. Whether the root method belongs in the
-policy or in `kernel.plan.json` is an open design decision.
+list entries, or any lever that names a non-downgradable id
+(`is_non_downgradable`: the NON_DOWNGRADABLE set or any `NEG.KERNEL.*`).
 
 ---
 
@@ -55,7 +53,8 @@ classify_neg_id(neg_id, policy=None, known_issue_ids=(), waived_issue_ids=(),
 ```
 Returns one of `HARD_FAIL`, `SOFT_FAIL`, `WARNING`, `KNOWN_ISSUE`, `WAIVED_ISSUE`.
 
-Precedence: NON_DOWNGRADABLE ids skip every policy lever (spec
+Precedence: non-downgradable ids (`is_non_downgradable(neg_id)`: the
+NON_DOWNGRADABLE set or any `NEG.KERNEL.*`) skip every policy lever (spec
 `NEG_SEVERITY_MAPPING_v1`) -> waiver -> known issue -> `severity_overrides`
 -> built-in HARD / SOFT / WARNING tables -> unknown id (`HARD_FAIL` in strict
 mode, `SOFT_FAIL` otherwise). Raises `ValueError` for an override value outside

@@ -9,7 +9,7 @@
   `root_finding`, `contradiction_rules`) + 1 Integritäts-Tool (`freeze_manifest`),
   Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, 64 Dateien gepinnt, Stand 2026-09-27).
 - **CI-Gates aktiv (verifiziert 2026-09-27):** `ruff check .` clean · `compileall`
-  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **115/115 PASS** ·
+  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **128/128 PASS** ·
   zizmor Workflow-Audit (required) · Dependabot (github-actions, weekly, SHA-Pins).
 
 ## Phase 1 — Repo-Init & CI-Härtung
@@ -35,9 +35,9 @@
 - [x] Contradiction-DSL: Ganzbaum-Strukturprüfung (kein Crash, kein Short-Circuit-Schlupfloch, JSON-bool ist keine Zahl).
 - [x] Provenance: `used`/`wasDerivedFrom` referenzgeprüft in PROV-DM-Richtung; `UNKNOWN_EDGE_TYPE`, `DUPLICATE_ID`, `MISSING_ID`.
 - [x] Hysterese: `delta >= 0`, `min_support >= 1`, `min_duration >= 0` erzwungen.
+- [x] Root-Methode aus `kernel.plan.json` (`payload.root.METHOD`) statt totem Policy-Pfad: `NEG.ROOT.UNKNOWN_METHOD` ist wieder erreichbar.
+- [x] `NEG.KERNEL.*` non-downgradable (Kernel-Integrität = Reproduzierbarkeits-Anker).
 
 ## Offen / zu entscheiden
-- `NEG.ROOT.UNKNOWN_METHOD` ist über `validate_run` unerreichbar (Policy-Key `ROOT` nicht erlaubt): Root-Methode in Policy oder in `kernel.plan.json`?
-- Sollen `NEG.KERNEL.*` (heute HARD, aber waiverbar) in NON_DOWNGRADABLE?
 - Versionierungs-Politik nach Freeze (SemVer? Schema-Version getrennt von Tool-Version?).
 - Verhältnis zu den übrigen Governance-Stack-Säulen (Cross-Referenz-Specs).
