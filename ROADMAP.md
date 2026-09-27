@@ -31,7 +31,8 @@
 
 ## Phase 2b — Spec-vs-Code-Härtung (Hardening-Welle 2)
 - [x] NON_DOWNGRADABLE-IDs gegen **alle** Policy-Hebel gesperrt (Waiver/Known-Issue waren ein Bypass).
-- [x] Kaputtes Kernel-JSON -> `NEG.KERNEL.UNREADABLE` (REJECT mit Report statt Absturz).
+- [x] Kaputtes Kernel-JSON -> `NEG.KERNEL.UNREADABLE` (REJECT mit Report statt Absturz), auch bei Int-Ziffernlimit (`ValueError`), Verschachtelung über das Rekursionslimit (`RecursionError`) und nicht listbarem `kernels/`.
+- [x] Kernel-Dateinamen exakt (case-sensitiv) gegen die `os.listdir`-Menge statt `os.path.exists`: `kernel.PLAN.json` wurde auf Windows/macOS als vorhandener Plan gezählt, ohne dass die Root-Methode geprüft wurde. Neu `NEG.KERNEL.NAME_CASE_MISMATCH` (HARD); Urteil unabhängig vom Dateisystem.
 - [x] Contradiction-DSL: Ganzbaum-Strukturprüfung (kein Crash, kein Short-Circuit-Schlupfloch, JSON-bool ist keine Zahl).
 - [x] Provenance: `used`/`wasDerivedFrom` referenzgeprüft in PROV-DM-Richtung; `UNKNOWN_EDGE_TYPE`, `DUPLICATE_ID`, `MISSING_ID`.
 - [x] Hysterese: `delta >= 0`, `min_support >= 1`, `min_duration >= 0` erzwungen.

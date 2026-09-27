@@ -131,8 +131,10 @@ def load_policy(path):
         doc = read_json(path)
     except FileNotFoundError:
         raise PolicyError(f"policy file not found: {path}")
-    except (OSError, json.JSONDecodeError) as exc:
-        raise PolicyError(f"policy file unreadable ({path}): {exc}")
+    except (OSError, ValueError, RecursionError) as exc:
+        # ValueError: JSONDecodeError, UnicodeDecodeError, int-digit limit;
+        # RecursionError: nesting deeper than the recursion limit.
+        raise PolicyError(f"policy file unreadable ({path}): {type(exc).__name__}: {exc}")
     return validate_policy_shape(doc)
 
 
@@ -171,12 +173,71 @@ def check_root_plan(plan):
     return [] if isinstance(method, str) and method in ROOT_ALLOWED_METHODS else ["NEG.ROOT.UNKNOWN_METHOD"]
 
 
-def check_kernel_files(run_dir):
-    req = ["kernel.model.json", "kernel.plan.json", "kernel.events.json", "kernel.schema.json", "kernel.env.json"]
+REQUIRED_KERNEL_FILES = (
+    "kernel.model.json", "kernel.plan.json", "kernel.events.json", "kernel.schema.json", "kernel.env.json",
+)
+
+
+def _is_kernel_name(fn):
+    return fn.startswith("kernel.") and fn.endswith(".json")
+
+
+_REQUIRED_FOLDED = {f.casefold() for f in REQUIRED_KERNEL_FILES}
+
+
+def _is_kernel_case_variant(fn):
+    """True for a stored name that deviates from a kernel name only by case.
+
+    Covers (a) a case variant of a required name (``kernel.PLAN.json``) and
+    (b) a name that is a kernel file only when case is ignored
+    (``KERNEL.plan.json``, ``kernel.x.JSON``), which the payload loop would skip.
+    """
+    folded = fn.casefold()
+    if folded in _REQUIRED_FOLDED:
+        return fn not in REQUIRED_KERNEL_FILES
+    return folded.startswith("kernel.") and folded.endswith(".json") and not _is_kernel_name(fn)
+
+
+def list_kernel_dir(run_dir):
+    """Return the stored names in ``<run_dir>/kernels`` (``[]`` if absent).
+
+    Names come from ``os.listdir``, i.e. with the spelling stored on disk. Presence
+    checks must compare against this list, NOT use ``os.path.exists``: on
+    case-insensitive file systems (Windows NTFS, macOS APFS default) ``exists`` says
+    yes for ``kernel.plan.json`` when only ``kernel.PLAN.json`` is stored, while the
+    payload loop compares names case-sensitively -> the plan would count as present
+    but its root method would never be checked (gate bypass). Raises ``OSError``
+    if the directory exists but cannot be listed.
+    """
+    kernels_dir = os.path.join(run_dir, "kernels")
+    if not os.path.isdir(kernels_dir):
+        return []
+    # Same rule for the directory itself: ``Kernels/`` must not pass on NTFS/APFS
+    # while it is absent on Linux (the verdict must not depend on the host FS).
+    if "kernels" not in os.listdir(run_dir):
+        return []
+    return sorted(os.listdir(kernels_dir))
+
+
+def check_kernel_files(run_dir, names=None):
+    """Structural kernel-file checks against the EXACT (case-sensitive) stored names.
+
+    - a required name not stored with exactly that spelling -> ``NEG.KERNEL.MISSING_<X>``
+    - any stored name that is a kernel file only when case is ignored
+      (``kernel.PLAN.json``, ``KERNEL.plan.json``, ``Kernel.Plan.JSON``, also next
+      to an exact-name file on a case-sensitive FS) -> ``NEG.KERNEL.NAME_CASE_MISMATCH``
+    """
+    if names is None:
+        names = list_kernel_dir(run_dir)
+    stored = set(names)
     neg = []
-    for f in req:
-        if not os.path.exists(os.path.join(run_dir, "kernels", f)):
+    for f in REQUIRED_KERNEL_FILES:
+        if f not in stored:
             neg.append("NEG.KERNEL.MISSING_" + f.split(".")[1].upper())
+    kernelish = [fn for fn in stored if fn.casefold().startswith("kernel.") and fn.casefold().endswith(".json")]
+    case_duplicates = len({fn.casefold() for fn in kernelish}) < len(kernelish)
+    if case_duplicates or any(_is_kernel_case_variant(fn) for fn in kernelish):
+        neg.append("NEG.KERNEL.NAME_CASE_MISMATCH")
     return neg
 
 
@@ -226,23 +287,32 @@ def validate_run(run_dir, policy=None):
         else:  # KNOWN_ISSUE / WAIVED_ISSUE
             known_issues.append(neg_id)
 
-    # Missing required kernel files are structural HARD failures by definition.
-    hard_fail.extend(check_kernel_files(run_dir))
-
     kernels_dir = os.path.join(run_dir, "kernels")
-    if os.path.isdir(kernels_dir):
-        for fn in sorted(os.listdir(kernels_dir)):
-            if fn.startswith("kernel.") and fn.endswith(".json"):
-                try:
-                    obj = read_json(os.path.join(kernels_dir, fn))
-                except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-                    # Fail closed with a report instead of crashing without one.
-                    obj = None
-                for neg in check_kernel_payload(obj):
+    try:
+        names = list_kernel_dir(run_dir)
+    except OSError:
+        # Unlistable kernels dir: fail closed with a report, not a crash.
+        names = []
+        hard_fail.append("NEG.KERNEL.UNREADABLE")
+
+    # Missing / case-mismatched kernel files are structural HARD failures by definition.
+    hard_fail.extend(check_kernel_files(run_dir, names))
+
+    for fn in names:
+        if _is_kernel_name(fn):
+            try:
+                obj = read_json(os.path.join(kernels_dir, fn))
+            except (OSError, ValueError, RecursionError):
+                # Fail closed with a report instead of crashing without one.
+                # ValueError covers JSONDecodeError, UnicodeDecodeError and the
+                # int-digit limit (int_max_str_digits); RecursionError covers
+                # nesting deeper than the interpreter's recursion limit.
+                obj = None
+            for neg in check_kernel_payload(obj):
+                route(neg)
+            if fn == "kernel.plan.json":
+                for neg in check_root_plan(obj):
                     route(neg)
-                if fn == "kernel.plan.json":
-                    for neg in check_root_plan(obj):
-                        route(neg)
 
     if hard_fail:
         report["status"] = "REJECT"
