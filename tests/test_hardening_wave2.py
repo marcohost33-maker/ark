@@ -54,9 +54,11 @@ def test_downgradable_id_can_still_be_waived():
     )
 
 
-def test_invalid_override_value_is_rejected_by_classifier():
+@pytest.mark.parametrize("neg_id", ["NEG.QA.SLOW", LOCKED])
+def test_invalid_override_value_is_rejected_by_classifier(neg_id):
+    # Also for a locked id, whose (valid) override would merely be ignored.
     with pytest.raises(ValueError):
-        severity_mapping.classify_neg_id("NEG.QA.SLOW", {"severity_overrides": {"NEG.QA.SLOW": "PASS"}})
+        severity_mapping.classify_neg_id(neg_id, {"severity_overrides": {neg_id: "PASS"}})
 
 
 @pytest.mark.parametrize("key", ["waivers", "known_issues"])
@@ -116,6 +118,9 @@ def _codes(when, metrics=None):
         ({"all": [{"gt": [0, 1]}, {"bogus": 1}]}, "NEG.CONTRADICTION.UNKNOWN_OPERATOR"),
         ({"gt": [True, 0]}, "NEG.CONTRADICTION.TYPE_MISMATCH"),
         ({"gt": ["not_a_metric", 0]}, "NEG.CONTRADICTION.TYPE_MISMATCH"),
+        # JSON ints are unbounded; beyond double range -> issue, not OverflowError
+        ({"all": [{"gt": [0, 1]}, {"gt": [10**400, 1]}]}, "NEG.CONTRADICTION.TYPE_MISMATCH"),
+        ({"gt": [10**10000, 1]}, "NEG.CONTRADICTION.TYPE_MISMATCH"),
     ],
 )
 def test_contradiction_nested_malformed_is_reported_not_crashing(when, code):
@@ -210,7 +215,7 @@ def _set_plan_root(kdir: Path, root) -> None:
 _ABSENT = object()
 
 
-@pytest.mark.parametrize("root", [{"METHOD": "newton"}, {"METHOD": 3}, "brentq", None])
+@pytest.mark.parametrize("root", [{"METHOD": "newton"}, {"METHOD": 3}, "brentq", None, {}])
 def test_unknown_or_malformed_plan_root_method_rejects(tmp_path, root):
     kdir = _write_kernels(tmp_path / "run")
     _set_plan_root(kdir, root)
@@ -219,7 +224,7 @@ def test_unknown_or_malformed_plan_root_method_rejects(tmp_path, root):
     assert report["hard_fail"] == ["NEG.ROOT.UNKNOWN_METHOD"]
 
 
-@pytest.mark.parametrize("root", [_ABSENT, {}, {"METHOD": "toms748"}])
+@pytest.mark.parametrize("root", [_ABSENT, {"METHOD": "toms748"}])
 def test_allowed_or_default_plan_root_method_accepts(tmp_path, root):
     kdir = _write_kernels(tmp_path / "run")
     _set_plan_root(kdir, root)

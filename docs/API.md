@@ -21,7 +21,8 @@ CLI: `python TOOLS/validate_run.py --run DIR [--out FILE] [--policy FILE]`
 
 **Input.** `run_dir/kernels/kernel.{model,plan,events,schema,env}.json`, each an
 object with `content_hash`, `version` (SemVer 2.0.0) and `payload`. The plan may
-pin the root-finding method as `payload.root.METHOD` (default `brentq`).
+pin the root-finding method as `payload.root.METHOD`; without `payload.root`
+the default is `brentq`, a present `root` must carry an allowlisted `METHOD`.
 Policy: `policy=None` loads `run_dir/policy.json` if present, else `{}`; an
 explicit dict is validated the same way. See `docs/POLICY_LOADING.md`.
 

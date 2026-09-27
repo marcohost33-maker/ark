@@ -50,6 +50,11 @@ def is_non_downgradable(neg_id: str) -> bool:
 
 def classify_neg_id(neg_id: str, policy: Dict|None=None, known_issue_ids: Iterable[str]=(), waived_issue_ids: Iterable[str]=(), strict_mode: bool=True) -> str:
     policy = policy or {}
+    overrides = policy.get("severity_overrides", {})
+    # Validate before the lock check: a malformed override is an error even
+    # when it targets a locked id whose override would be ignored anyway.
+    if neg_id in overrides and overrides[neg_id] not in OVERRIDE_SEVERITIES:
+        raise ValueError(f"invalid severity override for {neg_id}: {overrides[neg_id]!r}")
     # NON_DOWNGRADABLE ids are immune to every policy lever: a waiver or a
     # known-issue entry is a downgrade just like a severity override.
     if not is_non_downgradable(neg_id):
@@ -57,10 +62,7 @@ def classify_neg_id(neg_id: str, policy: Dict|None=None, known_issue_ids: Iterab
             return "WAIVED_ISSUE"
         if neg_id in known_issue_ids:
             return "KNOWN_ISSUE"
-        overrides = policy.get("severity_overrides", {})
         if neg_id in overrides:
-            if overrides[neg_id] not in OVERRIDE_SEVERITIES:
-                raise ValueError(f"invalid severity override for {neg_id}: {overrides[neg_id]!r}")
             return overrides[neg_id]
     if neg_id in HARD_EXACT or neg_id.startswith(HARD_PREFIXES):
         return "HARD_FAIL"

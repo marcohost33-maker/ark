@@ -42,7 +42,9 @@ def _validate_expr_shape(expr: Any, rule_id: str|None, issues: List[RuleIssue]) 
             return
         for operand in value:
             if not (_is_numeric_literal(operand) or _is_metric_ref(operand)):
-                issues.append(RuleIssue("NEG.CONTRADICTION.TYPE_MISMATCH", f"Invalid operand: {operand!r}", rule_id))
+                # repr() of a huge int can itself raise (int max str digits).
+                shown = "integer out of float range" if isinstance(operand, int) and not isinstance(operand, bool) else repr(operand)
+                issues.append(RuleIssue("NEG.CONTRADICTION.TYPE_MISMATCH", f"Invalid operand: {shown}", rule_id))
     elif op in {"all", "any"}:
         if not isinstance(value, list):
             issues.append(RuleIssue("NEG.CONTRADICTION.INVALID_STRUCTURE", f"{op} expects list", rule_id))
@@ -54,7 +56,13 @@ def _validate_expr_shape(expr: Any, rule_id: str|None, issues: List[RuleIssue]) 
 
 def _is_numeric_literal(x: Any) -> bool:
     # bool is an int subclass in Python, but JSON true/false are not numbers.
-    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+    if isinstance(x, bool) or not isinstance(x, (int, float)):
+        return False
+    try:
+        # JSON integers are unbounded; one beyond double range is not comparable.
+        return math.isfinite(float(x))
+    except OverflowError:
+        return False
 
 def _collect_metric_refs(expr: Any, out: set[str]) -> None:
     if isinstance(expr, dict):

@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-09-27T06:51:09.283076+00:00",
+  "created_utc": "2026-09-27T06:59:16.022882+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -9,7 +9,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "970e13f106342245e5b1e60cf20eb998d7aa60f21dad2e461954395340225541",
+      "sha256": "1271ac076218b52734aaa26de8d92ba0e46b83e07e56066ecad8a6353a822625",
       "bytes": 1562
     },
     {
@@ -89,8 +89,8 @@
     },
     {
       "path": "SPECS/ROOT_FINDING_v1.md",
-      "sha256": "9dfe572280b252baca24952da4726a1fdfae2a4df5fa3950f998e09557aa411a",
-      "bytes": 525
+      "sha256": "c499e97fda16ebb58f85f01e7fe5ceaec8fa7acc2fd78085727e5a614876fc5b",
+      "bytes": 547
     },
     {
       "path": "SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md",
@@ -159,8 +159,8 @@
     },
     {
       "path": "TOOLS/contradiction_rules.py",
-      "sha256": "191c10335e3874e5cb6e0c76333094f4490f550f20cf9765879021bde4bf889c",
-      "bytes": 6902
+      "sha256": "008dda66522e78ac64328f71ced7a95854567ac4532873b4189e0cd6eb6b46ad",
+      "bytes": 7283
     },
     {
       "path": "TOOLS/event_hysteresis.py",
@@ -184,13 +184,13 @@
     },
     {
       "path": "TOOLS/severity_mapping.py",
-      "sha256": "d2661e193035ecb1eb0b41e538423f85bacbb7cd6f5742751e53f60ba09ea023",
-      "bytes": 2738
+      "sha256": "b22707c5cb2a9e83d207680ddb9570702ab6ef7aff48aeb72103b58b501067b3",
+      "bytes": 2892
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "afd25175b2d8c0773e3d02d3d4674602e90e3a9eab8136634c8a9f68e3b57d99",
-      "bytes": 11186
+      "sha256": "8a73b3b5155dd24df3b33a530b5660511294a9fe3a6d35beddf8785c2bd8c799",
+      "bytes": 11196
     },
     {
       "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",
@@ -199,8 +199,8 @@
     },
     {
       "path": "docs/API.md",
-      "sha256": "fb52e791ecba5a612931483dad0a2d4d5b476d3eb3cc3ba99d56f7376427e3e1",
-      "bytes": 6295
+      "sha256": "c0741e8778b9c8e68e27bf99f9bd574df10e5e698392c9d8afad40a1dd61c009",
+      "bytes": 6377
     },
     {
       "path": "docs/FREEZE_COVERAGE_POLICY.md",
@@ -289,8 +289,8 @@
     },
     {
       "path": "tests/test_hardening_wave2.py",
-      "sha256": "37c10bcec35fba08052deee396c64c8f576d77daeee118c140cb20f0d489a09a",
-      "bytes": 11528
+      "sha256": "4fc4ec99c52be5009cfee175838b59efdab1a66c78b048b8a1c0f35b3150821d",
+      "bytes": 11902
     },
     {
       "path": "tests/test_schema_fixtures.py",

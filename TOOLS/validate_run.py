@@ -160,14 +160,14 @@ def check_root_plan(plan):
 
     The method is part of the run's reproducible execution plan (REGISTRY_POLICY:
     exact pinning in kernel.plan wins), not of the gate policy. Absent
-    ``payload.root`` keeps the default ``brentq``; a present but malformed or
+    ``payload.root`` keeps the default ``brentq``; a present entry without METHOD, a malformed or
     non-allowlisted entry is a hard error (ROOT_FINDING_v1).
     """
     payload = plan.get("payload") if isinstance(plan, dict) else None
     if not isinstance(payload, dict) or "root" not in payload:
         return []
     root = payload["root"]
-    method = root.get("METHOD", "brentq") if isinstance(root, dict) else None
+    method = root.get("METHOD") if isinstance(root, dict) else None
     return [] if isinstance(method, str) and method in ROOT_ALLOWED_METHODS else ["NEG.ROOT.UNKNOWN_METHOD"]
 
 

@@ -9,7 +9,7 @@
   `root_finding`, `contradiction_rules`) + 1 Integritäts-Tool (`freeze_manifest`),
   Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, 64 Dateien gepinnt, Stand 2026-09-27).
 - **CI-Gates aktiv (verifiziert 2026-09-27):** `ruff check .` clean · `compileall`
-  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **128/128 PASS** ·
+  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **131/131 PASS** ·
   zizmor Workflow-Audit (required) · Dependabot (github-actions, weekly, SHA-Pins).
 
 ## Phase 1 — Repo-Init & CI-Härtung
