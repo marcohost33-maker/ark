@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-07-06T06:00:46.443125+00:00",
+  "created_utc": "2026-09-28T08:34:51.696429+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -9,8 +9,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "f91bed0237e44b018dc4442e0fd9abd4eda604c3d6e175cbd37c54fe1e07e96d",
-      "bytes": 1501
+      "sha256": "999369a823b679dc7627cb11511b0d58f0abb90bbbae6ac9531c457f506ccd0a",
+      "bytes": 1562
     },
     {
       "path": "SCHEMAS/gate_report.schema.json",
@@ -69,13 +69,13 @@
     },
     {
       "path": "SPECS/NEG_SEVERITY_MAPPING_v1.md",
-      "sha256": "108795e2bf7718ca28fb5b15400947d746f274cf61020394acf16ca518b7d2e9",
-      "bytes": 204
+      "sha256": "553516981f7141bdd6e7db1c237b570c3aba04075015f31f57a8a93fc1192454",
+      "bytes": 758
     },
     {
       "path": "SPECS/PROVENANCE_MINIMAL_v1.md",
-      "sha256": "197bb74872dd81756d92d15c92307e20fc1b4b7ecd0ffcbc0210a3627b49a016",
-      "bytes": 332
+      "sha256": "ffeeaf2a59d7e7f292fe2a858d92dbc4c54374f584751b087faa475bf71ce18a",
+      "bytes": 946
     },
     {
       "path": "SPECS/REGISTRY_POLICY_v1.md",
@@ -89,8 +89,8 @@
     },
     {
       "path": "SPECS/ROOT_FINDING_v1.md",
-      "sha256": "fe75b70fa95b27d11b1a54b3028e0f6c6846b942c6ced0d0a68951fc710ef82b",
-      "bytes": 157
+      "sha256": "c499e97fda16ebb58f85f01e7fe5ceaec8fa7acc2fd78085727e5a614876fc5b",
+      "bytes": 547
     },
     {
       "path": "SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md",
@@ -116,6 +116,16 @@
       "path": "TESTVECTORS/contradiction/rule_malformed.json",
       "sha256": "e25f67a4f55e6dafca3b3c14fd098fd6adb7fda1df6c327f5ba25abd12cf018a",
       "bytes": 548
+    },
+    {
+      "path": "TESTVECTORS/contradiction/rule_nested_malformed.json",
+      "sha256": "e39adeaca70d36ea03eed554f6b2b7c23482db1fd1f15e2a2a6b4e575c0a174a",
+      "bytes": 617
+    },
+    {
+      "path": "TESTVECTORS/provenance/prov_dangling_used.json",
+      "sha256": "a5f12515a1234f23d49f97a5fc01ab442e7dd9f03dfe513d4051ddb099c41a21",
+      "bytes": 822
     },
     {
       "path": "TESTVECTORS/provenance/prov_missing_core_node.json",
@@ -149,13 +159,13 @@
     },
     {
       "path": "TOOLS/contradiction_rules.py",
-      "sha256": "1b166ba12332f52774dac590ffdf639beb6d69cfd40028e3f9f474e70326b6c1",
-      "bytes": 5734
+      "sha256": "2ebc43a97af514ff480f8c0c511b29aa657cb3a563165d2d7f3b0c76e61316a5",
+      "bytes": 7324
     },
     {
       "path": "TOOLS/event_hysteresis.py",
-      "sha256": "b11cd680a9178b05d6e892394688a6dc5af47bb42e31871b4eddadbd09e0f56a",
-      "bytes": 1694
+      "sha256": "5032aa9dbf343b520c7b5f4ad113441b948de4486c6941e0f5e315fadc39765a",
+      "bytes": 2061
     },
     {
       "path": "TOOLS/freeze_manifest.py",
@@ -164,28 +174,33 @@
     },
     {
       "path": "TOOLS/provenance_validate.py",
-      "sha256": "73c1caa07e67dee9d39fd47ab4dfbc1b341ba5e5115a34f3e5535fe9e5ed9566",
-      "bytes": 1346
+      "sha256": "0c879533fdc3808bb05796faab60544676997e7ffea3928ee34aab0ffa133ec1",
+      "bytes": 2383
     },
     {
       "path": "TOOLS/root_finding.py",
-      "sha256": "a6b9f1c1981444c4cb735185e08db6306389ac9d2d0f3e395881075e31f804a4",
-      "bytes": 1267
+      "sha256": "98b4676acd09c7f4e95d797cfdfb213d17932e1a55da3d409ab31b21b8fc25a8",
+      "bytes": 1291
     },
     {
       "path": "TOOLS/severity_mapping.py",
-      "sha256": "7b8cf780e31f2d3666f1aa7e7861d52fce8bca2e7eb7dacdafc7810cef32aa5b",
-      "bytes": 1956
+      "sha256": "6452ba7d2cd149db2337be06507948cb1199c3d53bdc73832a8a9367490dc762",
+      "bytes": 3115
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "4531fd71a15122b31964657576426b369e413cf2a495ac80ad662c5e724b0bcf",
-      "bytes": 9930
+      "sha256": "489e0299cc4d9ca9cb789b0db13f9d5ea4f49fee07a00f4582d4f2cb2be00546",
+      "bytes": 15331
     },
     {
       "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",
       "sha256": "f7e7b05f95cde35982bcbe45d90ed3f5af0c64d1179546e365cc0144429ce122",
       "bytes": 326
+    },
+    {
+      "path": "docs/API.md",
+      "sha256": "785c912aaa5956e9c0e148537f3a0431f212b71c07486c96eae329d44e8d9aa3",
+      "bytes": 6967
     },
     {
       "path": "docs/FREEZE_COVERAGE_POLICY.md",
@@ -194,8 +209,8 @@
     },
     {
       "path": "docs/POLICY_LOADING.md",
-      "sha256": "3c6cacaf2997a626130b7868d75cab64649292255fddcdd46611950ee95d6e32",
-      "bytes": 2174
+      "sha256": "7875b0bd89ad958061efb5e0e3176cfcf462dbc9e0ed740dc0d75b59c2128e7e",
+      "bytes": 2432
     },
     {
       "path": "docs/RELEASE_HARDENING.md",
@@ -271,6 +286,16 @@
       "path": "tests/test_freeze_manifest.py",
       "sha256": "01cbe81d668a20a823820f7ee6da4e92e2d8ff2bfc034c2a7d1f9b62c5b896a8",
       "bytes": 9995
+    },
+    {
+      "path": "tests/test_hardening_wave2.py",
+      "sha256": "dc8bbbb039d76d721167ccf035db07f6c70d659732a94fc7b32ee1b4a2feb2ff",
+      "bytes": 13240
+    },
+    {
+      "path": "tests/test_kernel_gate_edges.py",
+      "sha256": "0205bb009b9114c2ebae4626b27c7ba6152de23e8c98a0a4e7f6dd67b0da7620",
+      "bytes": 14402
     },
     {
       "path": "tests/test_schema_fixtures.py",

@@ -1,0 +1,20 @@
+{
+  "name": "prov_dangling_used_edge",
+  "inputs": {
+    "prov": {
+      "entities": [{"id": "entity:report", "kind": "gate_report", "hash": null, "location_ref": null}],
+      "activities": [{"id": "activity:validate", "kind": "validation", "start_utc": null, "end_utc": null, "tool_version": "1.0.5"}],
+      "agents": [{"id": "agent:ark", "kind": "tool", "name": "ARK", "version": "1.0.5"}],
+      "edges": [
+        {"type": "wasGeneratedBy", "src": "entity:report", "dst": "activity:validate"},
+        {"type": "wasAssociatedWith", "src": "activity:validate", "dst": "agent:ark"},
+        {"type": "used", "src": "activity:validate", "dst": "entity:ghost_input"}
+      ]
+    }
+  },
+  "expected": {
+    "status": "ACCEPT_WITH_NOTES",
+    "neg_ids": ["NEG.PROV.BROKEN_REF"]
+  },
+  "tags": ["provenance", "negative"]
+}

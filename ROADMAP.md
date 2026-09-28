@@ -1,20 +1,21 @@
 # ARK-Core — Roadmap
 
-> Initial-Draft (2026-06-02), Stand aktualisiert 2026-06-30. Abgeleitet aus dem Freeze-Stand v1.0.5.
+> Initial-Draft (2026-06-02), Stand aktualisiert 2026-09-27. Abgeleitet aus dem Freeze-Stand v1.0.5.
 > Reihenfolge = Vorschlag, nicht Zusage. Richtung entscheidet Coworker-Research.
 
 ## Stand
 - **v1.0.5 (Freeze):** 4 JSON-Schemas, 14 Specs, 6 deterministische Python-Validatoren
   (`validate_run`, `provenance_validate`, `event_hysteresis`, `severity_mapping`,
   `root_finding`, `contradiction_rules`) + 1 Integritäts-Tool (`freeze_manifest`),
-  Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, 36 Dateien gepinnt).
-- **CI-Gates aktiv (verifiziert 2026-06-30):** `ruff --select=F,E9` clean · `compileall`
-  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **34/34 PASS** ·
+  Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, 65 Dateien gepinnt, Stand 2026-09-28).
+- **CI-Gates aktiv (verifiziert 2026-09-28):** `ruff check .` clean · `compileall`
+  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **165/165 PASS** ·
   zizmor Workflow-Audit (required) · Dependabot (github-actions, weekly, SHA-Pins).
 
 ## Phase 1 — Repo-Init & CI-Härtung
 - [x] Initial-Push, CI grün (`ruff F,E9` + `compileall` aller TOOLS/tests). _(verifiziert 2026-06-30)_
-- [ ] CI erweitern: Schema-Validierung der TESTVECTORS gegen SCHEMAS bei jedem Push.
+- [x] CI erweitern: Schema-Validierung der TESTVECTORS gegen SCHEMAS bei jedem Push. _(PR #20, `tests/test_schema_fixtures.py`)_
+- [x] `ruff check .` (DoD) statt nur `F,E9` als CI-Gate; 13 E70x-Befunde in `TOOLS/` behoben. _(Hardening-Welle 2)_
 - [x] `pytest`-Smoke je Validator + je 1 Positiv- + 1 Negativ-Behavioral-Testvektor **pro** Tool
   (`tests/test_tool_behaviors.py` + `TESTVECTORS/{provenance,severity,contradiction}/`). _(issue #16)_
 
@@ -26,7 +27,17 @@
 ## Phase 3 — Konsumierbarkeit
 - [x] `examples/` mit lauffähigem Minimal-Pipeline-Run (validate_run → provenance → report). _(issue #17)_
 - [x] Release-Härtung: Release-Workflow + SBOM + Attestation-Design + Dependency-Pinning. _(issue #19, `docs/RELEASE_HARDENING.md`)_
-- [ ] API-Doku der 6 Validatoren (Ein-/Ausgabe-Verträge) in `docs/`.
+- [x] API-Doku der Validatoren (Ein-/Ausgabe-Verträge) in `docs/API.md`. _(Hardening-Welle 2)_
+
+## Phase 2b — Spec-vs-Code-Härtung (Hardening-Welle 2)
+- [x] NON_DOWNGRADABLE-IDs gegen **alle** Policy-Hebel gesperrt (Waiver/Known-Issue waren ein Bypass).
+- [x] Kaputtes Kernel-JSON -> `NEG.KERNEL.UNREADABLE` (REJECT mit Report statt Absturz), auch bei Int-Ziffernlimit (`ValueError`), Verschachtelung über das Rekursionslimit (`RecursionError`) und nicht listbarem `kernels/`.
+- [x] Kernel-Dateinamen exakt (case-sensitiv) gegen die `os.listdir`-Menge statt `os.path.exists`: `kernel.PLAN.json` wurde auf Windows/macOS als vorhandener Plan gezählt, ohne dass die Root-Methode geprüft wurde. Neu `NEG.KERNEL.NAME_CASE_MISMATCH` (HARD); Urteil unabhängig vom Dateisystem.
+- [x] Contradiction-DSL: Ganzbaum-Strukturprüfung (kein Crash, kein Short-Circuit-Schlupfloch, JSON-bool ist keine Zahl).
+- [x] Provenance: `used`/`wasDerivedFrom` referenzgeprüft in PROV-DM-Richtung; `UNKNOWN_EDGE_TYPE`, `DUPLICATE_ID`, `MISSING_ID`.
+- [x] Hysterese: `delta >= 0`, `min_support >= 1`, `min_duration >= 0` erzwungen.
+- [x] Root-Methode aus `kernel.plan.json` (`payload.root.METHOD`) statt totem Policy-Pfad: `NEG.ROOT.UNKNOWN_METHOD` ist wieder erreichbar.
+- [x] `NEG.KERNEL.*` non-downgradable (Kernel-Integrität = Reproduzierbarkeits-Anker).
 
 ## Offen / zu entscheiden
 - Versionierungs-Politik nach Freeze (SemVer? Schema-Version getrennt von Tool-Version?).

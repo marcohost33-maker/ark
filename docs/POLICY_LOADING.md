@@ -30,8 +30,13 @@ All keys are optional. The document is validated **before use** and fails closed
 - `severity_overrides` not an object, or a value outside
   `{HARD_FAIL, SOFT_FAIL, WARNING}`, or an empty key;
 - `known_issues` / `waivers` not a list of non-empty strings;
-- **an override targeting a NON_DOWNGRADABLE id** (e.g. `NEG.ROOT.UNKNOWN_METHOD`,
-  `NEG.REPORT.SCHEMA_INVALID`): such ids must never be softened by policy.
+- **any lever (`severity_overrides`, `known_issues`, `waivers`) naming a
+  non-downgradable id** — the NON_DOWNGRADABLE set (e.g. `NEG.ROOT.UNKNOWN_METHOD`,
+  `NEG.REPORT.SCHEMA_INVALID`) or any `NEG.KERNEL.*` id: such ids must never be
+  softened by policy.
+
+The policy does not select the root-finding method; that is pinned per run in
+`kernel.plan.json` (`payload.root.METHOD`, see `SPECS/ROOT_FINDING_v1.md`).
 
 ## Enforced `format: date-time`
 

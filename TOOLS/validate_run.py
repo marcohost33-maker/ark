@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
-from severity_mapping import NON_DOWNGRADABLE, classify_neg_id
+from severity_mapping import classify_neg_id, is_non_downgradable
 
 # Official SemVer 2.0.0 regex (semver.org, "Backus-Naur Form Grammar" appendix).
 # Forbids leading zeros in numeric prerelease identifiers and empty identifiers,
@@ -92,8 +92,9 @@ def validate_policy_shape(policy):
 
     Allowed keys: ``severity_overrides`` (map neg_id -> severity in
     {HARD_FAIL, SOFT_FAIL, WARNING}), ``known_issues`` (list[str]),
-    ``waivers`` (list[str]). Overriding a NON_DOWNGRADABLE neg id is refused
-    (fail-closed): such ids must never be softened by policy.
+    ``waivers`` (list[str]). Overriding, waiving or known-issue-listing a
+    non-downgradable neg id (NON_DOWNGRADABLE set or ``NEG.KERNEL.*``) is
+    refused (fail-closed): such ids must never be softened by policy.
     """
     if not isinstance(policy, dict):
         raise PolicyError(f"policy must be an object, got {type(policy).__name__}")
@@ -107,17 +108,20 @@ def validate_policy_shape(policy):
     for neg_id, severity in overrides.items():
         if not isinstance(neg_id, str) or not neg_id:
             raise PolicyError(f"severity_overrides key must be a non-empty string: {neg_id!r}")
-        if severity not in ALLOWED_SEVERITIES:
+        if not isinstance(severity, str) or severity not in ALLOWED_SEVERITIES:
             raise PolicyError(
                 f"severity_overrides[{neg_id}] = {severity!r} not in {sorted(ALLOWED_SEVERITIES)}"
             )
-        if neg_id in NON_DOWNGRADABLE:
+        if is_non_downgradable(neg_id):
             raise PolicyError(f"refusing non-downgradable override of {neg_id}")
 
     for key in ("known_issues", "waivers"):
         value = policy.get(key, [])
         if not isinstance(value, list) or not all(isinstance(x, str) and x for x in value):
             raise PolicyError(f"{key} must be a list of non-empty strings")
+        locked = sorted(x for x in set(value) if is_non_downgradable(x))
+        if locked:
+            raise PolicyError(f"refusing {key} entry for non-downgradable id(s): {locked}")
     return policy
 
 
@@ -127,20 +131,32 @@ def load_policy(path):
         doc = read_json(path)
     except FileNotFoundError:
         raise PolicyError(f"policy file not found: {path}")
-    except (OSError, json.JSONDecodeError) as exc:
-        raise PolicyError(f"policy file unreadable ({path}): {exc}")
+    except (OSError, ValueError, RecursionError) as exc:
+        # ValueError: JSONDecodeError, UnicodeDecodeError, int-digit limit;
+        # RecursionError: nesting deeper than the recursion limit.
+        raise PolicyError(f"policy file unreadable ({path}): {type(exc).__name__}: {exc}")
     return validate_policy_shape(doc)
 
 
 def _resolve_policy(run_dir, policy):
     """Return an effective, validated policy dict.
 
-    ``policy is None`` -> load ``<run_dir>/policy.json`` if it exists, else {}.
-    An explicit dict is validated defensively.
+    ``policy is None`` -> load ``<run_dir>/policy.json`` if it is stored with
+    exactly that name, else {}. An explicit dict is validated defensively.
+
+    Presence is decided against the stored names (``os.listdir``), not with
+    ``os.path.isfile``: on NTFS/APFS ``isfile`` says yes for ``policy.json`` when
+    only ``POLICY.json`` is stored, so the effective policy -- and with it the
+    waivers -- would depend on the host file system (same class as A1).
     """
     if policy is None:
         default_path = os.path.join(run_dir, DEFAULT_POLICY_FILENAME)
-        if os.path.isfile(default_path):
+        try:
+            stored = os.listdir(run_dir) if os.path.isdir(run_dir) else []
+        except OSError as exc:
+            # Cannot tell whether a policy (with waivers) exists: fail closed.
+            raise PolicyError(f"run dir not listable ({run_dir}): {exc}")
+        if DEFAULT_POLICY_FILENAME in stored and os.path.isfile(default_path):
             return load_policy(default_path)
         return {}
     return validate_policy_shape(policy)
@@ -151,27 +167,105 @@ def validate_json_against_schema(instance, schema_path):
     Draft202012Validator(schema, format_checker=strict_format_checker()).validate(instance)
 
 
-def check_root_policy(policy):
-    method = policy.get("ROOT", {}).get("METHOD", "brentq")
-    return [] if method in ROOT_ALLOWED_METHODS else ["NEG.ROOT.UNKNOWN_METHOD"]
+def check_root_plan(plan):
+    """Check the root-finding method pinned in ``kernel.plan.json``.
+
+    The method is part of the run's reproducible execution plan (REGISTRY_POLICY:
+    exact pinning in kernel.plan wins), not of the gate policy. Absent
+    ``payload.root`` keeps the default ``brentq``; a present entry without METHOD, a malformed or
+    non-allowlisted entry is a hard error (ROOT_FINDING_v1).
+    """
+    payload = plan.get("payload") if isinstance(plan, dict) else None
+    if not isinstance(payload, dict) or "root" not in payload:
+        return []
+    root = payload["root"]
+    method = root.get("METHOD") if isinstance(root, dict) else None
+    return [] if isinstance(method, str) and method in ROOT_ALLOWED_METHODS else ["NEG.ROOT.UNKNOWN_METHOD"]
 
 
-def check_kernel_files(run_dir):
-    req = ["kernel.model.json", "kernel.plan.json", "kernel.events.json", "kernel.schema.json", "kernel.env.json"]
+REQUIRED_KERNEL_FILES = (
+    "kernel.model.json", "kernel.plan.json", "kernel.events.json", "kernel.schema.json", "kernel.env.json",
+)
+
+
+def _is_kernel_name(fn):
+    return fn.startswith("kernel.") and fn.endswith(".json")
+
+
+# Spec-defined kernel names beyond the required five (BASELINE_POLICY_v1:
+# ``kernel.baseline.json``). Their exact spelling is enforced like the required
+# ones, so ``kernel.BASELINE.json`` cannot pass as a merely "other" kernel.
+OPTIONAL_KERNEL_FILES = ("kernel.baseline.json",)
+CANONICAL_KERNEL_FILES = REQUIRED_KERNEL_FILES + OPTIONAL_KERNEL_FILES
+_CANONICAL_FOLDED = {f.casefold() for f in CANONICAL_KERNEL_FILES}
+
+
+def _is_kernel_case_variant(fn):
+    """True for a stored name that deviates from a kernel name only by case.
+
+    Covers (a) a case variant of a canonical name (``kernel.PLAN.json``,
+    ``kernel.BASELINE.json``) and
+    (b) a name that is a kernel file only when case is ignored
+    (``KERNEL.plan.json``, ``kernel.x.JSON``), which the payload loop would skip.
+    """
+    folded = fn.casefold()
+    if folded in _CANONICAL_FOLDED:
+        return fn not in CANONICAL_KERNEL_FILES
+    return folded.startswith("kernel.") and folded.endswith(".json") and not _is_kernel_name(fn)
+
+
+def list_kernel_dir(run_dir):
+    """Return the stored names in ``<run_dir>/kernels`` (``[]`` if absent).
+
+    Names come from ``os.listdir``, i.e. with the spelling stored on disk. Presence
+    checks must compare against this list, NOT use ``os.path.exists``: on
+    case-insensitive file systems (Windows NTFS, macOS APFS default) ``exists`` says
+    yes for ``kernel.plan.json`` when only ``kernel.PLAN.json`` is stored, while the
+    payload loop compares names case-sensitively -> the plan would count as present
+    but its root method would never be checked (gate bypass). Raises ``OSError``
+    if the directory exists but cannot be listed.
+    """
+    kernels_dir = os.path.join(run_dir, "kernels")
+    if not os.path.isdir(kernels_dir):
+        return []
+    # Same rule for the directory itself: ``Kernels/`` must not pass on NTFS/APFS
+    # while it is absent on Linux (the verdict must not depend on the host FS).
+    if "kernels" not in os.listdir(run_dir):
+        return []
+    return sorted(os.listdir(kernels_dir))
+
+
+def check_kernel_files(run_dir, names=None):
+    """Structural kernel-file checks against the EXACT (case-sensitive) stored names.
+
+    - a required name not stored with exactly that spelling -> ``NEG.KERNEL.MISSING_<X>``
+    - any stored name that is a kernel file only when case is ignored
+      (``kernel.PLAN.json``, ``KERNEL.plan.json``, ``Kernel.Plan.JSON``, also next
+      to an exact-name file on a case-sensitive FS) -> ``NEG.KERNEL.NAME_CASE_MISMATCH``
+    """
+    if names is None:
+        names = list_kernel_dir(run_dir)
+    stored = set(names)
     neg = []
-    for f in req:
-        if not os.path.exists(os.path.join(run_dir, "kernels", f)):
+    for f in REQUIRED_KERNEL_FILES:
+        if f not in stored:
             neg.append("NEG.KERNEL.MISSING_" + f.split(".")[1].upper())
+    kernelish = [fn for fn in stored if fn.casefold().startswith("kernel.") and fn.casefold().endswith(".json")]
+    case_duplicates = len({fn.casefold() for fn in kernelish}) < len(kernelish)
+    if case_duplicates or any(_is_kernel_case_variant(fn) for fn in kernelish):
+        neg.append("NEG.KERNEL.NAME_CASE_MISMATCH")
     return neg
 
 
 def check_kernel_payload(obj):
+    if not isinstance(obj, dict):
+        return ["NEG.KERNEL.UNREADABLE"]
     neg = []
     if not obj.get("content_hash"):
         neg.append("NEG.KERNEL.MISSING_HASH")
     if not obj.get("version"):
         neg.append("NEG.KERNEL.MISSING_VERSION")
-    elif not SEMVER_RE.match(obj["version"]):
+    elif not isinstance(obj["version"], str) or not SEMVER_RE.match(obj["version"]):
         neg.append("NEG.KERNEL.INVALID_SEMVER")
     if "payload" not in obj:
         neg.append("NEG.KERNEL.MISSING_PAYLOAD")
@@ -209,18 +303,32 @@ def validate_run(run_dir, policy=None):
         else:  # KNOWN_ISSUE / WAIVED_ISSUE
             known_issues.append(neg_id)
 
-    # Missing required kernel files are structural HARD failures by definition.
-    hard_fail.extend(check_kernel_files(run_dir))
-
     kernels_dir = os.path.join(run_dir, "kernels")
-    if os.path.isdir(kernels_dir):
-        for fn in sorted(os.listdir(kernels_dir)):
-            if fn.startswith("kernel.") and fn.endswith(".json"):
+    try:
+        names = list_kernel_dir(run_dir)
+    except OSError:
+        # Unlistable kernels dir: fail closed with a report, not a crash.
+        names = []
+        hard_fail.append("NEG.KERNEL.UNREADABLE")
+
+    # Missing / case-mismatched kernel files are structural HARD failures by definition.
+    hard_fail.extend(check_kernel_files(run_dir, names))
+
+    for fn in names:
+        if _is_kernel_name(fn):
+            try:
                 obj = read_json(os.path.join(kernels_dir, fn))
-                for neg in check_kernel_payload(obj):
+            except (OSError, ValueError, RecursionError):
+                # Fail closed with a report instead of crashing without one.
+                # ValueError covers JSONDecodeError, UnicodeDecodeError and the
+                # int-digit limit (int_max_str_digits); RecursionError covers
+                # nesting deeper than the interpreter's recursion limit.
+                obj = None
+            for neg in check_kernel_payload(obj):
+                route(neg)
+            if fn == "kernel.plan.json":
+                for neg in check_root_plan(obj):
                     route(neg)
-    for neg in check_root_policy(policy):
-        route(neg)
 
     if hard_fail:
         report["status"] = "REJECT"
