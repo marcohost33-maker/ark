@@ -309,3 +309,19 @@ def test_policy_exact_name_is_still_loaded(tmp_path):
     (run / "policy.json").write_text("{", encoding="utf-8")
     with pytest.raises(validate_run.PolicyError):
         validate_run._resolve_policy(str(run), None)
+
+
+def test_unlistable_run_dir_fails_closed_not_crashing(tmp_path, monkeypatch):
+    """Presence of policy.json is decided via os.listdir(run_dir); if that raises,
+    validate_run must fail closed with PolicyError instead of crashing."""
+    run = _write_run(tmp_path / "run", _base_files())
+    real_listdir = os.listdir
+
+    def listdir(path):
+        if os.path.abspath(os.fspath(path)) == os.path.abspath(str(run)):
+            raise PermissionError("denied")
+        return real_listdir(path)
+
+    monkeypatch.setattr(validate_run.os, "listdir", listdir)
+    with pytest.raises(validate_run.PolicyError, match="not listable"):
+        validate_run.validate_run(str(run))

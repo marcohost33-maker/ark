@@ -151,7 +151,11 @@ def _resolve_policy(run_dir, policy):
     """
     if policy is None:
         default_path = os.path.join(run_dir, DEFAULT_POLICY_FILENAME)
-        stored = os.listdir(run_dir) if os.path.isdir(run_dir) else []
+        try:
+            stored = os.listdir(run_dir) if os.path.isdir(run_dir) else []
+        except OSError as exc:
+            # Cannot tell whether a policy (with waivers) exists: fail closed.
+            raise PolicyError(f"run dir not listable ({run_dir}): {exc}")
         if DEFAULT_POLICY_FILENAME in stored and os.path.isfile(default_path):
             return load_policy(default_path)
         return {}

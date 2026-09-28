@@ -40,7 +40,7 @@ explicit dict is validated the same way. See `docs/POLICY_LOADING.md`.
 | `NEG.ROOT.UNKNOWN_METHOD` | `kernel.plan.json` pins a malformed or non-allowlisted root method |
 | `NEG.REPORT.SCHEMA_INVALID` | the report fails its own schema (forces `REJECT`) |
 
-**Errors.** `PolicyError` (fail-closed) for a missing/unreadable/malformed policy:
+**Errors.** `PolicyError` (fail-closed) for a missing/unreadable/malformed policy or a run dir that cannot be listed:
 unknown keys, override values outside {HARD_FAIL, SOFT_FAIL, WARNING}, non-string
 list entries, or any lever that names a non-downgradable id
 (`is_non_downgradable`: the NON_DOWNGRADABLE set or any `NEG.KERNEL.*`).
