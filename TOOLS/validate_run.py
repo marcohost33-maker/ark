@@ -141,12 +141,18 @@ def load_policy(path):
 def _resolve_policy(run_dir, policy):
     """Return an effective, validated policy dict.
 
-    ``policy is None`` -> load ``<run_dir>/policy.json`` if it exists, else {}.
-    An explicit dict is validated defensively.
+    ``policy is None`` -> load ``<run_dir>/policy.json`` if it is stored with
+    exactly that name, else {}. An explicit dict is validated defensively.
+
+    Presence is decided against the stored names (``os.listdir``), not with
+    ``os.path.isfile``: on NTFS/APFS ``isfile`` says yes for ``policy.json`` when
+    only ``POLICY.json`` is stored, so the effective policy -- and with it the
+    waivers -- would depend on the host file system (same class as A1).
     """
     if policy is None:
         default_path = os.path.join(run_dir, DEFAULT_POLICY_FILENAME)
-        if os.path.isfile(default_path):
+        stored = os.listdir(run_dir) if os.path.isdir(run_dir) else []
+        if DEFAULT_POLICY_FILENAME in stored and os.path.isfile(default_path):
             return load_policy(default_path)
         return {}
     return validate_policy_shape(policy)

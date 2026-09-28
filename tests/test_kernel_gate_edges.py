@@ -280,3 +280,32 @@ def test_unmaterialisable_policy_is_policy_error(tmp_path, content):
     # Any other exception type is the crash this test guards against.
     assert isinstance(excinfo.value, validate_run.PolicyError), repr(excinfo.value)[:300]
     assert "unreadable" in str(excinfo.value)
+
+
+# --- A1b: the default policy file must match EXACTLY as well -----------------
+
+
+def test_policy_case_variant_is_not_loaded_on_case_insensitive_fs(tmp_path, monkeypatch):
+    """``POLICY.json`` must not become the effective policy on NTFS/APFS while
+    Linux ignores it. The stored file is unreadable, so loading it would raise."""
+    run = _write_run(tmp_path / "run", _base_files())
+    (run / "POLICY.json").write_text("{", encoding="utf-8")
+    stored = {os.path.normcase(os.path.abspath(str(run))): sorted(os.listdir(run))}
+    real_isfile = os.path.isfile
+
+    def isfile(path):
+        d, base = os.path.split(os.fspath(path))
+        names = stored.get(os.path.normcase(os.path.abspath(d)))
+        if names is not None:
+            return base.casefold() in {n.casefold() for n in names}
+        return real_isfile(path)
+
+    monkeypatch.setattr(validate_run.os.path, "isfile", isfile)
+    assert validate_run._resolve_policy(str(run), None) == {}
+
+
+def test_policy_exact_name_is_still_loaded(tmp_path):
+    run = _write_run(tmp_path / "run", _base_files())
+    (run / "policy.json").write_text("{", encoding="utf-8")
+    with pytest.raises(validate_run.PolicyError):
+        validate_run._resolve_policy(str(run), None)
