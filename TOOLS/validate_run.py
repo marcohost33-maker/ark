@@ -108,7 +108,7 @@ def validate_policy_shape(policy):
     for neg_id, severity in overrides.items():
         if not isinstance(neg_id, str) or not neg_id:
             raise PolicyError(f"severity_overrides key must be a non-empty string: {neg_id!r}")
-        if severity not in ALLOWED_SEVERITIES:
+        if not isinstance(severity, str) or severity not in ALLOWED_SEVERITIES:
             raise PolicyError(
                 f"severity_overrides[{neg_id}] = {severity!r} not in {sorted(ALLOWED_SEVERITIES)}"
             )

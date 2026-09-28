@@ -112,7 +112,7 @@ def validate_rule_structure(rule: Dict[str, Any], known_metrics: set[str], known
     if missing:
         issues.append(RuleIssue("NEG.CONTRADICTION.INVALID_STRUCTURE", f"Missing keys: {sorted(missing)}", rule_id))
         return issues
-    if rule["severity"] not in ALLOWED_SEVERITIES:
+    if not isinstance(rule["severity"], str) or rule["severity"] not in ALLOWED_SEVERITIES:
         issues.append(RuleIssue("NEG.CONTRADICTION.INVALID_SEVERITY", f"Invalid severity: {rule['severity']}", rule_id))
     _validate_expr_shape(rule["when"], rule_id, issues)
     refs: set[str] = set()

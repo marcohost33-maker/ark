@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-09-28T07:58:19.783307+00:00",
+  "created_utc": "2026-09-28T08:34:51.696429+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -9,7 +9,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "4c6f3271ad67153c13200327ddb4b1f8d0719f38aaf505f604a77505fa1acbbe",
+      "sha256": "999369a823b679dc7627cb11511b0d58f0abb90bbbae6ac9531c457f506ccd0a",
       "bytes": 1562
     },
     {
@@ -159,8 +159,8 @@
     },
     {
       "path": "TOOLS/contradiction_rules.py",
-      "sha256": "008dda66522e78ac64328f71ced7a95854567ac4532873b4189e0cd6eb6b46ad",
-      "bytes": 7283
+      "sha256": "2ebc43a97af514ff480f8c0c511b29aa657cb3a563165d2d7f3b0c76e61316a5",
+      "bytes": 7324
     },
     {
       "path": "TOOLS/event_hysteresis.py",
@@ -184,13 +184,13 @@
     },
     {
       "path": "TOOLS/severity_mapping.py",
-      "sha256": "b22707c5cb2a9e83d207680ddb9570702ab6ef7aff48aeb72103b58b501067b3",
-      "bytes": 2892
+      "sha256": "6452ba7d2cd149db2337be06507948cb1199c3d53bdc73832a8a9367490dc762",
+      "bytes": 3115
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "df7969b423bc2afe70b899c2d81fb4391805324f86c40ef8b48b1edc53bec722",
-      "bytes": 15298
+      "sha256": "489e0299cc4d9ca9cb789b0db13f9d5ea4f49fee07a00f4582d4f2cb2be00546",
+      "bytes": 15331
     },
     {
       "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",
@@ -289,8 +289,8 @@
     },
     {
       "path": "tests/test_hardening_wave2.py",
-      "sha256": "4fc4ec99c52be5009cfee175838b59efdab1a66c78b048b8a1c0f35b3150821d",
-      "bytes": 11902
+      "sha256": "dc8bbbb039d76d721167ccf035db07f6c70d659732a94fc7b32ee1b4a2feb2ff",
+      "bytes": 13240
     },
     {
       "path": "tests/test_kernel_gate_edges.py",

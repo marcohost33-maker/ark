@@ -265,3 +265,29 @@ def test_other_hard_prefixes_stay_waivable():
     assert not severity_mapping.is_non_downgradable(neg_id)
     assert severity_mapping.classify_neg_id(neg_id, {}, waived_issue_ids=[neg_id]) == "WAIVED_ISSUE"
     validate_run.validate_policy_shape({"waivers": [neg_id]})
+
+
+# --------------------------------------------------------------------------- #
+# 8. unhashable JSON values (arrays/objects) in enum positions must yield the
+#    documented error, never a TypeError from set membership
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize("value", [[], {}, ["WARNING"], {"x": 1}])
+def test_unhashable_override_value_raises_value_error(value):
+    with pytest.raises(Exception) as exc:
+        severity_mapping.classify_neg_id("NEG.QA.SLOW", {"severity_overrides": {"NEG.QA.SLOW": value}})
+    assert type(exc.value) is ValueError, type(exc.value).__name__
+
+
+@pytest.mark.parametrize("value", [[], {}])
+def test_unhashable_override_value_is_policy_error(value):
+    with pytest.raises(Exception) as exc:
+        validate_run.validate_policy_shape({"severity_overrides": {"NEG.QA.SLOW": value}})
+    assert isinstance(exc.value, validate_run.PolicyError), type(exc.value).__name__
+
+
+@pytest.mark.parametrize("value", [[], {}])
+def test_unhashable_rule_severity_is_rule_issue(value):
+    rule = {"rule_id": "R", "when": {"gt": [1, 0]}, "neg_id": "N", "severity": value, "summary": "s"}
+    hits, issues = contradiction_rules.evaluate_rules([rule], {}, {})
+    assert hits == []
+    assert "NEG.CONTRADICTION.INVALID_SEVERITY" in {i.code for i in issues}

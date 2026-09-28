@@ -53,7 +53,10 @@ def classify_neg_id(neg_id: str, policy: Dict|None=None, known_issue_ids: Iterab
     overrides = policy.get("severity_overrides", {})
     # Validate before the lock check: a malformed override is an error even
     # when it targets a locked id whose override would be ignored anyway.
-    if neg_id in overrides and overrides[neg_id] not in OVERRIDE_SEVERITIES:
+    # isinstance first: JSON arrays/objects are unhashable and would raise
+    # TypeError on set membership instead of the documented ValueError.
+    if neg_id in overrides and (not isinstance(overrides[neg_id], str)
+                                or overrides[neg_id] not in OVERRIDE_SEVERITIES):
         raise ValueError(f"invalid severity override for {neg_id}: {overrides[neg_id]!r}")
     # NON_DOWNGRADABLE ids are immune to every policy lever: a waiver or a
     # known-issue entry is a downgrade just like a severity override.
