@@ -325,3 +325,20 @@ def test_unlistable_run_dir_fails_closed_not_crashing(tmp_path, monkeypatch):
     monkeypatch.setattr(validate_run.os, "listdir", listdir)
     with pytest.raises(validate_run.PolicyError, match="not listable"):
         validate_run.validate_run(str(run))
+
+
+@pytest.mark.parametrize("name", ["kernel.BASELINE.json", "kernel.Baseline.json"])
+def test_case_variant_of_optional_spec_kernel_is_rejected(tmp_path, name):
+    """kernel.baseline.json is spec-defined (BASELINE_POLICY_v1); a case variant of
+    it must not pass as an arbitrary extra kernel."""
+    run = _write_run(tmp_path / "run", _base_files())
+    (run / "kernels" / name).write_text(json.dumps(GOOD), encoding="utf-8")
+    report = validate_run.validate_run(str(run))
+    assert report["status"] == "REJECT"
+    assert CASE in report["hard_fail"]
+
+
+def test_exact_optional_spec_kernel_is_accepted(tmp_path):
+    run = _write_run(tmp_path / "run", _base_files())
+    (run / "kernels" / "kernel.baseline.json").write_text(json.dumps(GOOD), encoding="utf-8")
+    assert validate_run.validate_run(str(run))["status"] == "ACCEPT"

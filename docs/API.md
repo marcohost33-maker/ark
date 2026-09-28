@@ -33,7 +33,7 @@ explicit dict is validated the same way. See `docs/POLICY_LOADING.md`.
 | NEG ID | When |
 |---|---|
 | `NEG.KERNEL.MISSING_<NAME>` | a required kernel file is not stored under its EXACT (case-sensitive) name (always HARD, not routable) |
-| `NEG.KERNEL.NAME_CASE_MISMATCH` | a stored name differs from a kernel name only by case (`kernel.PLAN.json`, `KERNEL.plan.json`) or two kernel names collide case-insensitively; same verdict on case-sensitive and case-insensitive file systems (always HARD, not routable) |
+| `NEG.KERNEL.NAME_CASE_MISMATCH` | a stored name differs from a canonical kernel name (the five required ones or the spec-defined `kernel.baseline.json`) only by case (`kernel.PLAN.json`, `kernel.BASELINE.json`, `KERNEL.plan.json`) or two kernel names collide case-insensitively; same verdict on case-sensitive and case-insensitive file systems (always HARD, not routable) |
 | `NEG.KERNEL.UNREADABLE` | kernel file is not valid UTF-8 JSON, not an object, or cannot be materialised (integer beyond the int-digit limit, nesting beyond the recursion limit); also when `kernels/` cannot be listed |
 | `NEG.KERNEL.MISSING_HASH` / `MISSING_VERSION` / `MISSING_PAYLOAD` | field missing or empty |
 | `NEG.KERNEL.INVALID_SEMVER` | `version` is not a SemVer 2.0.0 string |

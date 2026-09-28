@@ -192,19 +192,25 @@ def _is_kernel_name(fn):
     return fn.startswith("kernel.") and fn.endswith(".json")
 
 
-_REQUIRED_FOLDED = {f.casefold() for f in REQUIRED_KERNEL_FILES}
+# Spec-defined kernel names beyond the required five (BASELINE_POLICY_v1:
+# ``kernel.baseline.json``). Their exact spelling is enforced like the required
+# ones, so ``kernel.BASELINE.json`` cannot pass as a merely "other" kernel.
+OPTIONAL_KERNEL_FILES = ("kernel.baseline.json",)
+CANONICAL_KERNEL_FILES = REQUIRED_KERNEL_FILES + OPTIONAL_KERNEL_FILES
+_CANONICAL_FOLDED = {f.casefold() for f in CANONICAL_KERNEL_FILES}
 
 
 def _is_kernel_case_variant(fn):
     """True for a stored name that deviates from a kernel name only by case.
 
-    Covers (a) a case variant of a required name (``kernel.PLAN.json``) and
+    Covers (a) a case variant of a canonical name (``kernel.PLAN.json``,
+    ``kernel.BASELINE.json``) and
     (b) a name that is a kernel file only when case is ignored
     (``KERNEL.plan.json``, ``kernel.x.JSON``), which the payload loop would skip.
     """
     folded = fn.casefold()
-    if folded in _REQUIRED_FOLDED:
-        return fn not in REQUIRED_KERNEL_FILES
+    if folded in _CANONICAL_FOLDED:
+        return fn not in CANONICAL_KERNEL_FILES
     return folded.startswith("kernel.") and folded.endswith(".json") and not _is_kernel_name(fn)
 
 
