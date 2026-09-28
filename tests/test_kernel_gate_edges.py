@@ -287,9 +287,11 @@ def test_unmaterialisable_policy_is_policy_error(tmp_path, content):
 
 def test_policy_case_variant_is_not_loaded_on_case_insensitive_fs(tmp_path, monkeypatch):
     """``POLICY.json`` must not become the effective policy on NTFS/APFS while
-    Linux ignores it. The stored file is unreadable, so loading it would raise."""
+    Linux ignores it. The stored file is a valid policy, so loading it shows up
+    as a non-empty effective policy -- the test fails by assertion, not by a
+    PolicyError, which keeps its discrimination proof classifiable."""
     run = _write_run(tmp_path / "run", _base_files())
-    (run / "POLICY.json").write_text("{", encoding="utf-8")
+    (run / "POLICY.json").write_text('{"waivers": []}', encoding="utf-8")
     stored = {os.path.normcase(os.path.abspath(str(run))): sorted(os.listdir(run))}
     real_isfile = os.path.isfile
 
@@ -323,8 +325,14 @@ def test_unlistable_run_dir_fails_closed_not_crashing(tmp_path, monkeypatch):
         return real_listdir(path)
 
     monkeypatch.setattr(validate_run.os, "listdir", listdir)
-    with pytest.raises(validate_run.PolicyError, match="not listable"):
+    # Caught broadly on purpose: without the guard the raw PermissionError must
+    # fail this test by assertion, not escape it as an error.
+    with pytest.raises(Exception) as exc:
         validate_run.validate_run(str(run))
+    assert isinstance(exc.value, validate_run.PolicyError), (
+        f"expected PolicyError, got {type(exc.value).__name__}"
+    )
+    assert "not listable" in str(exc.value)
 
 
 @pytest.mark.parametrize("name", ["kernel.BASELINE.json", "kernel.Baseline.json"])
