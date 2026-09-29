@@ -55,6 +55,11 @@ def test_run_id_windows_semantics_ignores_trailing_separators(raw):
     assert vr._run_id(raw, _path=ntpath) == "run"
 
 
+def test_issue34_trailing_backslash_on_windows_is_not_an_empty_id():
+    # The exact report of #34: --run "...\run\" on Windows.
+    assert vr._run_id("C:\\runs\\run\\", _path=ntpath) == "run"
+
+
 @pytest.mark.parametrize("raw", ["/x/run", "/x/run/", "/x/run//", "run/"])
 def test_run_id_posix_semantics_ignores_trailing_slashes(raw):
     assert vr._run_id(raw, _path=posixpath) == "run"
