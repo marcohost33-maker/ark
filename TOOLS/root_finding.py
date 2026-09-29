@@ -13,8 +13,11 @@ class RootResult:
     message: str
 
 def find_root_bracketed(g: Callable[[float], float], bracket: Tuple[float,float], method: str="brentq", xtol: float=1e-10, rtol: float=1e-8, maxiter: int=100) -> RootResult:
-    if method not in ROOT_ALLOWED_METHODS:
-        return RootResult(None, False, 0, method, "unknown method")
+    # isinstance first: an unhashable method (e.g. a list) would raise TypeError on
+    # set membership, but the documented contract is "never raise" (#35).
+    if not isinstance(method, str) or method not in ROOT_ALLOWED_METHODS:
+        return RootResult(None, False, 0, method if isinstance(method, str) else repr(method),
+                          "unknown method")
     a,b = bracket
     ga, gb = g(a), g(b)
     if ga == 0.0:

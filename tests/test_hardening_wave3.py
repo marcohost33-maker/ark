@@ -223,3 +223,42 @@ def test_cli_good_run_still_rc0(tmp_path):
     out = tmp_path / "out.json"
     assert _main(["--run", str(run), "--out", str(out)]) == 0
     assert json.loads(out.read_text(encoding="utf-8"))["status"] == "ACCEPT"
+
+
+# --------------------- #35 type hardening outside the CLI ------------------- #
+rf = importlib.import_module("root_finding")
+sm35 = importlib.import_module("severity_mapping")
+
+
+@pytest.mark.parametrize("method", [[], ["brentq"], {"brentq"}, {"m": 1}, None, 3, b"brentq"])
+def test_find_root_bracketed_bad_method_type_never_raises(method):
+    try:
+        res = rf.find_root_bracketed(lambda x: x - 1.0, (0.0, 2.0), method=method)
+    except Exception as exc:  # noqa: BLE001 - docs/API.md: solver failures never raise
+        raise AssertionError(f"raised {type(exc).__name__}: {exc}") from exc
+    assert res.converged is False and res.root is None
+    assert res.message == "unknown method"
+    assert isinstance(res.method, str)
+
+
+def test_find_root_bracketed_valid_method_unchanged():
+    res = rf.find_root_bracketed(lambda x: x - 1.0, (0.0, 2.0), method="brentq")
+    assert res.converged is True and abs(res.root - 1.0) < 1e-9 and res.method == "brentq"
+
+
+@pytest.mark.parametrize("lever", ["waived_issue_ids", "known_issue_ids"])
+@pytest.mark.parametrize("ids", ["NEG.QA.SLOWNESS", b"NEG.QA.SLOWNESS", (i for i in ["NEG.QA.SLOW"]), None])
+def test_classify_rejects_non_collection_levers(lever, ids):
+    try:
+        cls = sm35.classify_neg_id("NEG.QA.SLOW", {}, **{lever: ids})
+    except Exception as exc:  # noqa: BLE001 - the exception TYPE is the assertion
+        assert type(exc) is ValueError, f"{type(exc).__name__}: {exc}"
+    else:
+        raise AssertionError(f"{lever}={ids!r} accepted, classified as {cls}")
+
+
+@pytest.mark.parametrize("container", [list, tuple, set, frozenset])
+def test_classify_collection_levers_still_work(container):
+    assert sm35.classify_neg_id("NEG.QA.SLOW", {}, waived_issue_ids=container(["NEG.QA.SLOWNESS"])) == "SOFT_FAIL"
+    assert sm35.classify_neg_id("NEG.QA.SLOW", {}, waived_issue_ids=container(["NEG.QA.SLOW"])) == "WAIVED_ISSUE"
+    assert sm35.classify_neg_id("NEG.QA.SLOW", {}, known_issue_ids=container(["NEG.QA.SLOW"])) == "KNOWN_ISSUE"

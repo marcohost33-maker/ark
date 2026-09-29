@@ -68,7 +68,8 @@ NON_DOWNGRADABLE set or any `NEG.KERNEL.*`) skip every policy lever (spec
 `NEG_SEVERITY_MAPPING_v1`) -> waiver -> known issue -> `severity_overrides`
 -> built-in HARD / SOFT / WARNING tables -> unknown id (`HARD_FAIL` in strict
 mode, `SOFT_FAIL` otherwise). Raises `ValueError` for an override value outside
-{HARD_FAIL, SOFT_FAIL, WARNING}.
+{HARD_FAIL, SOFT_FAIL, WARNING}, and when `known_issue_ids` / `waived_issue_ids` is
+not a list, tuple, set or frozenset (a bare string would match by substring, #35).
 
 ---
 
@@ -134,7 +135,7 @@ find_root_bracketed(g, bracket, method="brentq", xtol=1e-10, rtol=1e-8,
 ```
 Methods: `bisect`, `brentq`, `brenth`, `ridder`, `toms748` (SciPy `root_scalar`).
 Solver failures never raise: `RootResult(root, converged, iterations, method, message)` with
-`converged=False` for an unknown method, a bracket without sign change, or a
+`converged=False` for an unknown or non-string method (#35), a bracket without sign change, or a
 solver exception. An exact zero at an endpoint returns that endpoint. Exceptions
 raised by `g` itself at the bracket endpoints propagate to the caller.
 
