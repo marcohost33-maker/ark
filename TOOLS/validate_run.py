@@ -272,6 +272,28 @@ def check_kernel_payload(obj):
     return neg
 
 
+def _run_id(run_dir, _path=os.path):
+    """Run id = last component of ``run_dir`` under the HOST path semantics.
+
+    ``normpath`` drops trailing separators -- on Windows both ``\\`` and ``/``
+    -- so ``run``, ``run/`` and ``run\\`` name the same run (issue #34: a
+    trailing backslash used to yield an empty id and a REJECT). It stays a pure
+    function of the argument string (no cwd lookup, unlike ``abspath``), so the
+    id is reproducible. ``PureWindowsPath`` is deliberately NOT used: on POSIX a
+    backslash is a legal file-name character, and the id must name the
+    directory that is actually opened, i.e. follow ``os.path``.
+    ``_path`` exists only so tests can pin both ``ntpath`` and ``posixpath``.
+
+    An empty ``run_dir`` stays an empty id (``normpath("")`` would be ``"."``),
+    so it keeps failing the report schema (``minLength: 1``) -> REJECT, instead
+    of silently validating the current working directory as run ``"."``.
+    """
+    raw = os.fspath(run_dir)
+    if not raw:
+        return ""
+    return _path.basename(_path.normpath(raw))
+
+
 def validate_run(run_dir, policy=None):
     policy = _resolve_policy(run_dir, policy)
     known_issue_ids = policy.get("known_issues", [])
@@ -281,7 +303,7 @@ def validate_run(run_dir, policy=None):
     warnings = []
     known_issues = []
     report = {
-        "run_id": os.path.basename(run_dir.rstrip("/")),
+        "run_id": _run_id(run_dir),
         "created_utc": utc_now(),
         "status": "ACCEPT",
         "hard_fail": hard_fail,

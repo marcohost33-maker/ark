@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-09-28T08:34:51.696429+00:00",
+  "created_utc": "2026-09-29T21:05:36.348106+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -189,8 +189,8 @@
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "489e0299cc4d9ca9cb789b0db13f9d5ea4f49fee07a00f4582d4f2cb2be00546",
-      "bytes": 15331
+      "sha256": "95d0171511529009168ffbf75a0b91f5634e48519abdd7978bd75104534f2367",
+      "bytes": 16386
     },
     {
       "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",
@@ -199,8 +199,8 @@
     },
     {
       "path": "docs/API.md",
-      "sha256": "785c912aaa5956e9c0e148537f3a0431f212b71c07486c96eae329d44e8d9aa3",
-      "bytes": 6967
+      "sha256": "3cfd932fc9d555e57dc31f3ae73b7e6ab71173324d4971fdce731a2322738238",
+      "bytes": 7247
     },
     {
       "path": "docs/FREEZE_COVERAGE_POLICY.md",
@@ -291,6 +291,11 @@
       "path": "tests/test_hardening_wave2.py",
       "sha256": "dc8bbbb039d76d721167ccf035db07f6c70d659732a94fc7b32ee1b4a2feb2ff",
       "bytes": 13240
+    },
+    {
+      "path": "tests/test_hardening_wave3.py",
+      "sha256": "e5ba5f8bfb54b97cf63d234a22afecfca3b03dd2d770b8c5e0e497a90fdd992f",
+      "bytes": 3426
     },
     {
       "path": "tests/test_kernel_gate_edges.py",

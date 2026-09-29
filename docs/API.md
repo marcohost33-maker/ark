@@ -29,6 +29,10 @@ explicit dict is validated the same way. See `docs/POLICY_LOADING.md`.
 **Output.** A report valid against `SCHEMAS/gate_report.schema.json`:
 `run_id`, `created_utc`, `status`, `hard_fail`, `soft_fail`, `warnings`,
 `known_issues`, `metrics`, `gate_results`.
+`run_id` is the last component of `run_dir` under the host path semantics
+(`os.path.normpath`): trailing separators are ignored, so `run`, `run/` and, on
+Windows, `run\` name the same run (#34). An empty `run_dir` keeps an empty id and
+is therefore REJECTed by the report schema.
 
 | NEG ID | When |
 |---|---|
