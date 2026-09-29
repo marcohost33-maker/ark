@@ -17,7 +17,10 @@ else any WARNING / KNOWN_ISSUE / WAIVED_ISSUE -> `ACCEPT_WITH_NOTES`, else `ACCE
 validate_run(run_dir: str, policy: dict | None = None) -> dict   # gate report
 ```
 CLI: `python TOOLS/validate_run.py --run DIR [--out FILE] [--policy FILE]`
-(default output `DIR/reports/gate_report.json`, prints the path).
+(default output `DIR/reports/gate_report.json`, prints the path). Exit 0 when a
+report was written, whatever its status. Exit 1 when the policy cannot be
+established (the CLI then writes a REJECT report with `NEG.POLICY.UNREADABLE`,
+replacing any older report at that path, #33) or when the report cannot be written.
 
 **Input.** `run_dir/kernels/kernel.{model,plan,events,schema,env}.json`, each an
 object with `content_hash`, `version` (SemVer 2.0.0) and `payload`. The plan may
@@ -43,6 +46,7 @@ is therefore REJECTed by the report schema.
 | `NEG.KERNEL.INVALID_SEMVER` | `version` is not a SemVer 2.0.0 string |
 | `NEG.ROOT.UNKNOWN_METHOD` | `kernel.plan.json` pins a malformed or non-allowlisted root method |
 | `NEG.REPORT.SCHEMA_INVALID` | the report fails its own schema (forces `REJECT`) |
+| `NEG.POLICY.UNREADABLE` | CLI only: the policy is missing/unreadable/malformed or the run dir cannot be listed (`PolicyError` below); always HARD, not routable |
 
 **Errors.** `PolicyError` (fail-closed) for a missing/unreadable/malformed policy or a run dir that cannot be listed:
 unknown keys, override values outside {HARD_FAIL, SOFT_FAIL, WARNING}, non-string

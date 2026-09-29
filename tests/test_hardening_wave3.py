@@ -93,3 +93,133 @@ def test_empty_run_dir_is_still_rejected(tmp_path, monkeypatch):
     report = _validate("")
     assert report["status"] == "REJECT"
     assert "NEG.REPORT.SCHEMA_INVALID" in report["hard_fail"]
+
+
+# ------------------------- #33 policy error -> REJECT ----------------------- #
+# The API keeps raising PolicyError (docs/API.md); the CLI must turn it into a
+# REJECT report with NEG.POLICY.UNREADABLE, exit non-zero, and never leave an
+# older report standing at the output path.
+POLICY_UNREADABLE = "NEG.POLICY.UNREADABLE"
+
+
+def _stale_accept(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"status": "ACCEPT", "run_id": "stale"}), encoding="utf-8")
+
+
+def _main(argv) -> int:
+    try:
+        return vr.main(argv)
+    except BaseException as exc:  # noqa: BLE001 - SystemExit/tracebacks are verdicts too
+        raise AssertionError(f"CLI raised instead of reporting: {type(exc).__name__}: {exc}"[:300]) from exc
+
+
+def _assert_policy_reject(report_path: Path) -> dict:
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    assert report["status"] == "REJECT", report
+    assert report["hard_fail"] == [POLICY_UNREADABLE], report
+    assert report["run_id"] == "run"
+    vr.report_schema_validator().validate(report)
+    return report
+
+
+def test_cli_broken_default_policy_replaces_stale_report(tmp_path):
+    run = _write_good_run(tmp_path / "run")
+    report_path = run / "reports" / "gate_report.json"
+    _stale_accept(report_path)
+    (run / "policy.json").write_text("{", encoding="utf-8")
+    assert _main(["--run", str(run)]) == 1
+    _assert_policy_reject(report_path)
+
+
+def test_cli_broken_explicit_policy_gives_reject_report(tmp_path):
+    run = _write_good_run(tmp_path / "run")
+    out = tmp_path / "out.json"
+    _stale_accept(out)
+    bad = tmp_path / "policy.json"
+    bad.write_text(json.dumps({"waivers": "NEG.QA.SLOW"}), encoding="utf-8")
+    assert _main(["--run", str(run), "--out", str(out), "--policy", str(bad)]) == 1
+    _assert_policy_reject(out)
+
+
+def test_cli_unlistable_run_dir_gives_reject_report(tmp_path, monkeypatch):
+    # Simulates NTFS "icacls deny RD" on every host: listing the run dir fails.
+    run = _write_good_run(tmp_path / "run")
+    out = tmp_path / "out.json"
+    _stale_accept(out)
+    real_listdir = os.listdir
+    target = os.path.normcase(os.path.abspath(run))
+
+    def listdir(path="."):
+        if os.path.normcase(os.path.abspath(os.fspath(path))) == target:
+            raise PermissionError(13, "Access is denied", os.fspath(path))
+        return real_listdir(path)
+
+    monkeypatch.setattr(vr.os, "listdir", listdir)
+    assert _main(["--run", str(run), "--out", str(out)]) == 1
+    _assert_policy_reject(out)
+
+
+def test_api_still_raises_policy_error_for_unreadable_policy(tmp_path):
+    # Documented API contract (docs/API.md "Errors"): only the CLI converts.
+    run = _write_good_run(tmp_path / "run")
+    (run / "policy.json").write_text("{", encoding="utf-8")
+    try:
+        vr.validate_run(str(run))
+    except Exception as exc:  # noqa: BLE001 - the exception TYPE is the assertion
+        assert type(exc) is vr.PolicyError, type(exc)
+    else:
+        raise AssertionError("validate_run accepted an unreadable policy")
+
+
+def test_cli_process_broken_policy_no_traceback(tmp_path):
+    """Real process, real __main__ wiring: rc != 0, no traceback, REJECT on disk."""
+    import subprocess
+
+    run = _write_good_run(tmp_path / "run")
+    report_path = run / "reports" / "gate_report.json"
+    _stale_accept(report_path)
+    (run / "policy.json").write_text("{", encoding="utf-8")
+    proc = subprocess.run(
+        [sys.executable, str(ROOT / "TOOLS" / "validate_run.py"), "--run", str(run)],
+        capture_output=True, text=True, stdin=subprocess.DEVNULL, check=False,
+    )
+    assert proc.returncode == 1, (proc.returncode, proc.stderr)
+    assert "Traceback" not in proc.stderr, proc.stderr
+    assert "policy error" in proc.stderr
+    _assert_policy_reject(report_path)
+
+
+def test_policy_unreadable_is_hard_and_not_waivable():
+    sm = importlib.import_module("severity_mapping")
+    for lever in ({"waived_issue_ids": [POLICY_UNREADABLE]},
+                  {"known_issue_ids": [POLICY_UNREADABLE]}):
+        assert sm.classify_neg_id(POLICY_UNREADABLE, {}, **lever) == "HARD_FAIL"
+    try:
+        vr.validate_policy_shape({"waivers": [POLICY_UNREADABLE]})
+    except Exception as exc:  # noqa: BLE001
+        assert type(exc) is vr.PolicyError, type(exc)
+    else:
+        raise AssertionError("a policy waiving NEG.POLICY.UNREADABLE was accepted")
+
+
+def test_cli_unwritable_output_is_rc1_without_traceback(tmp_path):
+    run = _write_good_run(tmp_path / "run")
+    blocker = tmp_path / "blocker"
+    blocker.write_text("a file, not a directory", encoding="utf-8")
+    assert _main(["--run", str(run), "--out", str(blocker / "sub" / "out.json")]) == 1
+
+
+def test_cli_out_without_directory_part(tmp_path, monkeypatch):
+    # os.makedirs("") used to raise FileNotFoundError for "--out report.json".
+    run = _write_good_run(tmp_path / "run")
+    monkeypatch.chdir(tmp_path)
+    assert _main(["--run", str(run), "--out", "report.json"]) == 0
+    assert json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))["status"] == "ACCEPT"
+
+
+def test_cli_good_run_still_rc0(tmp_path):
+    run = _write_good_run(tmp_path / "run")
+    out = tmp_path / "out.json"
+    assert _main(["--run", str(run), "--out", str(out)]) == 0
+    assert json.loads(out.read_text(encoding="utf-8"))["status"] == "ACCEPT"

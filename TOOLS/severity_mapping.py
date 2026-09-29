@@ -15,6 +15,7 @@ HARD_EXACT = {
     "NEG.BASELINE.NOT_FOUND",
     "NEG.BASELINE.MULTIPLE_MATCHES",
     "NEG.BASELINE.INCOMPATIBLE_VERSION",
+    "NEG.POLICY.UNREADABLE",
 }
 SOFT_PREFIXES = ("NEG.CALIB.", "NEG.QA.", "NEG.DYN.", "NEG.METRIC.", "NEG.CONTRADICTION.")
 SOFT_EXACT = {
@@ -37,6 +38,8 @@ NON_DOWNGRADABLE = {
     "NEG.BASELINE.MULTIPLE_MATCHES",
     "NEG.ARCHIVE.SCHEMA_FAIL",
     "NEG.ARCHIVE.SCHEMATRON_FAIL",
+    # The policy itself could not be established (issue #33): no policy may waive that.
+    "NEG.POLICY.UNREADABLE",
 }
 
 # Kernel integrity is the reproducibility anchor: missing kernel files are

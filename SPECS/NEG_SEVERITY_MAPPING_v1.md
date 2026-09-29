@@ -19,3 +19,10 @@ downgrades. Non-downgradable IDs — the NON_DOWNGRADABLE set plus every
 their mapped severity, and a policy that names one of them in any lever is
 rejected as malformed (fail-closed). Override values must be one of
 HARD_FAIL, SOFT_FAIL, WARNING.
+
+## NEG.POLICY.UNREADABLE (clarification, issue #33)
+When the effective policy cannot be established -- policy file missing,
+unreadable or malformed, or the run directory cannot be listed so the presence
+of a `policy.json` cannot be decided -- the run-gate CLI reports REJECT with
+`NEG.POLICY.UNREADABLE`. The ID is HARD_FAIL and non-downgradable: no policy can
+waive the absence of a readable policy.

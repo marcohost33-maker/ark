@@ -56,7 +56,7 @@ py TOOLS/validate_run.py --run examples/minimal_run
 
 # malformed policy fails closed:
 echo '{"bogus": 1}' > examples/minimal_run/policy.json
-py TOOLS/validate_run.py --run examples/minimal_run   # -> PolicyError, non-zero
+py TOOLS/validate_run.py --run examples/minimal_run   # -> REJECT report, NEG.POLICY.UNREADABLE, exit 1
 rm examples/minimal_run/policy.json
 ```
 

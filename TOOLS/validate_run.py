@@ -39,6 +39,9 @@ ALLOWED_SEVERITIES = {"HARD_FAIL", "SOFT_FAIL", "WARNING"}
 # Deterministic default policy location, relative to the run directory.
 DEFAULT_POLICY_FILENAME = "policy.json"
 _ALLOWED_POLICY_KEYS = {"severity_overrides", "known_issues", "waivers"}
+# CLI verdict when the policy cannot be established (issue #33); HARD and
+# non-downgradable in severity_mapping -- a policy cannot waive its own absence.
+POLICY_UNREADABLE = "NEG.POLICY.UNREADABLE"
 
 
 class PolicyError(ValueError):
@@ -367,8 +370,43 @@ def validate_run(run_dir, policy=None):
     return report
 
 
-if __name__ == "__main__":
+def policy_unreadable_report(run_dir):
+    """REJECT report for a run whose policy cannot be established (issue #33).
+
+    ``validate_run`` raises ``PolicyError`` when the policy is missing, unreadable
+    or malformed, or when ``run_dir`` cannot be listed (so the presence of a
+    ``policy.json`` with waivers cannot be decided). The API keeps raising; the
+    CLI turns it into this report so a caller always gets a verdict on disk and
+    a previous report at the same path is replaced, not left standing.
+    """
+    report = {
+        "run_id": _run_id(run_dir),
+        "created_utc": utc_now(),
+        "status": "REJECT",
+        "hard_fail": [POLICY_UNREADABLE],
+        "soft_fail": [],
+        "warnings": [],
+        "known_issues": [],
+        "metrics": [],
+        "gate_results": [],
+    }
+    try:
+        report_schema_validator().validate(report)
+    except ValidationError:
+        report["hard_fail"].append("NEG.REPORT.SCHEMA_INVALID")
+    return report
+
+
+def main(argv=None):
+    """CLI entry point. Returns the process exit code.
+
+    0: a report was written (whatever its status). 1: the policy could not be
+    established -- a REJECT report with ``NEG.POLICY.UNREADABLE`` was written --
+    or the report itself could not be written (then a stale report at the
+    output path is removed if possible, so no old verdict survives).
+    """
     import argparse
+    import sys
 
     ap = argparse.ArgumentParser(description="ARK run-gate validator (deterministic).")
     ap.add_argument("--run", required=True)
@@ -379,11 +417,32 @@ if __name__ == "__main__":
         help="Explicit policy file (severity_overrides/known_issues/waivers). "
         "Defaults to <run>/policy.json if present.",
     )
-    args = ap.parse_args()
-    loaded_policy = load_policy(args.policy) if args.policy else None
-    report = validate_run(args.run, policy=loaded_policy)
+    args = ap.parse_args(argv)
     out = args.out or os.path.join(args.run, "reports", "gate_report.json")
-    os.makedirs(os.path.dirname(out), exist_ok=True)
-    with open(out, "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2, sort_keys=True)
+    rc = 0
+    try:
+        loaded_policy = load_policy(args.policy) if args.policy else None
+        report = validate_run(args.run, policy=loaded_policy)
+    except PolicyError as exc:
+        print(f"validate_run: policy error -> REJECT: {exc}", file=sys.stderr)
+        report = policy_unreadable_report(args.run)
+        rc = 1
+    try:
+        out_dir = os.path.dirname(out)
+        if out_dir:  # "--out report.json" has no directory part
+            os.makedirs(out_dir, exist_ok=True)
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2, sort_keys=True)
+    except OSError as exc:
+        print(f"validate_run: cannot write report {out}: {exc}", file=sys.stderr)
+        try:
+            os.remove(out)
+        except OSError:
+            pass
+        return 1
     print(out)
+    return rc
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

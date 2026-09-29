@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-09-29T21:05:36.348106+00:00",
+  "created_utc": "2026-09-29T21:11:44.961139+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -69,8 +69,8 @@
     },
     {
       "path": "SPECS/NEG_SEVERITY_MAPPING_v1.md",
-      "sha256": "553516981f7141bdd6e7db1c237b570c3aba04075015f31f57a8a93fc1192454",
-      "bytes": 758
+      "sha256": "5909c0d72d4b2a0e840fd53b20041097e54c66269a591a230be51cd3d6651cab",
+      "bytes": 1160
     },
     {
       "path": "SPECS/PROVENANCE_MINIMAL_v1.md",
@@ -184,13 +184,13 @@
     },
     {
       "path": "TOOLS/severity_mapping.py",
-      "sha256": "6452ba7d2cd149db2337be06507948cb1199c3d53bdc73832a8a9367490dc762",
-      "bytes": 3115
+      "sha256": "a0ac2dd8b3ff6a378d5dc351285423483a445d63054381182ac432108e6cff13",
+      "bytes": 3261
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "95d0171511529009168ffbf75a0b91f5634e48519abdd7978bd75104534f2367",
-      "bytes": 16386
+      "sha256": "e8897bf4de950c4c91689786f78b992f0a8d4eb4e0ef0fc2d6fb01c3fdf376ac",
+      "bytes": 18543
     },
     {
       "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",
@@ -199,8 +199,8 @@
     },
     {
       "path": "docs/API.md",
-      "sha256": "3cfd932fc9d555e57dc31f3ae73b7e6ab71173324d4971fdce731a2322738238",
-      "bytes": 7247
+      "sha256": "bd741c16ea7f9819e6abc1c6e0920e84a14f3e33e2c98a86b2e4f9f2780426e5",
+      "bytes": 7662
     },
     {
       "path": "docs/FREEZE_COVERAGE_POLICY.md",
@@ -209,8 +209,8 @@
     },
     {
       "path": "docs/POLICY_LOADING.md",
-      "sha256": "7875b0bd89ad958061efb5e0e3176cfcf462dbc9e0ed740dc0d75b59c2128e7e",
-      "bytes": 2432
+      "sha256": "c1820eae9496b80723878fc413565cbc94c7ce25e46b134d4440fd5a0a499d59",
+      "bytes": 2455
     },
     {
       "path": "docs/RELEASE_HARDENING.md",
@@ -294,8 +294,8 @@
     },
     {
       "path": "tests/test_hardening_wave3.py",
-      "sha256": "e5ba5f8bfb54b97cf63d234a22afecfca3b03dd2d770b8c5e0e497a90fdd992f",
-      "bytes": 3426
+      "sha256": "f163bbd6432f73315e2ecc705e67fdd87340a1db8120a440442e6c7786023e65",
+      "bytes": 8776
     },
     {
       "path": "tests/test_kernel_gate_edges.py",

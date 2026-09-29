@@ -38,6 +38,8 @@
 - [x] Hysterese: `delta >= 0`, `min_support >= 1`, `min_duration >= 0` erzwungen.
 - [x] Root-Methode aus `kernel.plan.json` (`payload.root.METHOD`) statt totem Policy-Pfad: `NEG.ROOT.UNKNOWN_METHOD` ist wieder erreichbar.
 - [x] `NEG.KERNEL.*` non-downgradable (Kernel-Integrität = Reproduzierbarkeits-Anker).
+- [x] Nicht ladbare Policy / nicht listbares Run-Verzeichnis: CLI schreibt REJECT-Report mit `NEG.POLICY.UNREADABLE` (HARD, non-downgradable), Exit 1, alter Report wird ersetzt. _(#33)_
+- [x] `run_id` unabhängig vom Pfad-Trenner am Ende (`run\` auf Windows). _(#34)_
 
 ## Offen / zu entscheiden
 - Versionierungs-Politik nach Freeze (SemVer? Schema-Version getrennt von Tool-Version?).
