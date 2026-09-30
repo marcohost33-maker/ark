@@ -39,6 +39,9 @@ ALLOWED_SEVERITIES = {"HARD_FAIL", "SOFT_FAIL", "WARNING"}
 # Deterministic default policy location, relative to the run directory.
 DEFAULT_POLICY_FILENAME = "policy.json"
 _ALLOWED_POLICY_KEYS = {"severity_overrides", "known_issues", "waivers"}
+# CLI verdict when the policy cannot be established (issue #33); HARD and
+# non-downgradable in severity_mapping -- a policy cannot waive its own absence.
+POLICY_UNREADABLE = "NEG.POLICY.UNREADABLE"
 
 
 class PolicyError(ValueError):
@@ -272,6 +275,28 @@ def check_kernel_payload(obj):
     return neg
 
 
+def _run_id(run_dir, _path=os.path):
+    """Run id = last component of ``run_dir`` under the HOST path semantics.
+
+    ``normpath`` drops trailing separators -- on Windows both ``\\`` and ``/``
+    -- so ``run``, ``run/`` and ``run\\`` name the same run (issue #34: a
+    trailing backslash used to yield an empty id and a REJECT). It stays a pure
+    function of the argument string (no cwd lookup, unlike ``abspath``), so the
+    id is reproducible. ``PureWindowsPath`` is deliberately NOT used: on POSIX a
+    backslash is a legal file-name character, and the id must name the
+    directory that is actually opened, i.e. follow ``os.path``.
+    ``_path`` exists only so tests can pin both ``ntpath`` and ``posixpath``.
+
+    An empty ``run_dir`` stays an empty id (``normpath("")`` would be ``"."``),
+    so it keeps failing the report schema (``minLength: 1``) -> REJECT, instead
+    of silently validating the current working directory as run ``"."``.
+    """
+    raw = os.fspath(run_dir)
+    if not raw:
+        return ""
+    return _path.basename(_path.normpath(raw))
+
+
 def validate_run(run_dir, policy=None):
     policy = _resolve_policy(run_dir, policy)
     known_issue_ids = policy.get("known_issues", [])
@@ -281,7 +306,7 @@ def validate_run(run_dir, policy=None):
     warnings = []
     known_issues = []
     report = {
-        "run_id": os.path.basename(run_dir.rstrip("/")),
+        "run_id": _run_id(run_dir),
         "created_utc": utc_now(),
         "status": "ACCEPT",
         "hard_fail": hard_fail,
@@ -345,8 +370,46 @@ def validate_run(run_dir, policy=None):
     return report
 
 
-if __name__ == "__main__":
+def policy_unreadable_report(run_dir):
+    """REJECT report for a run whose policy cannot be established (issue #33).
+
+    ``validate_run`` raises ``PolicyError`` when the policy is missing, unreadable
+    or malformed, or when ``run_dir`` cannot be listed (so the presence of a
+    ``policy.json`` with waivers cannot be decided). The API keeps raising; the
+    CLI turns it into this report so a caller always gets a verdict on disk and
+    a previous report at the same path is replaced when that write succeeds
+    (see ``main`` for the write-failure case).
+    """
+    report = {
+        "run_id": _run_id(run_dir),
+        "created_utc": utc_now(),
+        "status": "REJECT",
+        "hard_fail": [POLICY_UNREADABLE],
+        "soft_fail": [],
+        "warnings": [],
+        "known_issues": [],
+        "metrics": [],
+        "gate_results": [],
+    }
+    try:
+        report_schema_validator().validate(report)
+    except ValidationError:
+        report["hard_fail"].append("NEG.REPORT.SCHEMA_INVALID")
+    return report
+
+
+def main(argv=None):
+    """CLI entry point. Returns the process exit code.
+
+    0: a report was written (whatever its status). 1: the policy could not be
+    established -- a REJECT report with ``NEG.POLICY.UNREADABLE`` was written --
+    or the report itself could not be written. On a write failure a stale report
+    at the output path is removed where possible; if it cannot be removed either
+    (read-only or locked file on Windows) it stays and only the exit code 1
+    signals the failure.
+    """
     import argparse
+    import sys
 
     ap = argparse.ArgumentParser(description="ARK run-gate validator (deterministic).")
     ap.add_argument("--run", required=True)
@@ -357,11 +420,32 @@ if __name__ == "__main__":
         help="Explicit policy file (severity_overrides/known_issues/waivers). "
         "Defaults to <run>/policy.json if present.",
     )
-    args = ap.parse_args()
-    loaded_policy = load_policy(args.policy) if args.policy else None
-    report = validate_run(args.run, policy=loaded_policy)
+    args = ap.parse_args(argv)
     out = args.out or os.path.join(args.run, "reports", "gate_report.json")
-    os.makedirs(os.path.dirname(out), exist_ok=True)
-    with open(out, "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2, sort_keys=True)
+    rc = 0
+    try:
+        loaded_policy = load_policy(args.policy) if args.policy else None
+        report = validate_run(args.run, policy=loaded_policy)
+    except PolicyError as exc:
+        print(f"validate_run: policy error -> REJECT: {exc}", file=sys.stderr)
+        report = policy_unreadable_report(args.run)
+        rc = 1
+    try:
+        out_dir = os.path.dirname(out)
+        if out_dir:  # "--out report.json" has no directory part
+            os.makedirs(out_dir, exist_ok=True)
+        with open(out, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2, sort_keys=True)
+    except OSError as exc:
+        print(f"validate_run: cannot write report {out}: {exc}", file=sys.stderr)
+        try:
+            os.remove(out)
+        except OSError:
+            pass
+        return 1
     print(out)
+    return rc
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

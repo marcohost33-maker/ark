@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-09-28T08:34:51.696429+00:00",
+  "created_utc": "2026-09-30T06:13:40.209115+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -69,8 +69,8 @@
     },
     {
       "path": "SPECS/NEG_SEVERITY_MAPPING_v1.md",
-      "sha256": "553516981f7141bdd6e7db1c237b570c3aba04075015f31f57a8a93fc1192454",
-      "bytes": 758
+      "sha256": "5909c0d72d4b2a0e840fd53b20041097e54c66269a591a230be51cd3d6651cab",
+      "bytes": 1160
     },
     {
       "path": "SPECS/PROVENANCE_MINIMAL_v1.md",
@@ -179,18 +179,18 @@
     },
     {
       "path": "TOOLS/root_finding.py",
-      "sha256": "98b4676acd09c7f4e95d797cfdfb213d17932e1a55da3d409ab31b21b8fc25a8",
-      "bytes": 1291
+      "sha256": "7922654fc7c2c2e9592845fb18424fb0273d13f8b03fce2c1a0b68b62a854300",
+      "bytes": 1551
     },
     {
       "path": "TOOLS/severity_mapping.py",
-      "sha256": "6452ba7d2cd149db2337be06507948cb1199c3d53bdc73832a8a9367490dc762",
-      "bytes": 3115
+      "sha256": "9be8a7ff5161a74438a1e6d0ad63d4ddcfd44f5b9576b263bf64e5523332a79c",
+      "bytes": 3872
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "489e0299cc4d9ca9cb789b0db13f9d5ea4f49fee07a00f4582d4f2cb2be00546",
-      "bytes": 15331
+      "sha256": "ad44c762896524f5112e141db5f0e495b6f54e5bfc6066b3922fe91bfb2c2b04",
+      "bytes": 18715
     },
     {
       "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",
@@ -199,8 +199,8 @@
     },
     {
       "path": "docs/API.md",
-      "sha256": "785c912aaa5956e9c0e148537f3a0431f212b71c07486c96eae329d44e8d9aa3",
-      "bytes": 6967
+      "sha256": "f97acdc75f5b0b52cdd208620e8416c2c2c400a13030ed4ff7b28972b6286c85",
+      "bytes": 8119
     },
     {
       "path": "docs/FREEZE_COVERAGE_POLICY.md",
@@ -209,8 +209,8 @@
     },
     {
       "path": "docs/POLICY_LOADING.md",
-      "sha256": "7875b0bd89ad958061efb5e0e3176cfcf462dbc9e0ed740dc0d75b59c2128e7e",
-      "bytes": 2432
+      "sha256": "c1820eae9496b80723878fc413565cbc94c7ce25e46b134d4440fd5a0a499d59",
+      "bytes": 2455
     },
     {
       "path": "docs/RELEASE_HARDENING.md",
@@ -291,6 +291,11 @@
       "path": "tests/test_hardening_wave2.py",
       "sha256": "dc8bbbb039d76d721167ccf035db07f6c70d659732a94fc7b32ee1b4a2feb2ff",
       "bytes": 13240
+    },
+    {
+      "path": "tests/test_hardening_wave3.py",
+      "sha256": "1e8ea9397cb1e19d288e85cbd1297a2f2c2d1940e0d78805b3605050d8cb9430",
+      "bytes": 13664
     },
     {
       "path": "tests/test_kernel_gate_edges.py",
