@@ -19,8 +19,12 @@ validate_run(run_dir: str, policy: dict | None = None) -> dict   # gate report
 CLI: `python TOOLS/validate_run.py --run DIR [--out FILE] [--policy FILE]`
 (default output `DIR/reports/gate_report.json`, prints the path). Exit 0 when a
 report was written, whatever its status. Exit 1 when the policy cannot be
-established (the CLI then writes a REJECT report with `NEG.POLICY.UNREADABLE`,
-replacing any older report at that path, #33) or when the report cannot be written.
+established (the CLI then writes a REJECT report with `NEG.POLICY.UNREADABLE`
+to the output path, #33) or when the report cannot be written. A written report
+replaces any older one at that path. If writing fails, the CLI removes the older
+report where possible; if it cannot be removed either (e.g. a read-only or locked
+file on Windows), the old report stays in place and only exit code 1 signals the
+failure -- callers must check the exit code, not just the file.
 
 **Input.** `run_dir/kernels/kernel.{model,plan,events,schema,env}.json`, each an
 object with `content_hash`, `version` (SemVer 2.0.0) and `payload`. The plan may

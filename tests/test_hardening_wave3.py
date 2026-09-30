@@ -102,8 +102,9 @@ def test_empty_run_dir_is_still_rejected(tmp_path, monkeypatch):
 
 # ------------------------- #33 policy error -> REJECT ----------------------- #
 # The API keeps raising PolicyError (docs/API.md); the CLI must turn it into a
-# REJECT report with NEG.POLICY.UNREADABLE, exit non-zero, and never leave an
-# older report standing at the output path.
+# REJECT report with NEG.POLICY.UNREADABLE and exit non-zero. If that report cannot
+# be written, an older report at the output path is removed where the filesystem
+# allows it (docs/API.md); the exit code is 1 either way.
 POLICY_UNREADABLE = "NEG.POLICY.UNREADABLE"
 
 
@@ -213,6 +214,63 @@ def test_cli_unwritable_output_is_rc1_without_traceback(tmp_path):
     blocker = tmp_path / "blocker"
     blocker.write_text("a file, not a directory", encoding="utf-8")
     assert _main(["--run", str(run), "--out", str(blocker / "sub" / "out.json")]) == 1
+
+
+@pytest.mark.parametrize("fail_at", ["open", "dump"])
+def test_cli_write_failure_removes_stale_report(tmp_path, monkeypatch, capsys, fail_at):
+    # Host-independent simulation of the POSIX branch: the report cannot be written
+    # (read-only old report -> open fails; disk full -> dump fails after truncation),
+    # the old report is still removable, so no older ACCEPT may be left behind.
+    run = _write_good_run(tmp_path / "run")
+    report_path = run / "reports" / "gate_report.json"
+    _stale_accept(report_path)
+    (run / "policy.json").write_text("{", encoding="utf-8")
+    target = os.path.normcase(os.path.abspath(report_path))
+
+    if fail_at == "open":
+        real_open = open
+
+        def fake_open(file, mode="r", *args, **kwargs):
+            if "w" in mode and os.path.normcase(os.path.abspath(os.fspath(file))) == target:
+                raise PermissionError(13, "Permission denied", os.fspath(file))
+            return real_open(file, mode, *args, **kwargs)
+
+        monkeypatch.setattr(vr, "open", fake_open, raising=False)
+    else:
+        def fake_dump(*args, **kwargs):
+            raise OSError(28, "No space left on device")
+
+        monkeypatch.setattr(vr.json, "dump", fake_dump)
+
+    assert _main(["--run", str(run)]) == 1
+    assert "cannot write report" in capsys.readouterr().err
+    assert not report_path.exists(), (
+        "write failed but a report is still standing at the output path: "
+        + report_path.read_text(encoding="utf-8")[:200]
+    )
+
+
+def test_cli_readonly_stale_report_real_filesystem(tmp_path, capsys):
+    # Real permissions, no monkeypatch. POSIX (non-root): the directory is writable, so
+    # the read-only old ACCEPT is removed. Windows: a read-only file cannot be deleted
+    # either -- it may stay (docs/API.md "where possible"), but the exit code stays 1.
+    import stat
+
+    if sys.platform != "win32" and hasattr(os, "geteuid") and os.geteuid() == 0:
+        pytest.skip("root ignores file permissions; open() on a 0444 file succeeds")
+    run = _write_good_run(tmp_path / "run")
+    report_path = run / "reports" / "gate_report.json"
+    _stale_accept(report_path)
+    (run / "policy.json").write_text("{", encoding="utf-8")
+    os.chmod(report_path, stat.S_IRUSR)
+    try:
+        assert _main(["--run", str(run)]) == 1
+        assert "cannot write report" in capsys.readouterr().err
+        if sys.platform != "win32":
+            assert not report_path.exists(), "stale ACCEPT survived on POSIX"
+    finally:
+        if report_path.exists():
+            os.chmod(report_path, stat.S_IRUSR | stat.S_IWUSR)
 
 
 def test_cli_out_without_directory_part(tmp_path, monkeypatch):

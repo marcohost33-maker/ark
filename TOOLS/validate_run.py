@@ -377,7 +377,8 @@ def policy_unreadable_report(run_dir):
     or malformed, or when ``run_dir`` cannot be listed (so the presence of a
     ``policy.json`` with waivers cannot be decided). The API keeps raising; the
     CLI turns it into this report so a caller always gets a verdict on disk and
-    a previous report at the same path is replaced, not left standing.
+    a previous report at the same path is replaced when that write succeeds
+    (see ``main`` for the write-failure case).
     """
     report = {
         "run_id": _run_id(run_dir),
@@ -402,8 +403,10 @@ def main(argv=None):
 
     0: a report was written (whatever its status). 1: the policy could not be
     established -- a REJECT report with ``NEG.POLICY.UNREADABLE`` was written --
-    or the report itself could not be written (then a stale report at the
-    output path is removed if possible, so no old verdict survives).
+    or the report itself could not be written. On a write failure a stale report
+    at the output path is removed where possible; if it cannot be removed either
+    (read-only or locked file on Windows) it stays and only the exit code 1
+    signals the failure.
     """
     import argparse
     import sys
