@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Mapping, Sequence
 import hashlib
+import hmac
 import json
 from pathlib import Path
 import sys
@@ -14,6 +15,8 @@ if str(HERE) not in sys.path:
 
 import gate_input  # noqa: E402
 import normalize as core  # noqa: E402
+import trusted_gate_pin_r2 as pin_gate  # noqa: E402
+from trusted_gate_pin import TrustedPinError  # noqa: E402
 
 EX_NOINPUT = 66
 
@@ -107,9 +110,34 @@ def _documents_for_profile(
 
 
 def normalize(
+    bundle: dict[str, Any],
+    identity_policy: Mapping[str, Any] | None,
+    trusted_pin: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Normalize v1.1 behind a mandatory consumer-held gate pin (ARK-F-001).
+
+    The producer bundle cannot vouch for its own gate profile: a coordinated edit of
+    profile, manifest and digest is internally consistent. The consumer pin fixes
+    profile digest, input digest and GateReport digest out of band. Any pin failure
+    raises TrustedPinError before the normalizer runs (fail closed).
+    """
+    if trusted_pin is None:
+        raise TrustedPinError("pin:required")
+    preflight = pin_gate.verify_bundle_r2(bundle, trusted_pin)
+    result = _normalize_unpinned(bundle, identity_policy)
+    result["contract_bindings"]["trusted_gate_pin"] = {
+        key: preflight[key]
+        for key in ("status", "gate_id", "profile_digest", "input_digest", "gate_report_digest")
+    }
+    result.pop("output_digest", None)
+    result["output_digest"] = _digest(result)
+    return result
+
+
+def _normalize_unpinned(
     bundle: dict[str, Any], identity_policy: Mapping[str, Any] | None
 ) -> dict[str, Any]:
-    """Normalize v1.1 while independently reconstructing GateReport input binding."""
+    """Bundle-internal v1.1 checks; NOT a trust decision without the pin preflight."""
     result = core.normalize(bundle, identity_policy)
     result["schema_version"] = "1.3.0-candidate"
 
@@ -181,19 +209,38 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("input", type=Path)
     parser.add_argument("--identity-policy", type=Path, required=True)
+    parser.add_argument("--trusted-pin", type=Path, required=True)
+    parser.add_argument(
+        "--expected-pin-sha256",
+        required=True,
+        help="sha256:<64 lowercase hex> over the EXACT trusted-pin file bytes, from independent configuration",
+    )
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
         bundle = json.loads(args.input.read_text(encoding="utf-8"))
         policy = json.loads(args.identity_policy.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        pin_bytes = pin_gate._read_bounded(args.trusted_pin, pin_gate.MAX_PIN_BYTES)
+    except (OSError, json.JSONDecodeError, pin_gate.R2Error) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return EX_NOINPUT
     if not isinstance(bundle, dict) or not isinstance(policy, dict):
         print("error: input and identity policy must be JSON objects", file=sys.stderr)
         return EX_NOINPUT
-    result = normalize(bundle, policy)
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        if not pin_gate.SHA_RE.fullmatch(args.expected_pin_sha256):
+            raise pin_gate.R2Error("pin:expected-pin-sha256-invalid")
+        if not hmac.compare_digest(pin_gate.sha256_bytes(pin_bytes), args.expected_pin_sha256):
+            raise pin_gate.R2Error("pin:out-of-band-file-digest-mismatch")
+        pin = pin_gate.strict_json(pin_bytes, max_bytes=pin_gate.MAX_PIN_BYTES)
+        result = normalize(bundle, policy, trusted_pin=pin)
+    except TrustedPinError as exc:
+        # Replace any earlier accepting output so a stale PASS cannot survive.
+        reject = {"status": "REJECT", "reason": str(exc), "blocking": True}
+        args.out.write_text(json.dumps(reject, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(json.dumps(reject, sort_keys=True), file=sys.stderr)
+        return 2
     args.out.write_text(
         json.dumps(result, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
         encoding="utf-8",

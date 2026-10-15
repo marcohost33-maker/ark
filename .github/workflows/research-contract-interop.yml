@@ -52,6 +52,8 @@ jobs:
           python integration/research_contract_v1/normalize_v1_1.py \
             integration/research_contract_v1/fixtures/dde_v1_1_real.json \
             --identity-policy integration/research_contract_v1/policies/dde_v1_1_candidate.json \
+            --trusted-pin integration/research_contract_v1/pins/dde_v1_1_pilot_pin.json \
+            --expected-pin-sha256 sha256:16e833e262c0b06a6c46f4a57cbe3f4273a2a36d3643005085f9cf901621f9b1 \
             --out /tmp/dde-v1_1-ark-normalized.json
           python - <<'PY'
           import json
@@ -73,6 +75,9 @@ jobs:
           assert bindings[0]['verified'] is True
           assert bindings[0]['input_digest'] == 'sha256:994f8b45fcd249fd0dceecd7fd3a94c4323c8588cee5a5d0661c88c00c02b25c'
           assert bindings[0]['input_count'] == 7
+          pin = x['contract_bindings']['trusted_gate_pin']
+          assert pin['status'] == 'GATE_INPUT_BOUND_TO_CONSUMER_PIN'
+          assert pin['input_digest'] == bindings[0]['input_digest']
           print(json.dumps({
               'input_digest': x['input_digest'],
               'output_digest': x['output_digest'],

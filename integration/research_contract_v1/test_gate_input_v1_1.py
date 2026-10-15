@@ -14,6 +14,7 @@ import normalize_v1_1 as norm  # noqa: E402
 
 FIXTURE = HERE / "fixtures" / "dde_v1_1_real.json"
 POLICY = HERE / "policies" / "dde_v1_1_candidate.json"
+PIN = HERE / "pins" / "dde_v1_1_pilot_pin.json"
 HQST_MINIMAL_DIGEST = (
     "sha256:8744844a3f1b4323dabaca05e0072638de5b3dba87ad6b581203463672f06048"
 )
@@ -28,6 +29,10 @@ def load_fixture():
 
 def load_policy():
     return json.loads(POLICY.read_text(encoding="utf-8"))
+
+
+def load_pin():
+    return json.loads(PIN.read_text(encoding="utf-8"))
 
 
 def codes(result):
@@ -81,7 +86,7 @@ def test_hqst_minimal_cross_implementation_vector_is_reproduced():
 
 
 def test_real_dde_v1_1_fixture_normalizes_with_verified_gate_binding():
-    result = norm.normalize(load_fixture(), load_policy())
+    result = norm.normalize(load_fixture(), load_policy(), trusted_pin=load_pin())
     assert result["schema_version"] == "1.3.0-candidate"
     assert result["blocking"] is False
     assert result["contradictions"] == []
@@ -104,7 +109,7 @@ def test_real_dde_v1_1_fixture_normalizes_with_verified_gate_binding():
 def test_full_document_mutation_invalidates_gate_binding():
     fixture = load_fixture()
     fixture["model_spec"]["claim_ceiling"] = "mutated downstream after DDE gate"
-    result = norm.normalize(fixture, load_policy())
+    result = norm._normalize_unpinned(fixture, load_policy())
     assert result["blocking"] is True
     assert "RC.GATE.INPUT_BINDING_INVALID" in codes(result)
 
@@ -114,7 +119,7 @@ def test_profile_order_mutation_invalidates_gate_binding():
     fixture["gate_input_profiles"][0]["inputs"] = list(
         reversed(fixture["gate_input_profiles"][0]["inputs"])
     )
-    result = norm.normalize(fixture, load_policy())
+    result = norm._normalize_unpinned(fixture, load_policy())
     assert result["blocking"] is True
     assert "RC.GATE.INPUT_BINDING_INVALID" in codes(result)
 
@@ -128,7 +133,7 @@ def test_unreferenced_but_gate_bound_evidence_cannot_be_dropped():
     ]
     # The unavailable placeholder is not claim-positive evidence, but it is part of
     # the exact GateReport subject. Removing it must therefore invalidate the gate.
-    result = norm.normalize(fixture, load_policy())
+    result = norm._normalize_unpinned(fixture, load_policy())
     assert result["blocking"] is True
     assert "RC.GATE.INPUT_BINDING_INVALID" in codes(result)
 
@@ -136,7 +141,7 @@ def test_unreferenced_but_gate_bound_evidence_cannot_be_dropped():
 def test_policy_mutation_blocks_oracle_coverage_and_gate_promotion():
     policy = load_policy()
     policy["notes"].append("post-digest mutation")
-    result = norm.normalize(load_fixture(), policy)
+    result = norm.normalize(load_fixture(), policy, trusted_pin=load_pin())
     assert result["blocking"] is True
     ids = codes(result)
     assert "RC.IDENTITY.POLICY_INVALID" in ids
@@ -151,6 +156,6 @@ def test_v1_1_evidence_with_only_legacy_gate_fails_closed():
     gate.pop("input_materialization_profile")
     gate.pop("input_manifest")
     fixture["gate_reports"] = [gate]
-    result = norm.normalize(fixture, load_policy())
+    result = norm._normalize_unpinned(fixture, load_policy())
     assert result["blocking"] is True
     assert "RC.GATE.V1_1_MISSING" in codes(result)

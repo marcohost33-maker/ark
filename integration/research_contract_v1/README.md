@@ -30,6 +30,27 @@ The current real DDE fixture uses `dde_producer_local_legacy_v1.json`, a compati
 
 Policy bytes are content-bound: `policy_digest` is SHA-256 over deterministic JSON with the `policy_digest` member omitted. Any policy mutation without an explicit repin fails closed.
 
+## Consumer gate pin is mandatory for v1.1 (ARK-F-001)
+
+A producer can edit the GateInputMaterializationProfile, the GateReport manifest and its
+`input_digest` together; the bundle then re-checks as consistent. `normalize_v1_1` therefore
+runs `trusted_gate_pin_r2.verify_bundle_r2` as a mandatory preflight before any normalization:
+
+```text
+normalize_v1_1.py <bundle> --identity-policy <policy> \
+  --trusted-pin <pin.json> --expected-pin-sha256 sha256:<hex over exact pin file bytes> --out <out>
+```
+
+The pin (`ARKTrustedGatePin` 2.0.0) fixes gate/claim/run identity, the profile digest, the exact
+input manifest, the input digest and the GateReport digest, and requires `result == "PASS"`.
+A missing or failing pin raises `TrustedPinError` (Python API) or writes a `REJECT` verdict and
+exits 2 (CLI). `checked_normalize.py` is the stricter reference seam that additionally pins the
+identity-policy digest and re-checks the normalizer output.
+
+`pins/dde_v1_1_pilot_pin.json` was derived from the producer bundle of the DDE pilot (007acc2 R3).
+It is a regression fixture, **not** an independently adjudicated consumer pin, and a SHA-256 pin
+does not authenticate its origin. Signed pins, trust roots and key governance are out of scope here.
+
 ## Deterministic encoding boundary
 
 The exact JSON input includes array order. Record output is normalized by record type/source ID, but the `input_digest` intentionally changes if input array order changes. The project-local `json.dumps(sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)` encoding is deterministic for the supported domain but is **not claimed to implement RFC 8785/JCS**.
