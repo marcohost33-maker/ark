@@ -135,21 +135,24 @@ def test_rejected_pin_stops_before_normalization(monkeypatch):
     assert called == []
 
 
-@pytest.mark.parametrize(
-    "field,value",
-    [
-        ("profile_digest", "sha256:" + "0" * 64),
-        ("input_digest", "sha256:" + "0" * 64),
-        ("gate_report_digest", "sha256:" + "0" * 64),
-        ("gate_id", "GATE-OTHER"),
-    ],
-)
-def test_pin_field_mismatch_rejects_unmodified_bundle(field, value):
+PIN_FIELD_CASES = {
+    "profile_digest": ("sha256:" + "0" * 64, "bundle:profile-digest-mismatch"),
+    "input_digest": ("sha256:" + "0" * 64, "gate:expected-input-digest-mismatch"),
+    "gate_report_digest": ("sha256:" + "0" * 64, "gate:trusted-report-digest-mismatch"),
+    "gate_id": ("GATE-OTHER", "bundle:gate-identity-mismatch"),
+    "profile_id": ("DDE.GATE-OTHER", "bundle:profile-identity-mismatch"),
+}
+
+
+@pytest.mark.parametrize("field", sorted(PIN_FIELD_CASES))
+def test_pin_field_mismatch_rejects_unmodified_bundle(field):
+    """Each pinned field is checked by its own guard, not only by a neighbouring one."""
     from trusted_gate_pin import TrustedPinError
 
+    value, reason = PIN_FIELD_CASES[field]
     pin = load(PIN)
     pin[field] = value
-    with pytest.raises(TrustedPinError):
+    with pytest.raises(TrustedPinError, match=reason):
         norm.normalize(load(FIXTURE), load(POLICY), trusted_pin=pin)
 
 
@@ -182,7 +185,7 @@ def test_cli_positive_control_and_attack(tmp_path):
     # A stale accepting output must be replaced by a REJECT verdict.
     rc, out = _cli(tmp_path, coordinated_omission(load(FIXTURE)), pin_bytes, PIN_SHA256)
     assert rc == 2
-    assert out["status"] == "REJECT" and out["blocking"] is True
+    assert out.get("status") == "REJECT" and out.get("blocking") is True
     assert "output_digest" not in out
 
 
