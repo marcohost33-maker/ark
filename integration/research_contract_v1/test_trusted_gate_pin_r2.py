@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import copy
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -86,7 +84,8 @@ class R2Tests(unittest.TestCase):
             self.assertEqual(run.returncode, 0, run.stderr)
             self.assertEqual(json.loads(result.read_text())["pin_authority"], "FILE_DIGEST_MATCHED_OUT_OF_BAND_EXPECTATION")
             # Mutating the policy file without changing the independent expected digest fails.
-            bad = bytearray(raw);bad[-2:-1] = b" "
+            bad = bytearray(raw)
+            bad[-2:-1] = b" "
             run, result, *_ = cli(t, json.dumps(b).encode(), bytes(bad), expected=r2.sha256_bytes(raw))
             self.assertEqual(run.returncode, 2)
             self.assertIn("out-of-band-file-digest-mismatch", result.read_text())
@@ -126,7 +125,8 @@ class R2Tests(unittest.TestCase):
         b,p=fixture()
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
-            data=json.dumps(b).encode();pin=json.dumps(p).encode()
+            data = json.dumps(b).encode()
+            pin = json.dumps(p).encode()
             run,out,inp,pc=cli(root,data,pin,out="bundle.json")
             self.assertEqual(run.returncode,3)
             self.assertEqual(inp.read_bytes(),data)
@@ -138,9 +138,13 @@ class R2Tests(unittest.TestCase):
         b,p=fixture()
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
-            data=json.dumps(b).encode(); pin=json.dumps(p).encode()
-            inp=root/'bundle.json';pc=root/'consumer-pin.json';out=root/'report.json'
-            inp.write_bytes(data);pc.write_bytes(pin)
+            data = json.dumps(b).encode()
+            pin = json.dumps(p).encode()
+            inp = root / 'bundle.json'
+            pc = root / 'consumer-pin.json'
+            out = root / 'report.json'
+            inp.write_bytes(data)
+            pc.write_bytes(pin)
             os.link(inp,out)
             with self.assertRaises(r2.R2Error):
                 r2._check_output_is_not_input(out, inp, pc)
@@ -149,8 +153,10 @@ class R2Tests(unittest.TestCase):
     def test_15_no_overwrite_symlink(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
-            a=root/'bundle';a.write_text('{}')
-            out=root/'report';out.symlink_to(a)
+            a = root / 'bundle'
+            a.write_text('{}')
+            out = root / 'report'
+            out.symlink_to(a)
             with self.assertRaises(r2.R2Error):
                 r2._check_output_is_not_input(out,a,root/'pin')
 
@@ -158,7 +164,8 @@ class R2Tests(unittest.TestCase):
         b,p=fixture()
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
-            raw=json.dumps(p).encode();data=json.dumps(b).encode()
+            raw = json.dumps(p).encode()
+            data = json.dumps(b).encode()
             run,out,inp,pc=cli(root,data,raw)
             self.assertEqual(run.returncode,0)
             b['evidence_attestations'][0]['payload']['value']=999
@@ -168,10 +175,12 @@ class R2Tests(unittest.TestCase):
             self.assertEqual(json.loads(out.read_text())['status'],'REJECT')
 
     def test_17_checked_normalizer_never_invoked_on_bad_pin(self):
-        b,p=fixture();called=[]
+        b, p = fixture()
+        called = []
         p['input_digest']='sha256:'+'a'*64
         def normalizer(*args):
-            called.append(1);return {'blocking':False,'contradictions':[]}
+            called.append(1)
+            return {'blocking': False, 'contradictions': []}
         with self.assertRaises(r2.R2Error):
             checked_normalize(b,p,{},normalizer,r1.digest({}))
         self.assertEqual(called,[])
@@ -210,7 +219,8 @@ class R2Tests(unittest.TestCase):
             r2.verify_bundle_r2(b,p)
 
     def test_22_identity_policy_pin_rejects_mutation(self):
-        b,p=fixture();calls=[]
+        b, p = fixture()
+        calls = []
         def norm(*args):
             calls.append(True)
             return {}
