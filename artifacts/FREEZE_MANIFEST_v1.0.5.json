@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-09-30T06:13:40.209115+00:00",
+  "created_utc": "2026-10-19T17:20:29.064221+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -9,8 +9,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "999369a823b679dc7627cb11511b0d58f0abb90bbbae6ac9531c457f506ccd0a",
-      "bytes": 1562
+      "sha256": "492da31e5193190f46616731f413df345cf8a0174b1307b34c2e4fd3fc5e0a11",
+      "bytes": 1641
     },
     {
       "path": "SCHEMAS/gate_report.schema.json",
@@ -189,8 +189,8 @@
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "ad44c762896524f5112e141db5f0e495b6f54e5bfc6066b3922fe91bfb2c2b04",
-      "bytes": 18715
+      "sha256": "126e88ab267e00b98b360e45d18b9c7b978c73bfb088acacc2e6d600931b2dd5",
+      "bytes": 19989
     },
     {
       "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",
@@ -199,8 +199,8 @@
     },
     {
       "path": "docs/API.md",
-      "sha256": "f97acdc75f5b0b52cdd208620e8416c2c2c400a13030ed4ff7b28972b6286c85",
-      "bytes": 8119
+      "sha256": "fc374c4c90799698035fea5ced7a6b26c62657d587d8b1dde49a4244c4d7ef14",
+      "bytes": 8997
     },
     {
       "path": "docs/FREEZE_COVERAGE_POLICY.md",
@@ -311,6 +311,11 @@
       "path": "tests/test_semver.py",
       "sha256": "c542edd36987e1508e596d3990e0d8a011e146a108aaac29919abe224f5b0b58",
       "bytes": 1851
+    },
+    {
+      "path": "tests/test_strict_exit.py",
+      "sha256": "ab067b415205d1b37e41defbbd99ba47c918276c5cd35c988cd0d4efcd4dbf83",
+      "bytes": 4725
     },
     {
       "path": "tests/test_tool_behaviors.py",

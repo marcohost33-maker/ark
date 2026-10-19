@@ -1,15 +1,15 @@
 # ARK-Core — Roadmap
 
-> Initial-Draft (2026-06-02), Stand aktualisiert 2026-09-27. Abgeleitet aus dem Freeze-Stand v1.0.5.
+> Initial-Draft (2026-06-02), Stand aktualisiert 2026-10-19. Abgeleitet aus dem Freeze-Stand v1.0.5.
 > Reihenfolge = Vorschlag, nicht Zusage. Richtung entscheidet Coworker-Research.
 
 ## Stand
 - **v1.0.5 (Freeze):** 4 JSON-Schemas, 14 Specs, 6 deterministische Python-Validatoren
   (`validate_run`, `provenance_validate`, `event_hysteresis`, `severity_mapping`,
   `root_finding`, `contradiction_rules`) + 1 Integritäts-Tool (`freeze_manifest`),
-  Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, 65 Dateien gepinnt, Stand 2026-09-28).
-- **CI-Gates aktiv (verifiziert 2026-09-28):** `ruff check .` clean · `compileall`
-  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **165/165 PASS** ·
+  Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, 67 Dateien gepinnt, Stand 2026-10-19).
+- **CI-Gates aktiv (verifiziert 2026-09-28; Zählung lokal 2026-10-19):** `ruff check .` clean · `compileall`
+  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **230 passed / 1 skipped** (lokal 2026-10-19) ·
   zizmor Workflow-Audit (required) · Dependabot (github-actions, weekly, SHA-Pins).
 
 ## Phase 1 — Repo-Init & CI-Härtung
@@ -40,7 +40,9 @@
 - [x] `NEG.KERNEL.*` non-downgradable (Kernel-Integrität = Reproduzierbarkeits-Anker).
 - [x] Nicht ladbare Policy / nicht listbares Run-Verzeichnis: CLI schreibt REJECT-Report mit `NEG.POLICY.UNREADABLE` (HARD, non-downgradable), Exit 1, alter Report wird ersetzt. _(#33)_
 - [x] `run_id` unabhängig vom Pfad-Trenner am Ende (`run\` auf Windows). _(#34)_
+- [x] Opt-in `--strict-exit`: Exitcode trägt das Verdikt (0 ACCEPT/ACCEPT_WITH_NOTES, 1 REJECT, 2 Werkzeugfehler = argparse-Usage-Code, 3 REVIEW); Default unverändert. _(#37)_
 
 ## Offen / zu entscheiden
+- `--strict-exit` als Default (#37, Schritt 2): erst wenn alle Aufrufer (CI, USK-Adapter, Skripte) migriert sind; offen, ob REVIEW CI rot färben soll.
 - Versionierungs-Politik nach Freeze (SemVer? Schema-Version getrennt von Tool-Version?).
 - Verhältnis zu den übrigen Governance-Stack-Säulen (Cross-Referenz-Specs).

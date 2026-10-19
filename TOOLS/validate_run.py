@@ -42,6 +42,19 @@ _ALLOWED_POLICY_KEYS = {"severity_overrides", "known_issues", "waivers"}
 # CLI verdict when the policy cannot be established (issue #33); HARD and
 # non-downgradable in severity_mapping -- a policy cannot waive its own absence.
 POLICY_UNREADABLE = "NEG.POLICY.UNREADABLE"
+# Opt-in CLI exit codes (``--strict-exit``, issue #37). 2 matches argparse's own
+# usage-error code, so every "the tool did not run cleanly" case shares one code
+# and the verdicts keep theirs.
+EXIT_OK = 0
+EXIT_REJECT = 1
+EXIT_TOOL_ERROR = 2
+EXIT_REVIEW = 3
+_STRICT_EXIT_BY_STATUS = {
+    "ACCEPT": EXIT_OK,
+    "ACCEPT_WITH_NOTES": EXIT_OK,
+    "REJECT": EXIT_REJECT,
+    "REVIEW": EXIT_REVIEW,
+}
 
 
 class PolicyError(ValueError):
@@ -398,6 +411,14 @@ def policy_unreadable_report(run_dir):
     return report
 
 
+def strict_exit_code(status):
+    """Exit code of a report status under ``--strict-exit`` (issue #37).
+
+    Fail-closed: a status outside the report schema's enum maps to REJECT.
+    """
+    return _STRICT_EXIT_BY_STATUS.get(status, EXIT_REJECT)
+
+
 def main(argv=None):
     """CLI entry point. Returns the process exit code.
 
@@ -407,6 +428,10 @@ def main(argv=None):
     at the output path is removed where possible; if it cannot be removed either
     (read-only or locked file on Windows) it stays and only the exit code 1
     signals the failure.
+
+    With ``--strict-exit`` the code also carries the verdict (issue #37):
+    0 ACCEPT/ACCEPT_WITH_NOTES, 1 REJECT, 2 tool error (policy error or report
+    not written; same code as an argparse usage error), 3 REVIEW.
     """
     import argparse
     import sys
@@ -420,7 +445,14 @@ def main(argv=None):
         help="Explicit policy file (severity_overrides/known_issues/waivers). "
         "Defaults to <run>/policy.json if present.",
     )
+    ap.add_argument(
+        "--strict-exit",
+        action="store_true",
+        help="Exit code carries the verdict: 0 ACCEPT/ACCEPT_WITH_NOTES, 1 REJECT, "
+        "2 tool error, 3 REVIEW. Default: 0 whenever a report was written.",
+    )
     args = ap.parse_args(argv)
+    tool_error = EXIT_TOOL_ERROR if args.strict_exit else 1
     out = args.out or os.path.join(args.run, "reports", "gate_report.json")
     rc = 0
     try:
@@ -429,7 +461,7 @@ def main(argv=None):
     except PolicyError as exc:
         print(f"validate_run: policy error -> REJECT: {exc}", file=sys.stderr)
         report = policy_unreadable_report(args.run)
-        rc = 1
+        rc = tool_error
     try:
         out_dir = os.path.dirname(out)
         if out_dir:  # "--out report.json" has no directory part
@@ -442,8 +474,10 @@ def main(argv=None):
             os.remove(out)
         except OSError:
             pass
-        return 1
+        return tool_error
     print(out)
+    if args.strict_exit and rc == 0:
+        return strict_exit_code(report["status"])
     return rc
 
 
