@@ -9,7 +9,7 @@
   `root_finding`, `contradiction_rules`) + 1 Integritäts-Tool (`freeze_manifest`),
   Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, 71 Dateien gepinnt, Stand 2026-10-19).
 - **CI-Gates aktiv (verifiziert 2026-09-28; Zählung lokal 2026-10-19):** `ruff check .` clean · `compileall`
-  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **237 passed / 1 skipped** (lokal 2026-10-19) ·
+  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **242 passed / 1 skipped** (lokal 2026-10-19) ·
   zizmor Workflow-Audit (required) · Dependabot (github-actions, weekly, SHA-Pins).
 
 ## Phase 1 — Repo-Init & CI-Härtung
@@ -40,9 +40,11 @@
 - [x] `NEG.KERNEL.*` non-downgradable (Kernel-Integrität = Reproduzierbarkeits-Anker).
 - [x] Nicht ladbare Policy / nicht listbares Run-Verzeichnis: CLI schreibt REJECT-Report mit `NEG.POLICY.UNREADABLE` (HARD, non-downgradable), Exit 1, alter Report wird ersetzt. _(#33)_
 - [x] `run_id` unabhängig vom Pfad-Trenner am Ende (`run\` auf Windows). _(#34)_
-- [x] Opt-in `--strict-exit`: Exitcode trägt das Verdikt (0 ACCEPT/ACCEPT_WITH_NOTES, 1 REJECT, 2 Werkzeugfehler = argparse-Usage-Code, 3 REVIEW); Default unverändert. _(#37)_
+- [x] Opt-in `--strict-exit`: Exitcode trägt das Verdikt (0 ACCEPT/ACCEPT_WITH_NOTES, 1 REJECT, 2 Werkzeugfehler = argparse-Usage-Code, 3 REVIEW); Default unverändert. Vertrag in `SPECS/REPORTING_POLICY_v1.md`, Golden-Vektoren `TESTVECTORS/exit/`. _(#37)_
+- [x] Interner Absturz (z. B. fehlendes Schema) = Werkzeugfehler statt Traceback-Exit 1 (unter `--strict-exit` sonst als REJECT gelesen); ein alter Report am Ausgabepfad wird dabei entfernt, damit kein veraltetes ACCEPT liegen bleibt. End-to-End-Test auf echtem Prozess-Exitcode. _(#37)_
 
 ## Offen / zu entscheiden
 - `--strict-exit` als Default (#37, Schritt 2): erst wenn alle Aufrufer (CI, USK-Adapter, Skripte) migriert sind; offen, ob REVIEW CI rot färben soll.
+- REVIEW und ACCEPT_WITH_NOTES sind aus eigenen `validate_run`-Befunden derzeit unerreichbar (alle gerouteten NEG-IDs non-downgradable): gewollt oder fehlt ein downgradebarer Check?
 - Versionierungs-Politik nach Freeze (SemVer? Schema-Version getrennt von Tool-Version?).
 - Verhältnis zu den übrigen Governance-Stack-Säulen (Cross-Referenz-Specs).

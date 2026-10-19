@@ -148,3 +148,64 @@ def test_usage_error_shares_the_tool_error_code(capsys):
         vr.main(["--strict-exit"])  # --run missing
     assert exc.value.code == vr.EXIT_TOOL_ERROR
     capsys.readouterr()
+
+
+# ------------------------- internal failure (crash) ------------------------ #
+# An uncaught exception exits 1, which under --strict-exit reads as REJECT, and
+# it left an older report (possibly ACCEPT) at the output path. A crash is a
+# tool error: exit 2 strict / 1 default, and no stale verdict stays on disk.
+def _boom(*_a, **_k):
+    raise RuntimeError("simulated internal failure")
+
+
+@pytest.mark.parametrize("strict, code", [(True, 2), (False, 1)])
+def test_internal_failure_is_tool_error_and_drops_stale_report(tmp_path, monkeypatch, capsys, strict, code):
+    run = _write_run(tmp_path / "run")
+    out = tmp_path / "r.json"
+    out.write_text(json.dumps({"status": "ACCEPT", "run_id": "stale"}), encoding="utf-8")
+    monkeypatch.setattr(vr, "validate_run", _boom)
+    argv = ["--run", str(run), "--out", str(out)] + (["--strict-exit"] if strict else [])
+    assert _main(argv) == code
+    assert not out.exists()
+    assert "internal error" in capsys.readouterr().err
+
+
+def test_internal_failure_while_building_policy_reject_is_tool_error(tmp_path, monkeypatch, capsys):
+    run = _write_run(tmp_path / "run")
+    (run / "policy.json").write_text("{not json", encoding="utf-8")
+    monkeypatch.setattr(vr, "policy_unreadable_report", _boom)
+    assert _main(["--run", str(run), "--out", str(tmp_path / "r.json"), "--strict-exit"]) == 2
+    capsys.readouterr()
+
+
+# ------------------------- real process, end to end ------------------------ #
+def _cli(script: Path, *args: str) -> int:
+    import subprocess
+
+    return subprocess.run(
+        [sys.executable, str(script), *args], capture_output=True, text=True, timeout=60
+    ).returncode
+
+
+def test_process_exit_codes_end_to_end(tmp_path):
+    script = ROOT / "TOOLS" / "validate_run.py"
+    good = _write_run(tmp_path / "good")
+    bad = _write_run(tmp_path / "bad", skip=("plan",))
+    assert _cli(script, "--run", str(good), "--strict-exit") == 0
+    assert _cli(script, "--run", str(bad), "--strict-exit") == 1
+    assert _cli(script, "--run", str(bad)) == 0  # default unchanged
+    assert _cli(script, "--strict-exit") == 2  # usage error: --run missing
+    assert _cli(script, "--bogus") == 2  # usage error, default mode too
+
+
+def test_process_missing_schema_is_tool_error_end_to_end(tmp_path):
+    # A real internal failure: the gate_report schema is not installed next to TOOLS/.
+    import shutil
+
+    tools = tmp_path / "pkg" / "TOOLS"
+    shutil.copytree(ROOT / "TOOLS", tools, ignore=shutil.ignore_patterns("__pycache__"))
+    run = _write_run(tmp_path / "run")
+    out = tmp_path / "r.json"
+    out.write_text(json.dumps({"status": "ACCEPT", "run_id": "stale"}), encoding="utf-8")
+    assert _cli(tools / "validate_run.py", "--run", str(run), "--out", str(out), "--strict-exit") == 2
+    assert not out.exists()

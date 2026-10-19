@@ -422,22 +422,33 @@ def strict_exit_code(status):
     return _STRICT_EXIT_BY_STATUS.get(status, EXIT_REJECT)
 
 
+def _discard_stale_report(out):
+    """Remove a report left at ``out`` by an earlier run, where the FS allows it."""
+    try:
+        os.remove(out)
+    except OSError:
+        pass
+
+
 def main(argv=None):
     """CLI entry point. Returns the process exit code.
 
     0: a report was written (whatever its status). 1: the policy could not be
     established -- a REJECT report with ``NEG.POLICY.UNREADABLE`` was written --
-    or the report itself could not be written. On a write failure a stale report
-    at the output path is removed where possible; if it cannot be removed either
-    (read-only or locked file on Windows) it stays and only the exit code 1
-    signals the failure.
+    the report itself could not be written, or the validator failed internally
+    (e.g. a missing schema file; no report is written). 2: argparse usage error.
+    When no report is written, a stale report at the output path is removed
+    where possible; if it cannot be removed either (read-only or locked file on
+    Windows) it stays and only the exit code signals the failure.
 
     With ``--strict-exit`` the code also carries the verdict (issue #37):
-    0 ACCEPT/ACCEPT_WITH_NOTES, 1 REJECT, 2 tool error (policy error or report
-    not written; same code as an argparse usage error), 3 REVIEW.
+    0 ACCEPT/ACCEPT_WITH_NOTES, 1 REJECT, 2 tool error (policy error, report
+    not written, internal failure; same code as an argparse usage error),
+    3 REVIEW.
     """
     import argparse
     import sys
+    import traceback
 
     ap = argparse.ArgumentParser(description="ARK run-gate validator (deterministic).")
     ap.add_argument("--run", required=True)
@@ -459,24 +470,29 @@ def main(argv=None):
     out = args.out or os.path.join(args.run, "reports", "gate_report.json")
     rc = 0
     try:
-        loaded_policy = load_policy(args.policy) if args.policy else None
-        report = validate_run(args.run, policy=loaded_policy)
-    except PolicyError as exc:
-        print(f"validate_run: policy error -> REJECT: {exc}", file=sys.stderr)
-        report = policy_unreadable_report(args.run)
-        rc = tool_error
+        try:
+            loaded_policy = load_policy(args.policy) if args.policy else None
+            report = validate_run(args.run, policy=loaded_policy)
+        except PolicyError as exc:
+            print(f"validate_run: policy error -> REJECT: {exc}", file=sys.stderr)
+            report = policy_unreadable_report(args.run)
+            rc = tool_error
+    except Exception:  # noqa: BLE001 - a crash is a tool error, never a verdict
+        # Without this an uncaught exception exits 1 (= REJECT under
+        # --strict-exit) and leaves an older report -- possibly ACCEPT -- in place.
+        traceback.print_exc()
+        print("validate_run: internal error, no report written", file=sys.stderr)
+        _discard_stale_report(out)
+        return tool_error
     try:
         out_dir = os.path.dirname(out)
         if out_dir:  # "--out report.json" has no directory part
             os.makedirs(out_dir, exist_ok=True)
         with open(out, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, sort_keys=True)
-    except OSError as exc:
+    except Exception as exc:  # noqa: BLE001 - OSError, or a partial dump
         print(f"validate_run: cannot write report {out}: {exc}", file=sys.stderr)
-        try:
-            os.remove(out)
-        except OSError:
-            pass
+        _discard_stale_report(out)
         return tool_error
     print(out)
     if args.strict_exit and rc == 0:

@@ -20,11 +20,13 @@ CLI: `python TOOLS/validate_run.py --run DIR [--out FILE] [--policy FILE] [--str
 (default output `DIR/reports/gate_report.json`, prints the path). Exit 0 when a
 report was written, whatever its status. Exit 1 when the policy cannot be
 established (the CLI then writes a REJECT report with `NEG.POLICY.UNREADABLE`
-to the output path, #33) or when the report cannot be written. A written report
-replaces any older one at that path. If writing fails, the CLI removes the older
-report where possible; if it cannot be removed either (e.g. a read-only or locked
-file on Windows), the old report stays in place and only exit code 1 signals the
-failure -- callers must check the exit code, not just the file.
+to the output path, #33), when the report cannot be written, or when the
+validator fails internally (e.g. a schema file is missing; traceback on stderr,
+no report). Exit 2 on a command-line usage error (argparse). A written report
+replaces any older one at that path. When no report is written, the CLI removes
+the older report where possible; if it cannot be removed either (e.g. a read-only
+or locked file on Windows), the old report stays in place and only the exit code
+signals the failure -- callers must check the exit code, not just the file.
 
 `--strict-exit` (opt-in, #37) makes the exit code carry the verdict as well:
 
@@ -32,7 +34,7 @@ failure -- callers must check the exit code, not just the file.
 |---|---|
 | 0 | `ACCEPT` or `ACCEPT_WITH_NOTES` |
 | 1 | `REJECT` |
-| 2 | tool error: policy not established (REJECT report with `NEG.POLICY.UNREADABLE` still written), report not writable, or an argparse usage error |
+| 2 | tool error: policy not established (REJECT report with `NEG.POLICY.UNREADABLE` still written), report not writable, internal failure (no report), or an argparse usage error |
 | 3 | `REVIEW` |
 
 2 is argparse's own usage-error code, so every "the tool did not run cleanly"
@@ -40,8 +42,24 @@ case shares it and never reads as a verdict (same split as linters such as
 Ruff: findings vs. tool failure). A status outside the schema enum maps to 1
 (fail-closed). The default stays unchanged so callers that read only the report
 keep working; switching the default is a later, separate decision. Note: with
-the current checks every NEG ID `validate_run` routes is non-downgradable, so
-`REVIEW` (exit 3) is not reachable from its own findings yet.
+the current checks every NEG ID `validate_run` routes is non-downgradable (each
+policy lever on them is refused), so neither `REVIEW` (exit 3) nor
+`ACCEPT_WITH_NOTES` is reachable from its own findings yet; both are mapped so
+the contract holds once a downgradable check exists.
+
+Limits and caller rules:
+- Codes are produced by `main()`. A failure before it runs (interpreter cannot
+  start, `jsonschema` not installed -> `ImportError`) exits 1 by Python
+  convention, which under `--strict-exit` is indistinguishable from REJECT by the
+  code alone. Fail-closed either way (non-zero); a caller that must tell them
+  apart deletes the output path first and treats "exit 1 and no report" as a
+  tool error.
+- Read the code of the validator itself, never of a pipeline: in
+  `validate_run ... | tee log` the shell reports `tee`'s status. Use
+  `python TOOLS/validate_run.py --run DIR --strict-exit > log 2>&1; rc=$?`
+  (or `set -o pipefail` / `${PIPESTATUS[0]}` in bash).
+- CI that should fail on REJECT/tool errors but only flag REVIEW:
+  `rc=$?; [ "$rc" -eq 0 ] || [ "$rc" -eq 3 ]`.
 
 **Input.** `run_dir/kernels/kernel.{model,plan,events,schema,env}.json`, each an
 object with `content_hash`, `version` (SemVer 2.0.0) and `payload`. The plan may
