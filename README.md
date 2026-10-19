@@ -4,11 +4,11 @@
 Contradiction- und Governance-Kernel für **reproduzierbare wissenschaftliche und Engineering-Pipelines**.
 Deterministische Python-Tools + JSON-Schemas. Coworker-Research Governance-Stack (Säule 2/4).
 
-**Status:** v1.0.5 (Freeze). Gepusht, CI grün — `compileall` OK, Freeze-Manifest-Gate (NG-002) in sync, `ruff check .` clean, `pytest` 242 passed / 1 skipped (Skip nur als root: 0444-Datei bleibt schreibbar; verifiziert lokal 2026-10-19, ruff 0.15.18).
+**Status:** v1.0.5 (Freeze). Gepusht, CI grün — `compileall` OK, Freeze-Manifest-Gate (NG-002) in sync, `ruff check .` clean, `pytest` 266 passed / 1 skipped (Skip nur als root: 0444-Datei bleibt schreibbar; verifiziert lokal 2026-10-19, ruff 0.15.18).
 
 ## Inhalt
 - `SCHEMAS/` — 4 JSON-Schemas (gate_report, prov_min, report_evidence_profile, testvector).
-- `SPECS/` — 14 Spezifikationen (Archive-Conformance, Baseline-Policy, Hysteresis-FSM, Provenance-Minimal,
+- `SPECS/` — 15 Spezifikationen (Archive-Conformance, Baseline-Policy, Hysteresis-FSM, Provenance-Minimal,
   Contradiction-Rules-DSL, Reporting-Policy, Strict-JSON-Schema-Hardening, …).
 - `docs/API.md` — Ein-/Ausgabe-Verträge aller Tools.
 - `TOOLS/` — 6 deterministische Python-Validatoren: `validate_run`, `provenance_validate`,
@@ -16,6 +16,7 @@ Deterministische Python-Tools + JSON-Schemas. Coworker-Research Governance-Stack
   plus `freeze_manifest` (Integritäts-Tool, NG-002-Gate).
 - `TESTVECTORS/` — baseline/report/severity-Testfälle.
 - `artifacts/FREEZE_MANIFEST_v1.0.5.json` — SHA-256 je Datei (Integritäts-Anker).
+- `VERSION` — einzige Quelle der Release-Version; Regeln in `SPECS/VERSIONING_POLICY_v1.md`.
 
 ## Quickstart
 ```bash

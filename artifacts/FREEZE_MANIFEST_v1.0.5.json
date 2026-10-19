@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-10-19T17:39:16.927376+00:00",
+  "created_utc": "2026-10-19T17:50:56.497306+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -9,8 +9,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "540cdeef7936cfd6594de8df59bda3ec76bcf30692fcedc27d23374f4e7684d1",
-      "bytes": 1641
+      "sha256": "8ab6e29ec5ef8d9f74afa763d874303e6545e5a743dc75851ecbf32cff793cdf",
+      "bytes": 1736
     },
     {
       "path": "SCHEMAS/gate_report.schema.json",
@@ -103,6 +103,11 @@
       "bytes": 286
     },
     {
+      "path": "SPECS/VERSIONING_POLICY_v1.md",
+      "sha256": "ad82342cebfb2e79b7f9b081861c912f17c0f81e4d20e3c9b66e2707503c47a2",
+      "bytes": 5218
+    },
+    {
       "path": "TESTVECTORS/baseline/baseline_missing.json",
       "sha256": "1e5fc441a723f60e8c2569b55d58c4787394928066f30f300a23942ff8d54589",
       "bytes": 246
@@ -189,8 +194,8 @@
     },
     {
       "path": "TOOLS/freeze_manifest.py",
-      "sha256": "067335a2fc1d10b8b854d6ddee83a61be70ce550552df97ea7feb3a3d4c712e7",
-      "bytes": 9621
+      "sha256": "ed0ff5f35f038bd0fa88484cd8d2d075a22a3ec94d54aaa1b22f61edae085339",
+      "bytes": 9636
     },
     {
       "path": "TOOLS/provenance_validate.py",
@@ -213,6 +218,11 @@
       "bytes": 20908
     },
     {
+      "path": "VERSION",
+      "sha256": "8c54bfab7f1ae9bd1a7148eae41e7b0a8f4ad3726e0cac70f823a2d45db9e60c",
+      "bytes": 6
+    },
+    {
       "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",
       "sha256": "f7e7b05f95cde35982bcbe45d90ed3f5af0c64d1179546e365cc0144429ce122",
       "bytes": 326
@@ -224,8 +234,8 @@
     },
     {
       "path": "docs/FREEZE_COVERAGE_POLICY.md",
-      "sha256": "31f36e38bed69537e0e0e4c76e96b7c4cdab757a691b92fdf2f59fa3d04d61b0",
-      "bytes": 2890
+      "sha256": "cc25a79317b1bc083e9daab561c996b329bdfa249987aae528f9a77b8d68f114",
+      "bytes": 3053
     },
     {
       "path": "docs/POLICY_LOADING.md",
@@ -351,6 +361,11 @@
       "path": "tests/test_validate_run_hardening.py",
       "sha256": "b869806215a329a96461e63f0b008849109abd0b5c1d39ee8121dc4574571e4f",
       "bytes": 4413
+    },
+    {
+      "path": "tests/test_version_consistency.py",
+      "sha256": "e7f148cc13ec713a81f391a9f3c44faaaddea410f4064749a687e0ee7701395f",
+      "bytes": 8140
     },
     {
       "path": "tocs/TOC_ARK-Core_v1.0.5.md",

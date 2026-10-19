@@ -24,6 +24,26 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Resolve version and gate the tag (VERSION is the single source of truth)
+        id: version
+        # SPECS/VERSIONING_POLICY_v1.md: a release never attests a manifest of another
+        # version. Only repo content and GitHub's own ref env vars are read; no
+        # workflow expression is expanded into the script.
+        run: |
+          version="$(cat VERSION)"
+          case "$version" in
+            ""|*[!0-9A-Za-z.+-]*) echo "VERSION is malformed: '$version'" >&2; exit 1 ;;
+          esac
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "v${version}" ]; then
+            echo "tag $GITHUB_REF_NAME does not match VERSION (expected v${version})" >&2
+            exit 1
+          fi
+          if [ ! -f "artifacts/FREEZE_MANIFEST_v${version}.json" ]; then
+            echo "no freeze manifest for VERSION ${version}" >&2
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
       - name: Setup Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
@@ -39,10 +59,13 @@ jobs:
         run: python TOOLS/freeze_manifest.py
 
       - name: Build release artifacts (SBOM + freeze manifest)
+        env:
+          ARK_VERSION: ${{ steps.version.outputs.version }}
         run: |
           mkdir -p dist
           cyclonedx-py environment --output-format JSON --outfile dist/sbom.cdx.json
-          cp artifacts/FREEZE_MANIFEST_v1.0.5.json dist/FREEZE_MANIFEST_v1.0.5.json
+          cp "artifacts/FREEZE_MANIFEST_v${ARK_VERSION}.json" dist/
+          cp VERSION dist/VERSION
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373  # v4.1.1
