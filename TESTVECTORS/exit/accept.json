@@ -1,0 +1,18 @@
+{
+  "name": "strict_exit_accept",
+  "inputs": {
+    "status": "ACCEPT"
+  },
+  "expected": {
+    "status": "ACCEPT",
+    "neg_ids": [],
+    "outputs": {
+      "strict_exit": 0
+    }
+  },
+  "tags": [
+    "exit",
+    "strict-exit",
+    "positive"
+  ]
+}

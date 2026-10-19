@@ -414,8 +414,11 @@ def policy_unreadable_report(run_dir):
 def strict_exit_code(status):
     """Exit code of a report status under ``--strict-exit`` (issue #37).
 
-    Fail-closed: a status outside the report schema's enum maps to REJECT.
+    Fail-closed: a status outside the report schema's enum -- including a
+    non-string such as a list -- maps to REJECT instead of raising.
     """
+    if not isinstance(status, str):
+        return EXIT_REJECT
     return _STRICT_EXIT_BY_STATUS.get(status, EXIT_REJECT)
 
 

@@ -58,9 +58,27 @@ def test_strict_exit_covers_every_schema_status():
     assert set(enum) == set(vr._STRICT_EXIT_BY_STATUS)
 
 
-@pytest.mark.parametrize("status", ["", "accept", "PASS", None])
+@pytest.mark.parametrize("status", ["", "accept", "PASS", None, ["REVIEW"], {"s": 1}])
 def test_strict_exit_unknown_status_fails_closed(status):
     assert vr.strict_exit_code(status) == vr.EXIT_REJECT
+
+
+def _exit_vectors():
+    paths = sorted((ROOT / "TESTVECTORS" / "exit").glob("*.json"))
+    assert paths, "no testvectors under TESTVECTORS/exit"
+    return [pytest.param(json.loads(p.read_text(encoding="utf-8")), id=p.stem) for p in paths]
+
+
+@pytest.mark.parametrize("vec", _exit_vectors())
+def test_strict_exit_golden_vectors(vec):
+    # SPECS/REPORTING_POLICY_v1.md is the contract; the vectors are its oracle.
+    assert vec["inputs"]["status"] == vec["expected"]["status"]
+    assert vr.strict_exit_code(vec["inputs"]["status"]) == vec["expected"]["outputs"]["strict_exit"]
+
+
+def test_golden_vectors_cover_every_schema_status():
+    covered = {v.values[0]["expected"]["status"] for v in _exit_vectors()}
+    assert covered == set(vr._STRICT_EXIT_BY_STATUS)
 
 
 def test_tool_error_code_is_distinct_from_every_verdict():

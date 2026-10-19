@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-10-19T17:20:29.064221+00:00",
+  "created_utc": "2026-10-19T17:25:46.405534+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -9,7 +9,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "492da31e5193190f46616731f413df345cf8a0174b1307b34c2e4fd3fc5e0a11",
+      "sha256": "e14b2ebec36021e729c5217e67571e2620f1c5c7a94bb18dbc8bf615b29373f0",
       "bytes": 1641
     },
     {
@@ -84,8 +84,8 @@
     },
     {
       "path": "SPECS/REPORTING_POLICY_v1.md",
-      "sha256": "8d5285d4172638cfcfab0020480b6ede40925c95c0ad89c47eaa64137ba6c780",
-      "bytes": 250
+      "sha256": "9097b2341be57f6bba341cf2c55fc310a94c9859d5c19eecf67a1c7f946780c1",
+      "bytes": 930
     },
     {
       "path": "SPECS/ROOT_FINDING_v1.md",
@@ -121,6 +121,26 @@
       "path": "TESTVECTORS/contradiction/rule_nested_malformed.json",
       "sha256": "e39adeaca70d36ea03eed554f6b2b7c23482db1fd1f15e2a2a6b4e575c0a174a",
       "bytes": 617
+    },
+    {
+      "path": "TESTVECTORS/exit/accept.json",
+      "sha256": "918379c1960346d85f46d10f93a87e22dbb16586a69bcd04e383480543c31674",
+      "bytes": 250
+    },
+    {
+      "path": "TESTVECTORS/exit/accept_with_notes.json",
+      "sha256": "582f8a67af83ba88d41b3935ba99daf85f5484c71702555713e90e3e64e9331e",
+      "bytes": 283
+    },
+    {
+      "path": "TESTVECTORS/exit/reject.json",
+      "sha256": "7be89c969879d8f17fb687b8d99e628527bcba9d389dc1816e3277815d08fe67",
+      "bytes": 250
+    },
+    {
+      "path": "TESTVECTORS/exit/review.json",
+      "sha256": "f6e56fb01414fb67829457039f42acf29d908ad7e5760c0b13ff61e04125dcc6",
+      "bytes": 250
     },
     {
       "path": "TESTVECTORS/provenance/prov_dangling_used.json",
@@ -189,8 +209,8 @@
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "126e88ab267e00b98b360e45d18b9c7b978c73bfb088acacc2e6d600931b2dd5",
-      "bytes": 19989
+      "sha256": "8586c04b59cb93edee4eeb0d8491d1552438c122ffafcc9c53ba8dac90546b10",
+      "bytes": 20119
     },
     {
       "path": "artifacts/FREEZE_SUMMARY_v1.0.5.md",
@@ -314,8 +334,8 @@
     },
     {
       "path": "tests/test_strict_exit.py",
-      "sha256": "ab067b415205d1b37e41defbbd99ba47c918276c5cd35c988cd0d4efcd4dbf83",
-      "bytes": 4725
+      "sha256": "2704fbc8b02c1f10618e44082db7a0c5b9cb5fadddfe6f9958548d0203b248ff",
+      "bytes": 5511
     },
     {
       "path": "tests/test_tool_behaviors.py",
