@@ -61,6 +61,17 @@ Limits and caller rules:
 - CI that should fail on REJECT/tool errors but only flag REVIEW:
   `rc=$?; [ "$rc" -eq 0 ] || [ "$rc" -eq 3 ]`.
 
+**Consumer gate contract (normative for gating use).** Without `--strict-exit`
+a REJECT report still exits 0. A consumer that gates a promotion, merge or
+release on `validate_run` MUST therefore:
+1. call it with `--strict-exit` and read the validator's own exit code;
+2. promote only on exit 0, never on 1, 2 or 3 (3 = REVIEW needs a human);
+3. additionally read the written report and require its `status` to be
+   `ACCEPT` or `ACCEPT_WITH_NOTES` (the code and the report must agree).
+A consumer that checks only the exit code of a call without `--strict-exit`
+fails open on REJECT. Making `--strict-exit` the default is a MAJOR change
+under `SPECS/VERSIONING_POLICY_v1.md` section 3 and an owner decision.
+
 **Input.** `run_dir/kernels/kernel.{model,plan,events,schema,env}.json`, each an
 object with `content_hash`, `version` (SemVer 2.0.0) and `payload`. The plan may
 pin the root-finding method as `payload.root.METHOD`; without `payload.root`

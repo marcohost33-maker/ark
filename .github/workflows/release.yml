@@ -1,5 +1,8 @@
 # Release hardening (issue #19): SBOM + build-provenance attestation on tag.
-# Runs only on version tags / manual dispatch, so it does not gate normal PRs.
+# Runs only for version tags, so it does not gate normal PRs. A manual dispatch is
+# kept for re-running a tag, but the job is skipped on any non-tag ref, and the
+# release gate refuses a non-tag ref as well (cross-family review ARK-P1-02):
+# a branch run never builds, attests or uploads release artifacts.
 # All actions are pinned to immutable commit SHAs (zizmor workflow-audit clean).
 name: release
 
@@ -13,6 +16,7 @@ permissions: {}
 jobs:
   provenance:
     name: sbom + attestation
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
       contents: read        # read source only; no release-asset writes here
@@ -24,36 +28,27 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Resolve version and gate the tag (VERSION is the single source of truth)
-        id: version
-        # SPECS/VERSIONING_POLICY_v1.md: a release never attests a manifest of another
-        # version. Only repo content and GitHub's own ref env vars are read; no
-        # workflow expression is expanded into the script.
-        run: |
-          version="$(cat VERSION)"
-          case "$version" in
-            ""|*[!0-9A-Za-z.+-]*) echo "VERSION is malformed: '$version'" >&2; exit 1 ;;
-          esac
-          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "v${version}" ]; then
-            echo "tag $GITHUB_REF_NAME does not match VERSION (expected v${version})" >&2
-            exit 1
-          fi
-          if [ ! -f "artifacts/FREEZE_MANIFEST_v${version}.json" ]; then
-            echo "no freeze manifest for VERSION ${version}" >&2
-            exit 1
-          fi
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-
       - name: Setup Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
         with:
           python-version: "3.12"
+
+      - name: Release gate (strict SemVer VERSION, tag ref only, tag == v<VERSION>)
+        id: version
+        # SPECS/VERSIONING_POLICY_v1.md: a release never attests a manifest of another
+        # version. TOOLS/release_gate.py uses the same SemVer grammar as the version
+        # tests (validate_run.SEMVER_RE, full match) and reads only repo content and
+        # GitHub's own ref env vars; no workflow expression is expanded into a script.
+        run: python TOOLS/release_gate.py
 
       - name: Install pinned tooling
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-ci.txt
           pip install cyclonedx-bom==7.3.0
+
+      - name: Test suite on the release commit (includes version + release-gate tests)
+        run: pytest -q
 
       - name: Freeze-manifest gate (must be in sync at release)
         run: python TOOLS/freeze_manifest.py

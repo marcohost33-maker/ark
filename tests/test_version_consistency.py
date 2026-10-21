@@ -20,7 +20,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "TOOLS"))
 
-vr = importlib.import_module("validate_run")
+release_gate = importlib.import_module("release_gate")
 
 
 def _read(root: Path, rel: str) -> str:
@@ -28,11 +28,9 @@ def _read(root: Path, rel: str) -> str:
 
 
 def read_version(root: Path) -> str:
-    raw = _read(root, "VERSION")
-    version = raw[:-1] if raw.endswith("\n") else raw
-    if raw != version + "\n" or not vr.SEMVER_RE.fullmatch(version) or version != version.strip():
-        raise ValueError(f"VERSION must be one strict SemVer line ending in a newline, got {raw!r}")
-    return version
+    # One rule for PRs and releases: the release workflow runs TOOLS/release_gate.py,
+    # which reads VERSION with exactly this function (raises a ValueError subclass).
+    return release_gate.read_version(root)
 
 
 def version_drift(root: Path) -> list[str]:
@@ -95,8 +93,9 @@ def test_release_workflow_derives_version_and_gates_the_tag():
     wf = _read(ROOT, ".github/workflows/release.yml")
     # No hard-coded manifest version: the release must follow VERSION.
     assert not re.search(r"FREEZE_MANIFEST_v\d", wf), "release.yml hard-codes a manifest version"
-    assert "$(cat VERSION)" in wf
-    assert '"v${version}"' in wf  # tag == v<VERSION> gate
+    # The gate is the Python tool (strict SemVer, tag-only), not a shell character class.
+    assert "run: python TOOLS/release_gate.py\n" in wf
+    assert "case " not in wf, "shell case pattern is back in release.yml"
     # Template injection in run scripts is audited by zizmor (required CI check).
 
 
@@ -120,7 +119,8 @@ def test_bump_procedure_end_to_end(tmp_path):
     new = "1.1.0" if old != "1.1.0" else "1.2.0"
 
     # Step 1: only VERSION changed -> the gate names the stale copies.
-    (repo / "VERSION").write_text(new + "\n", encoding="utf-8")
+    # LF as enforced by .gitattributes; the release gate refuses a CRLF VERSION.
+    (repo / "VERSION").write_text(new + "\n", encoding="utf-8", newline="\n")
     stale = version_drift(repo)
     assert any(s.startswith("SPECS/") for s in stale)
     assert any("DEFAULT_MANIFEST" in s for s in stale)
@@ -144,43 +144,3 @@ def test_bump_procedure_end_to_end(tmp_path):
 
     assert version_drift(repo) == []
     assert _run(str(repo / "TOOLS/freeze_manifest.py")) == 0  # NG-002 gate in sync
-
-
-# ------------------------- release tag gate (shell) ------------------------ #
-def _tag_gate_script() -> str:
-    wf = _read(ROOT, ".github/workflows/release.yml")
-    m = re.search(r"id: version\n(?:.*\n)*?        run: \|\n((?:          .*\n|\n)+)", wf)
-    assert m, "tag-gate step not found in release.yml"
-    return "\n".join(line[10:] for line in m.group(1).splitlines()) + "\n"
-
-
-@pytest.mark.skipif(shutil.which("bash") is None, reason="needs bash (GitHub runners use it)")
-@pytest.mark.parametrize("shell", [["bash"], ["bash", "-eo", "pipefail"]])  # local and Actions default
-@pytest.mark.parametrize(
-    "version, ref_type, ref_name, manifest, ok",
-    [
-        ("1.0.5\n", "tag", "v1.0.5", True, True),
-        ("1.0.5\n", "tag", "v1.1.0", True, False),  # tag != VERSION
-        ("1.0.5\n", "tag", "1.0.5", True, False),  # tag without the v prefix
-        ("1.0.5\n", "branch", "main", True, True),  # workflow_dispatch: no tag to compare
-        ("1.0.5;rm -rf x\n", "tag", "v1.0.5", True, False),  # malformed / injection
-        ("\n", "branch", "main", True, False),  # empty VERSION
-        ("9.9.9\n", "branch", "main", False, False),  # no manifest for VERSION
-    ],
-)
-def test_release_tag_gate(tmp_path, shell, version, ref_type, ref_name, manifest, ok):
-    import os
-
-    (tmp_path / "VERSION").write_text(version, encoding="utf-8")
-    (tmp_path / "artifacts").mkdir()
-    if manifest:
-        v = version.strip()
-        (tmp_path / "artifacts" / f"FREEZE_MANIFEST_v{v}.json").write_text("{}", encoding="utf-8")
-    script = tmp_path / "gate.sh"
-    script.write_text(_tag_gate_script(), encoding="utf-8")
-    out = tmp_path / "out"
-    env = dict(os.environ, GITHUB_REF_TYPE=ref_type, GITHUB_REF_NAME=ref_name, GITHUB_OUTPUT=str(out))
-    rc = subprocess.run([*shell, str(script)], cwd=tmp_path, env=env, capture_output=True, timeout=30).returncode
-    assert (rc == 0) is ok
-    if ok:
-        assert out.read_text(encoding="utf-8") == f"version={version.strip()}\n"

@@ -11,6 +11,13 @@ and by the tag gate in `.github/workflows/release.yml` (every release).
   (one line, strict SemVer 2.0.0 without a `v` prefix, newline-terminated).
 - Release tags are `v<VERSION>`. The release workflow fails when the pushed tag differs from
   `VERSION`, so a release can never attest a manifest of another version.
+- The release gate is `TOOLS/release_gate.py`, the first step of the release job. It refuses
+  (exit 1, nothing built or attested): a `VERSION` that is not exactly one strict SemVer 2.0.0
+  line (`validate_run.SEMVER_RE`, full match, LF-terminated — the same rule as the PR tests);
+  any ref that is not a tag (a manual dispatch on a branch never attests; the job itself is also
+  skipped on non-tag refs); a tag other than `v<VERSION>`; a missing manifest or one whose
+  `artifact` field does not read `ARK-Core_v<VERSION>_freeze`. The full test suite then runs on
+  the release commit before any artifact is built.
 - Lockstep copies (checked against `VERSION` on every PR, never edited independently):
   the `Version:` header of every `SPECS/*.md`, `DEFAULT_MANIFEST` in `TOOLS/freeze_manifest.py`
   (`artifacts/FREEZE_MANIFEST_v<VERSION>.json`, which must exist and whose `artifact` field
@@ -67,8 +74,9 @@ therefore needs a consumer migration plan and owner approval.
    `artifacts/FREEZE_MANIFEST_v<VERSION>.json`, set its `artifact` field and `DEFAULT_MANIFEST`,
    then run `python TOOLS/freeze_manifest.py --regenerate`. The previous manifest stays as a
    historical record.
-4. Merge, then push the tag `v<VERSION>`; the release workflow verifies tag == `VERSION`,
-   re-runs the freeze gate and attests SBOM + manifest.
+4. Merge, then push the tag `v<VERSION>`; the release workflow runs the release gate
+   (strict SemVer, tag ref, tag == `v<VERSION>`, manifest), the full test suite and the freeze
+   gate, then attests SBOM + manifest.
 
 ## 6. Current state (2026-10-19)
 No tag exists. Since the frozen origin zip (SHA `3f515f30...`), the hardening waves added NEG IDs

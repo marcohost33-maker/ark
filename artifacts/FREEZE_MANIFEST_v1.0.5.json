@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-10-19T17:50:56.497306+00:00",
+  "created_utc": "2026-10-21T08:21:00.229999+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -104,8 +104,8 @@
     },
     {
       "path": "SPECS/VERSIONING_POLICY_v1.md",
-      "sha256": "ad82342cebfb2e79b7f9b081861c912f17c0f81e4d20e3c9b66e2707503c47a2",
-      "bytes": 5218
+      "sha256": "249646f62b96e6d7a8bf8701ddc7e36c6d7af10b05a9065d9d509a8dcb0d31c7",
+      "bytes": 5910
     },
     {
       "path": "TESTVECTORS/baseline/baseline_missing.json",
@@ -203,6 +203,11 @@
       "bytes": 2383
     },
     {
+      "path": "TOOLS/release_gate.py",
+      "sha256": "fe9ae3ab925edacef15285e511f4af389cdf162a77dc86aafa295bc74bdf9994",
+      "bytes": 4642
+    },
+    {
       "path": "TOOLS/root_finding.py",
       "sha256": "7922654fc7c2c2e9592845fb18424fb0273d13f8b03fce2c1a0b68b62a854300",
       "bytes": 1551
@@ -229,8 +234,8 @@
     },
     {
       "path": "docs/API.md",
-      "sha256": "e7b3f2e1a40b27811f2b2ac50a8bd2555dadb7d875029b5713f49ebbf1e8cc7e",
-      "bytes": 10133
+      "sha256": "6dcd03975d597270b6a9f8cc5017e1954016a67d730e2ebd995e1e25996dd418",
+      "bytes": 10842
     },
     {
       "path": "docs/FREEZE_COVERAGE_POLICY.md",
@@ -333,6 +338,11 @@
       "bytes": 14402
     },
     {
+      "path": "tests/test_release_gate.py",
+      "sha256": "31bb399e0820c2d18068c07b2218e15c534487e37bdc108b56a767746c332f70",
+      "bytes": 9142
+    },
+    {
       "path": "tests/test_schema_fixtures.py",
       "sha256": "32c59a3e620000c5b7f6efe3cfaec7f1ec319a84ebda0828e4153d749f70514b",
       "bytes": 4574
@@ -364,8 +374,8 @@
     },
     {
       "path": "tests/test_version_consistency.py",
-      "sha256": "e7f148cc13ec713a81f391a9f3c44faaaddea410f4064749a687e0ee7701395f",
-      "bytes": 8140
+      "sha256": "aa47dc9da25c3ec22500c9879ccd894c7548d8f9360277e05868d507df4763d3",
+      "bytes": 6278
     },
     {
       "path": "tocs/TOC_ARK-Core_v1.0.5.md",
