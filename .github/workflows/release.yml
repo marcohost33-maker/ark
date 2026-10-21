@@ -1,5 +1,8 @@
 # Release hardening (issue #19): SBOM + build-provenance attestation on tag.
-# Runs only on version tags / manual dispatch, so it does not gate normal PRs.
+# Runs only for version tags, so it does not gate normal PRs. A manual dispatch is
+# kept for re-running a tag, but the job is skipped on any non-tag ref, and the
+# release gate refuses a non-tag ref as well (cross-family review ARK-P1-02):
+# a branch run never builds, attests or uploads release artifacts.
 # All actions are pinned to immutable commit SHAs (zizmor workflow-audit clean).
 name: release
 
@@ -13,6 +16,7 @@ permissions: {}
 jobs:
   provenance:
     name: sbom + attestation
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
       contents: read        # read source only; no release-asset writes here
@@ -29,20 +33,34 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Release gate (strict SemVer VERSION, tag ref only, tag == v<VERSION>)
+        id: version
+        # SPECS/VERSIONING_POLICY_v1.md: a release never attests a manifest of another
+        # version. TOOLS/release_gate.py uses the same SemVer grammar as the version
+        # tests (ark_semver.SEMVER_RE, full match) and reads only repo content and
+        # GitHub's own ref env vars; no workflow expression is expanded into a script.
+        run: python TOOLS/release_gate.py
+
       - name: Install pinned tooling
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-ci.txt
           pip install cyclonedx-bom==7.3.0
 
+      - name: Test suite on the release commit (includes version + release-gate tests)
+        run: pytest -q
+
       - name: Freeze-manifest gate (must be in sync at release)
         run: python TOOLS/freeze_manifest.py
 
       - name: Build release artifacts (SBOM + freeze manifest)
+        env:
+          ARK_VERSION: ${{ steps.version.outputs.version }}
         run: |
           mkdir -p dist
           cyclonedx-py environment --output-format JSON --outfile dist/sbom.cdx.json
-          cp artifacts/FREEZE_MANIFEST_v1.0.5.json dist/FREEZE_MANIFEST_v1.0.5.json
+          cp "artifacts/FREEZE_MANIFEST_v${ARK_VERSION}.json" dist/
+          cp VERSION dist/VERSION
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373  # v4.1.1

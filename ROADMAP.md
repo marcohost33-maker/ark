@@ -1,15 +1,15 @@
 # ARK-Core — Roadmap
 
-> Initial-Draft (2026-06-02), Stand aktualisiert 2026-09-27. Abgeleitet aus dem Freeze-Stand v1.0.5.
+> Initial-Draft (2026-06-02), Stand aktualisiert 2026-10-19. Abgeleitet aus dem Freeze-Stand v1.0.5.
 > Reihenfolge = Vorschlag, nicht Zusage. Richtung entscheidet Coworker-Research.
 
 ## Stand
-- **v1.0.5 (Freeze):** 4 JSON-Schemas, 14 Specs, 6 deterministische Python-Validatoren
+- **v1.0.5 (Freeze):** 4 JSON-Schemas, 15 Specs, 6 deterministische Python-Validatoren
   (`validate_run`, `provenance_validate`, `event_hysteresis`, `severity_mapping`,
   `root_finding`, `contradiction_rules`) + 1 Integritäts-Tool (`freeze_manifest`),
-  Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, 65 Dateien gepinnt, Stand 2026-09-28).
-- **CI-Gates aktiv (verifiziert 2026-09-28):** `ruff check .` clean · `compileall`
-  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **165/165 PASS** ·
+  Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, 74 Dateien gepinnt, Stand 2026-10-19).
+- **CI-Gates aktiv (verifiziert 2026-09-28; Zählung lokal 2026-10-19):** `ruff check .` clean · `compileall`
+  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **266 passed / 1 skipped** (lokal 2026-10-19) ·
   zizmor Workflow-Audit (required) · Dependabot (github-actions, weekly, SHA-Pins).
 
 ## Phase 1 — Repo-Init & CI-Härtung
@@ -40,7 +40,19 @@
 - [x] `NEG.KERNEL.*` non-downgradable (Kernel-Integrität = Reproduzierbarkeits-Anker).
 - [x] Nicht ladbare Policy / nicht listbares Run-Verzeichnis: CLI schreibt REJECT-Report mit `NEG.POLICY.UNREADABLE` (HARD, non-downgradable), Exit 1, alter Report wird ersetzt. _(#33)_
 - [x] `run_id` unabhängig vom Pfad-Trenner am Ende (`run\` auf Windows). _(#34)_
+- [x] Opt-in `--strict-exit`: Exitcode trägt das Verdikt (0 ACCEPT/ACCEPT_WITH_NOTES, 1 REJECT, 2 Werkzeugfehler = argparse-Usage-Code, 3 REVIEW); Default unverändert. Vertrag in `SPECS/REPORTING_POLICY_v1.md`, Golden-Vektoren `TESTVECTORS/exit/`. _(#37)_
+- [x] Interner Absturz (z. B. fehlendes Schema) = Werkzeugfehler statt Traceback-Exit 1 (unter `--strict-exit` sonst als REJECT gelesen); ein alter Report am Ausgabepfad wird dabei entfernt, damit kein veraltetes ACCEPT liegen bleibt. End-to-End-Test auf echtem Prozess-Exitcode. _(#37)_
+
+## Phase 4 — Versionierung (`SPECS/VERSIONING_POLICY_v1.md`, Status PROPOSED)
+- [x] `VERSION` als einzige Quelle; Lockstep-Kopien (14+1 Spec-Header, Manifest-Name + `artifact`, `CITATION.cff`, `AGENTS.md`, README-Status, Beispiel-Provenance) per Gate in jedem PR geprüft (`tests/test_version_consistency.py`).
+- [x] Release-Gate: Tag muss `v<VERSION>` sein, Manifest-Pfad aus `VERSION` statt hart kodiert; Gate-Skript mit 7 Szenarien unter `bash` und `bash -eo pipefail` getestet.
+- [x] Bump-Ablauf end-to-end in einer Repo-Kopie getestet (1.0.5 -> 1.1.0, Freeze-Gate danach in sync).
+- [x] `VERSION` im Freeze-Manifest Pflicht (Coverage-Policy).
 
 ## Offen / zu entscheiden
-- Versionierungs-Politik nach Freeze (SemVer? Schema-Version getrennt von Tool-Version?).
+- **Release 1.1.0** (VERSIONING_POLICY §6): seit dem Origin-Zip kamen NEG-IDs, Verdikt-Verschärfungen/-Lockerungen und CLI-Flags dazu -> laut §3 MINOR. Es existiert noch kein einziger Tag; „v1.0.5 (Freeze)“ ist nirgends verankert.
+- VERSIONING_POLICY von PROPOSED auf ACCEPTED (Owner-Entscheid), inkl. Bump-Regel „Lockerung nie PATCH“.
+- Phase 2 Schema-Versionen (§4): `schema_version` + `tool{name,version}` im Gate-Report (SARIF-Modell) — bricht Konsumenten mit dem alten Schema (`additionalProperties: false`), braucht Migrationsplan (USK-Adapter).
+- `--strict-exit` als Default (#37, Schritt 2): erst wenn alle Aufrufer (CI, USK-Adapter, Skripte) migriert sind; offen, ob REVIEW CI rot färben soll.
+- REVIEW und ACCEPT_WITH_NOTES sind aus eigenen `validate_run`-Befunden derzeit unerreichbar (alle gerouteten NEG-IDs non-downgradable): gewollt oder fehlt ein downgradebarer Check?
 - Verhältnis zu den übrigen Governance-Stack-Säulen (Cross-Referenz-Specs).

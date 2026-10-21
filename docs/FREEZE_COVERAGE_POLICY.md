@@ -14,6 +14,7 @@ gate (`python TOOLS/freeze_manifest.py`) is fail-closed on any drift.
 | Specs | `SPECS/*.md` | Specs are the contract source (code follows spec). |
 | Test vectors | `TESTVECTORS/**` | Golden inputs/oracles. |
 | Frozen docs/TOC | `docs/architecture_overview.md`, `docs/FREEZE_COVERAGE_POLICY.md`, `tocs/*`, `README.md`, `artifacts/FREEZE_SUMMARY_*.md` | Released documentation surface. |
+| Release identity | `VERSION` | Single source of truth for the release version (`SPECS/VERSIONING_POLICY_v1.md`); a silent edit would relabel the frozen state. |
 | Line-ending normalization | `.gitattributes` | Cross-platform determinism for byte-level hashes; without it, Windows CRLF normalization can create false or masked drift. |
 
 ## Explicit exclusion

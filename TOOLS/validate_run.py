@@ -17,22 +17,15 @@ policy is ``{}`` and classification is identical to the pre-hardening tool.
 """
 import json
 import os
-import re
 from datetime import datetime, timezone
 
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
+# Official SemVer 2.0.0 regex, ASCII-only and anchored with \Z: one grammar for the
+# kernel check here and the release gate (TOOLS/ark_semver.py, ARK-EQ-01/02).
+from ark_semver import SEMVER_RE
 from severity_mapping import classify_neg_id, is_non_downgradable
 
-# Official SemVer 2.0.0 regex (semver.org, "Backus-Naur Form Grammar" appendix).
-# Forbids leading zeros in numeric prerelease identifiers and empty identifiers,
-# which the previous pattern wrongly accepted (e.g. 1.2.3-0123, 1.0.0-alpha..).
-SEMVER_RE = re.compile(
-    r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)"
-    r"(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)"
-    r"(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
-    r"(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
-)
 ROOT_ALLOWED_METHODS = {"bisect", "brentq", "brenth", "ridder", "toms748"}
 
 ALLOWED_SEVERITIES = {"HARD_FAIL", "SOFT_FAIL", "WARNING"}
@@ -42,6 +35,19 @@ _ALLOWED_POLICY_KEYS = {"severity_overrides", "known_issues", "waivers"}
 # CLI verdict when the policy cannot be established (issue #33); HARD and
 # non-downgradable in severity_mapping -- a policy cannot waive its own absence.
 POLICY_UNREADABLE = "NEG.POLICY.UNREADABLE"
+# Opt-in CLI exit codes (``--strict-exit``, issue #37). 2 matches argparse's own
+# usage-error code, so every "the tool did not run cleanly" case shares one code
+# and the verdicts keep theirs.
+EXIT_OK = 0
+EXIT_REJECT = 1
+EXIT_TOOL_ERROR = 2
+EXIT_REVIEW = 3
+_STRICT_EXIT_BY_STATUS = {
+    "ACCEPT": EXIT_OK,
+    "ACCEPT_WITH_NOTES": EXIT_OK,
+    "REJECT": EXIT_REJECT,
+    "REVIEW": EXIT_REVIEW,
+}
 
 
 class PolicyError(ValueError):
@@ -398,18 +404,44 @@ def policy_unreadable_report(run_dir):
     return report
 
 
+def strict_exit_code(status):
+    """Exit code of a report status under ``--strict-exit`` (issue #37).
+
+    Fail-closed: a status outside the report schema's enum -- including a
+    non-string such as a list -- maps to REJECT instead of raising.
+    """
+    if not isinstance(status, str):
+        return EXIT_REJECT
+    return _STRICT_EXIT_BY_STATUS.get(status, EXIT_REJECT)
+
+
+def _discard_stale_report(out):
+    """Remove a report left at ``out`` by an earlier run, where the FS allows it."""
+    try:
+        os.remove(out)
+    except OSError:
+        pass
+
+
 def main(argv=None):
     """CLI entry point. Returns the process exit code.
 
     0: a report was written (whatever its status). 1: the policy could not be
     established -- a REJECT report with ``NEG.POLICY.UNREADABLE`` was written --
-    or the report itself could not be written. On a write failure a stale report
-    at the output path is removed where possible; if it cannot be removed either
-    (read-only or locked file on Windows) it stays and only the exit code 1
-    signals the failure.
+    the report itself could not be written, or the validator failed internally
+    (e.g. a missing schema file; no report is written). 2: argparse usage error.
+    When no report is written, a stale report at the output path is removed
+    where possible; if it cannot be removed either (read-only or locked file on
+    Windows) it stays and only the exit code signals the failure.
+
+    With ``--strict-exit`` the code also carries the verdict (issue #37):
+    0 ACCEPT/ACCEPT_WITH_NOTES, 1 REJECT, 2 tool error (policy error, report
+    not written, internal failure; same code as an argparse usage error),
+    3 REVIEW.
     """
     import argparse
     import sys
+    import traceback
 
     ap = argparse.ArgumentParser(description="ARK run-gate validator (deterministic).")
     ap.add_argument("--run", required=True)
@@ -420,30 +452,44 @@ def main(argv=None):
         help="Explicit policy file (severity_overrides/known_issues/waivers). "
         "Defaults to <run>/policy.json if present.",
     )
+    ap.add_argument(
+        "--strict-exit",
+        action="store_true",
+        help="Exit code carries the verdict: 0 ACCEPT/ACCEPT_WITH_NOTES, 1 REJECT, "
+        "2 tool error, 3 REVIEW. Default: 0 whenever a report was written.",
+    )
     args = ap.parse_args(argv)
+    tool_error = EXIT_TOOL_ERROR if args.strict_exit else 1
     out = args.out or os.path.join(args.run, "reports", "gate_report.json")
     rc = 0
     try:
-        loaded_policy = load_policy(args.policy) if args.policy else None
-        report = validate_run(args.run, policy=loaded_policy)
-    except PolicyError as exc:
-        print(f"validate_run: policy error -> REJECT: {exc}", file=sys.stderr)
-        report = policy_unreadable_report(args.run)
-        rc = 1
+        try:
+            loaded_policy = load_policy(args.policy) if args.policy else None
+            report = validate_run(args.run, policy=loaded_policy)
+        except PolicyError as exc:
+            print(f"validate_run: policy error -> REJECT: {exc}", file=sys.stderr)
+            report = policy_unreadable_report(args.run)
+            rc = tool_error
+    except Exception:  # noqa: BLE001 - a crash is a tool error, never a verdict
+        # Without this an uncaught exception exits 1 (= REJECT under
+        # --strict-exit) and leaves an older report -- possibly ACCEPT -- in place.
+        traceback.print_exc()
+        print("validate_run: internal error, no report written", file=sys.stderr)
+        _discard_stale_report(out)
+        return tool_error
     try:
         out_dir = os.path.dirname(out)
         if out_dir:  # "--out report.json" has no directory part
             os.makedirs(out_dir, exist_ok=True)
         with open(out, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, sort_keys=True)
-    except OSError as exc:
+    except Exception as exc:  # noqa: BLE001 - OSError, or a partial dump
         print(f"validate_run: cannot write report {out}: {exc}", file=sys.stderr)
-        try:
-            os.remove(out)
-        except OSError:
-            pass
-        return 1
+        _discard_stale_report(out)
+        return tool_error
     print(out)
+    if args.strict_exit and rc == 0:
+        return strict_exit_code(report["status"])
     return rc
 
 
