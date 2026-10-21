@@ -75,12 +75,15 @@ therefore needs a consumer migration plan and owner approval.
    then run `python TOOLS/freeze_manifest.py --regenerate`. The previous manifest stays as a
    historical record.
 4. Merge, then push the tag `v<VERSION>`; the release workflow runs the release gate
-   (strict SemVer, tag ref, tag == `v<VERSION>`, manifest), the full test suite and the freeze
-   gate, then attests SBOM + manifest.
+   (strict SemVer, tag ref, tag == `v<VERSION>`, manifest), the same ruff and compile checks
+   as `ci.yml`, the full test suite and the freeze gate, then attests SBOM + manifest.
 
-## 6. Current state (2026-10-19)
+## 6. Current state (2026-10-21)
 No tag exists. Since the frozen origin zip (SHA `3f515f30...`), the hardening waves added NEG IDs
 (`NEG.KERNEL.NAME_CASE_MISMATCH`, `NEG.POLICY.UNREADABLE`), tightened and loosened verdicts
 (#34: trailing separator no longer REJECTs) and added CLI flags (`--policy`, `--strict-exit`).
+#39 tightened the kernel SemVer check: one grammar (`TOOLS/ark_semver.py`), ASCII digits only,
+no trailing newline accepted. A kernel VERSION that used non-ASCII digits or ended in a newline
+now fails where it passed before (tightening, MINOR).
 Under section 3 the current tree is a MINOR release over the origin: `1.1.0` is due. The bump
 itself is an owner decision and not part of this change.

@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-10-21T09:23:06.001435+00:00",
+  "created_utc": "2026-10-21T10:47:19.921582+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -104,8 +104,8 @@
     },
     {
       "path": "SPECS/VERSIONING_POLICY_v1.md",
-      "sha256": "3b26260f710eb25d89523435a32a1795cee0c703173afa371651d46046f9b6be",
-      "bytes": 5978
+      "sha256": "a8c19517e9bf09e81d4e9208e311056c9da15c5af9e1dcdf4aaf07efaad9eef1",
+      "bytes": 6269
     },
     {
       "path": "TESTVECTORS/baseline/baseline_missing.json",

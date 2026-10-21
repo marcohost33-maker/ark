@@ -47,6 +47,14 @@ jobs:
           pip install -r requirements-ci.txt
           pip install cyclonedx-bom==7.3.0
 
+      # Same gate as ci.yml on the tagged commit (ARK-R8-003): a tag pushed to a
+      # commit that never ran ci.yml still cannot attest code that fails lint.
+      - name: ruff (DoD, full default rule set)
+        run: ruff check .
+
+      - name: compile
+        run: python -m compileall -q TOOLS tests
+
       - name: Test suite on the release commit (includes version + release-gate tests)
         run: pytest -q
 
