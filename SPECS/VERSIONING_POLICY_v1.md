@@ -13,7 +13,7 @@ and by the tag gate in `.github/workflows/release.yml` (every release).
   `VERSION`, so a release can never attest a manifest of another version.
 - The release gate is `TOOLS/release_gate.py`, the first step of the release job. It refuses
   (exit 1, nothing built or attested): a `VERSION` that is not exactly one strict SemVer 2.0.0
-  line (`validate_run.SEMVER_RE`, full match, LF-terminated — the same rule as the PR tests);
+  line (`ark_semver.SEMVER_RE`: ASCII digits only, full match, LF-terminated — the same module the kernel check and the PR tests use; stdlib only, ARK-EQ-01/02);
   any ref that is not a tag (a manual dispatch on a branch never attests; the job itself is also
   skipped on non-tag refs); a tag other than `v<VERSION>`; a missing manifest or one whose
   `artifact` field does not read `ARK-Core_v<VERSION>_freeze`. The full test suite then runs on

@@ -17,22 +17,15 @@ policy is ``{}`` and classification is identical to the pre-hardening tool.
 """
 import json
 import os
-import re
 from datetime import datetime, timezone
 
 from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
+# Official SemVer 2.0.0 regex, ASCII-only and anchored with \Z: one grammar for the
+# kernel check here and the release gate (TOOLS/ark_semver.py, ARK-EQ-01/02).
+from ark_semver import SEMVER_RE
 from severity_mapping import classify_neg_id, is_non_downgradable
 
-# Official SemVer 2.0.0 regex (semver.org, "Backus-Naur Form Grammar" appendix).
-# Forbids leading zeros in numeric prerelease identifiers and empty identifiers,
-# which the previous pattern wrongly accepted (e.g. 1.2.3-0123, 1.0.0-alpha..).
-SEMVER_RE = re.compile(
-    r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)"
-    r"(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)"
-    r"(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
-    r"(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$"
-)
 ROOT_ALLOWED_METHODS = {"bisect", "brentq", "brenth", "ridder", "toms748"}
 
 ALLOWED_SEVERITIES = {"HARD_FAIL", "SOFT_FAIL", "WARNING"}

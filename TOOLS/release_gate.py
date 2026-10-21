@@ -10,8 +10,9 @@ manual dispatch on a branch passed it without any tag at all (ARK-P1-02).
 Rules, all fail-closed (exit 1, nothing written to ``GITHUB_OUTPUT``):
 
 * ``VERSION`` is exactly one strict SemVer 2.0.0 line ending in ``\\n``. The
-  grammar is ``validate_run.SEMVER_RE`` (the semver.org regex), matched in full,
-  the same rule as ``tests/test_version_consistency.py``.
+  grammar is ``ark_semver.SEMVER_RE`` (the semver.org regex, ASCII digits only),
+  matched in full; ``validate_run`` and ``tests/test_version_consistency.py`` use
+  the same module.
 * The workflow runs on a tag: ``GITHUB_REF_TYPE == "tag"``. A branch ref is not
   a release, so a manual dispatch on a branch attests nothing.
 * ``GITHUB_REF_NAME == "v" + VERSION``.
@@ -21,6 +22,8 @@ Rules, all fail-closed (exit 1, nothing written to ``GITHUB_OUTPUT``):
 On success it appends ``version=<VERSION>`` to ``GITHUB_OUTPUT`` and exits 0.
 Only environment variables and repository files are read; no workflow
 expression is expanded into a script (template-injection safe).
+Standard library only: the gate runs before ``pip install`` in the release job,
+so it must not import ``validate_run`` (which needs ``jsonschema``; ARK-EQ-02).
 Exit 2 is a usage/environment error (e.g. ``GITHUB_OUTPUT`` unset).
 """
 from __future__ import annotations
@@ -33,7 +36,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from validate_run import SEMVER_RE  # noqa: E402  (single SemVer grammar for the repo)
+from ark_semver import SEMVER_RE  # noqa: E402  (single SemVer grammar, stdlib only)
 
 
 class ReleaseGateError(ValueError):
@@ -55,10 +58,10 @@ def read_version(root: Path) -> str:
     except UnicodeDecodeError as exc:
         raise ReleaseGateError("VERSION is not UTF-8") from exc
     if not raw.endswith("\n") or raw.count("\n") != 1:
-        raise ReleaseGateError(f"VERSION must be exactly one line ending in a newline, got {raw!r}")
+        raise ReleaseGateError(f"VERSION must be exactly one line ending in a newline, got {raw!a}")
     version = raw[:-1]
     if not is_semver(version):
-        raise ReleaseGateError(f"VERSION is not strict SemVer 2.0.0: {version!r}")
+        raise ReleaseGateError(f"VERSION is not strict SemVer 2.0.0: {version!a}")
     return version
 
 
@@ -67,11 +70,11 @@ def check_release(root: Path, ref_type: str | None, ref_name: str | None) -> str
     version = read_version(root)
     if ref_type != "tag":
         raise ReleaseGateError(
-            f"release runs only on a tag ref, got ref type {ref_type!r} ({ref_name!r}); "
+            f"release runs only on a tag ref, got ref type {ref_type!a} ({ref_name!a}); "
             "a branch dispatch attests nothing"
         )
     if ref_name != f"v{version}":
-        raise ReleaseGateError(f"tag {ref_name!r} does not match VERSION (expected 'v{version}')")
+        raise ReleaseGateError(f"tag {ref_name!a} does not match VERSION (expected 'v{version}')")
     manifest = root / "artifacts" / f"FREEZE_MANIFEST_v{version}.json"
     try:
         data = json.loads(manifest.read_text(encoding="utf-8"))
@@ -97,7 +100,9 @@ def main(argv: list[str] | None = None) -> int:
             Path(args.root), os.environ.get("GITHUB_REF_TYPE"), os.environ.get("GITHUB_REF_NAME")
         )
     except ReleaseGateError as exc:
-        print(f"release gate: {exc}", file=sys.stderr)
+        # ASCII-safe: a console that cannot encode the message must not turn the
+        # refusal into a crash with the same exit code.
+        print(f"release gate: {exc}".encode("ascii", "backslashreplace").decode("ascii"), file=sys.stderr)
         return 1
     with open(output, "a", encoding="utf-8", newline="\n") as fh:
         fh.write(f"version={version}\n")

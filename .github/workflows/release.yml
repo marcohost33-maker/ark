@@ -37,7 +37,7 @@ jobs:
         id: version
         # SPECS/VERSIONING_POLICY_v1.md: a release never attests a manifest of another
         # version. TOOLS/release_gate.py uses the same SemVer grammar as the version
-        # tests (validate_run.SEMVER_RE, full match) and reads only repo content and
+        # tests (ark_semver.SEMVER_RE, full match) and reads only repo content and
         # GitHub's own ref env vars; no workflow expression is expanded into a script.
         run: python TOOLS/release_gate.py
 

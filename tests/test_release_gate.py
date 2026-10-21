@@ -93,6 +93,31 @@ def test_invalid_version_is_refused_even_with_matching_tag_and_manifest(tmp_path
     assert "SemVer" in err
 
 
+@pytest.mark.parametrize("version", ["1.0.1" + chr(0xFF15), "1.0.1" + chr(0x0665)], ids=["fullwidth-5", "arabic-indic-5"])
+def test_unicode_digit_version_is_refused(tmp_path, version):
+    # ARK-EQ-01: a Unicode-aware digit class let these through with rc 0 and a
+    # matching tag + manifest. SemVer numeric identifiers are ASCII [0-9].
+    repo = make_repo(tmp_path, f"{version}\n".encode())
+    assert (repo / "artifacts" / f"FREEZE_MANIFEST_v{version}.json").is_file()
+    rc, written, err = run_gate(repo, "tag", f"v{version}")
+    assert rc == 1 and written is None, f"Expected: refused; Observed: rc={rc}, output={written!a}"
+    assert "SemVer" in err
+
+
+def test_gate_runs_without_third_party_packages(tmp_path):
+    # ARK-EQ-02: the gate step runs before "pip install"; importing validate_run
+    # (jsonschema) made it fail on every legitimate tag. Control first: under -I -S
+    # this interpreter really has no third-party package, else the test is blind.
+    ctl = subprocess.run([sys.executable, "-I", "-S", "-c", "import jsonschema"], capture_output=True, text=True,
+                         timeout=60)
+    assert ctl.returncode != 0, "control: jsonschema importable without site-packages, test would be blind"
+    repo = make_repo(tmp_path, b"1.0.5\n")
+    shutil.copytree(ROOT / "TOOLS", repo / "TOOLS", ignore=shutil.ignore_patterns("__pycache__"))
+    cmd = [sys.executable, "-I", "-S", str(repo / "TOOLS" / "release_gate.py"), "--root", str(repo)]
+    rc, written, err = run_gate(repo, "tag", "v1.0.5", argv=cmd, cwd=repo)
+    assert rc == 0 and written == "version=1.0.5\n", f"Expected: rc 0 without third-party packages; Observed: rc={rc} {err}"
+
+
 @pytest.mark.parametrize("raw", [b"1.0.5", b"1.0.5\r\n", b"1.0.5\n\n", b"\n", b"", b"\xef\xbb\xbf1.0.5\n", b"1.0.5 \n",
                                  b"\xff\xfe1\n"])
 def test_malformed_version_file_is_refused(tmp_path, raw):
@@ -193,11 +218,13 @@ def test_workflow_gate_command_refuses_invalid_version(tmp_path):
     assert argv[:2] == ["python", "TOOLS/release_gate.py"], f"gate step runs {argv!r}"
     repo = make_repo(tmp_path, b"1.0.5.6\n")
     shutil.copytree(ROOT / "TOOLS", repo / "TOOLS", ignore=shutil.ignore_patterns("__pycache__"))
-    rc, written, _ = run_gate(repo, "tag", "v1.0.5.6", argv=[sys.executable, *argv[1:]], cwd=repo)
+    # -I -S: no site-packages, as in the release job before "pip install" (ARK-EQ-02).
+    stdlib_only = [sys.executable, "-I", "-S", *argv[1:]]
+    rc, written, _ = run_gate(repo, "tag", "v1.0.5.6", argv=stdlib_only, cwd=repo)
     assert rc == 1 and written is None, f"Expected: refused; Observed: rc={rc}, output={written!r}"
     (repo / "VERSION").write_bytes(b"1.0.5\n")
     (repo / "artifacts" / "FREEZE_MANIFEST_v1.0.5.json").write_text(
         json.dumps({"artifact": "ARK-Core_v1.0.5_freeze"}), encoding="utf-8"
     )
-    rc, written, err = run_gate(repo, "tag", "v1.0.5", argv=[sys.executable, *argv[1:]], cwd=repo)
+    rc, written, err = run_gate(repo, "tag", "v1.0.5", argv=stdlib_only, cwd=repo)
     assert rc == 0 and written == "version=1.0.5\n", err

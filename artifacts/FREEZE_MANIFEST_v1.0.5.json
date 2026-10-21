@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-10-21T08:21:00.229999+00:00",
+  "created_utc": "2026-10-21T09:23:06.001435+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -104,8 +104,8 @@
     },
     {
       "path": "SPECS/VERSIONING_POLICY_v1.md",
-      "sha256": "249646f62b96e6d7a8bf8701ddc7e36c6d7af10b05a9065d9d509a8dcb0d31c7",
-      "bytes": 5910
+      "sha256": "3b26260f710eb25d89523435a32a1795cee0c703173afa371651d46046f9b6be",
+      "bytes": 5978
     },
     {
       "path": "TESTVECTORS/baseline/baseline_missing.json",
@@ -183,6 +183,11 @@
       "bytes": 290
     },
     {
+      "path": "TOOLS/ark_semver.py",
+      "sha256": "64b40553456308ffdb4406a63f4a1afe685ec82e9fb40e121194e66ab8d173f8",
+      "bytes": 1568
+    },
+    {
       "path": "TOOLS/contradiction_rules.py",
       "sha256": "2ebc43a97af514ff480f8c0c511b29aa657cb3a563165d2d7f3b0c76e61316a5",
       "bytes": 7324
@@ -204,8 +209,8 @@
     },
     {
       "path": "TOOLS/release_gate.py",
-      "sha256": "fe9ae3ab925edacef15285e511f4af389cdf162a77dc86aafa295bc74bdf9994",
-      "bytes": 4642
+      "sha256": "5eb1c0873ad98ce38f178d1f9057bcbe7b0ceeb393610e4badce5d210b0d417d",
+      "bytes": 5032
     },
     {
       "path": "TOOLS/root_finding.py",
@@ -219,8 +224,8 @@
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "add58d93f49bfc23099422c3b0315c53d0d57a49302bb95841261a4906bbabc6",
-      "bytes": 20908
+      "sha256": "58a2e72e2ed7e69e2cad7b8a3485b42c9c211e04afc3946c58a4bae4da292ac1",
+      "bytes": 20556
     },
     {
       "path": "VERSION",
@@ -339,8 +344,8 @@
     },
     {
       "path": "tests/test_release_gate.py",
-      "sha256": "31bb399e0820c2d18068c07b2218e15c534487e37bdc108b56a767746c332f70",
-      "bytes": 9142
+      "sha256": "a1e853a6ebd9bd710d34fe9ee2a252e738ba755741e70866ffbb591e9803744e",
+      "bytes": 10927
     },
     {
       "path": "tests/test_schema_fixtures.py",
@@ -349,8 +354,8 @@
     },
     {
       "path": "tests/test_semver.py",
-      "sha256": "c542edd36987e1508e596d3990e0d8a011e146a108aaac29919abe224f5b0b58",
-      "bytes": 1851
+      "sha256": "8b16e1eedea85fc043fec5b40d74b9e5bff6b95a02dd31db30499441c824c8c8",
+      "bytes": 3326
     },
     {
       "path": "tests/test_strict_exit.py",
