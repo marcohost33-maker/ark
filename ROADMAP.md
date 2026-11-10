@@ -54,6 +54,8 @@
 ## Phase 4b — Release-Pfad (GPT-6 R8, 2026-10-21)
 - [x] **Release-Blocker behoben:** `release.yml` rief `cyclonedx-py environment --outfile …` — keine gültige Option (Exit 2); der erste Tag wäre nach den Gates und vor der Attestation gescheitert. Unentdeckt, weil der Schritt nur auf Tags lief. Jetzt `TOOLS/release_sbom.py`, in jedem PR von `ci.yml` ausgeführt.
 - [x] ARK-R8-002: Runtime-SBOM (`sbom.runtime.cdx.json`) aus sauberer venv nur mit `requirements-runtime.txt`, exakt gegen die Pins geprüft (fail-closed); Build-SBOM separat benannt. Test: jeder Drittanbieter-Import in `TOOLS/` ist gepinnt, CI testet unter genau den attestierten Versionen.
+- [x] ARK-R8-003: Tag-Job führt `ruff` + `compileall` wie `ci.yml` (#41 übernommen); struktureller Test verlangt jedes `ci.yml`-Gate auch im Tag-Job.
+- [x] Hash-Locks (OpenSSF Scorecard *Pinned-Dependencies*): `requirements-*.in` → `uv pip compile --generate-hashes`; jede Installation mit `--require-hashes --only-binary=:all:`, kein ungepinntes `pip --upgrade` mehr.
 - [x] Python-Floor-Drift (Doku ≥3.10/≥3.11 vs. CI 3.12) behoben und per Test an die Workflows gebunden.
 - [ ] ARK-R8-001 installierbares, attestiertes Software-Subjekt (Wheel/sdist) — Owner-Entscheid.
 - [ ] ARK-R8-005 echter Consumer-Receipt DDE→ARK→USK — Owner-Entscheid / Cross-Repo.

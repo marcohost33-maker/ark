@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-11-10T19:25:06.146472+00:00",
+  "created_utc": "2026-11-10T19:29:50.478399+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -9,8 +9,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "b5a083dd6e7b19d9a6688433261d266a2c6ba5b8f598c7fe43a746655fa3e0e7",
-      "bytes": 2056
+      "sha256": "14843825e31916fcc11eb3502db39632779fc73b9721551f778754a92e3709c3",
+      "bytes": 2094
     },
     {
       "path": "SCHEMAS/gate_report.schema.json",
@@ -214,8 +214,8 @@
     },
     {
       "path": "TOOLS/release_sbom.py",
-      "sha256": "845d0c7002380590dd6988bfa6ce120461844da94af63c374861c76064dff41c",
-      "bytes": 7820
+      "sha256": "289cf629ee2593fc678795371e2eb652911a0586237a561685385c15f2456603",
+      "bytes": 10217
     },
     {
       "path": "TOOLS/root_finding.py",
@@ -259,8 +259,8 @@
     },
     {
       "path": "docs/RELEASE_HARDENING.md",
-      "sha256": "dda9e913f9907611543d64958feaa57e7ef38a870204d33caecb19fdad2e059e",
-      "bytes": 5805
+      "sha256": "007e77d9dbee9bba2014f2d1504ee7c5dcbfd1088966b4716196c22f7e4cc443",
+      "bytes": 7435
     },
     {
       "path": "docs/architecture_overview.md",
@@ -318,14 +318,24 @@
       "bytes": 4014
     },
     {
+      "path": "requirements-ci.in",
+      "sha256": "5129a72191d4481c8cd09e7565fb2ca5ccb2ba61547de6a282eb04d028130167",
+      "bytes": 292
+    },
+    {
       "path": "requirements-ci.txt",
-      "sha256": "32fadebf50d183b8d7aecff7d806436fb1a229b4e36602eebc8a86fdc8056375",
-      "bytes": 547
+      "sha256": "6e5d6e077ca06dd1cf465cd2c30f32368eddd47aa3eccab5d75408a60b0500e3",
+      "bytes": 45293
+    },
+    {
+      "path": "requirements-runtime.in",
+      "sha256": "757f073cef8e3833d03679ed1e5b08ba68614aacbbe48f49d8fb8ebc486293bc",
+      "bytes": 468
     },
     {
       "path": "requirements-runtime.txt",
-      "sha256": "1192ceadf268e1bdcaf52abb59e8ae8ebfa4d28d4c007cd5b4df9bf871a7d105",
-      "bytes": 750
+      "sha256": "01c58940c5dc117d3b15bb40a67db344cfa75f66a4bdde14d579e8ce358d4566",
+      "bytes": 22872
     },
     {
       "path": "tests/test_example_minimal_run.py",
@@ -359,8 +369,8 @@
     },
     {
       "path": "tests/test_release_sbom.py",
-      "sha256": "d816781ed2e27e44ac8d7db6f924892990762de9272ec26233a9a14c2975aa0f",
-      "bytes": 8284
+      "sha256": "cb94ac2433f17a9faf08c2142dc5d5efcbbacd10f8e2f3a747ff7b5e25b029af",
+      "bytes": 11035
     },
     {
       "path": "tests/test_schema_fixtures.py",

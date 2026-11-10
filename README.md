@@ -15,8 +15,8 @@ Deterministische Python-Tools + JSON-Schemas. Coworker-Research Governance-Stack
   `event_hysteresis`, `severity_mapping`, `root_finding`, `contradiction_rules`;
   plus `freeze_manifest` (Integritäts-Tool, NG-002-Gate), `release_gate` + `ark_semver` (Tag-/SemVer-Gate)
   und `release_sbom` (Runtime- + Build-SBOM, ARK-R8-002).
-- `requirements-runtime.txt` — exakte Laufzeit-Pins der TOOLS (jsonschema, scipy + transitive);
-  `requirements-ci.txt` bindet sie ein und ergänzt die Werkzeug-Pins.
+- `requirements-runtime.txt` / `requirements-ci.txt` — Hash-Locks (sha256 je Artefakt), erzeugt aus
+  `requirements-*.in`; installiert nur mit `--require-hashes` (Ablauf: `docs/RELEASE_HARDENING.md` §4).
 - `TESTVECTORS/` — baseline/report/severity-Testfälle.
 - `artifacts/FREEZE_MANIFEST_v1.0.5.json` — SHA-256 je Datei (Integritäts-Anker).
 - `VERSION` — einzige Quelle der Release-Version; Regeln in `SPECS/VERSIONING_POLICY_v1.md`.
