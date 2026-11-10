@@ -10,7 +10,7 @@
   `release_gate`, `ark_semver`, `release_sbom`),
   Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, Stand 2026-11-10).
 - **CI-Gates aktiv (verifiziert 2026-09-28; Zählung lokal 2026-11-10):** `ruff check .` clean · `compileall`
-  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **325 passed / 1 skipped** (lokal 2026-11-10) ·
+  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **340 passed / 1 skipped** (lokal 2026-11-10) ·
   Release-SBOM-Pfad (`release_sbom.py`, jeder PR) ·
   zizmor Workflow-Audit (required) · Dependabot (github-actions, weekly, SHA-Pins).
 
@@ -56,6 +56,7 @@
 - [x] ARK-R8-002: Runtime-SBOM (`sbom.runtime.cdx.json`) aus sauberer venv nur mit `requirements-runtime.txt`, exakt gegen die Pins geprüft (fail-closed); Build-SBOM separat benannt. Test: jeder Drittanbieter-Import in `TOOLS/` ist gepinnt, CI testet unter genau den attestierten Versionen.
 - [x] ARK-R8-003: Tag-Job führt `ruff` + `compileall` wie `ci.yml` (#41 übernommen); struktureller Test verlangt jedes `ci.yml`-Gate auch im Tag-Job.
 - [x] Hash-Locks (OpenSSF Scorecard *Pinned-Dependencies*): `requirements-*.in` → `uv pip compile --generate-hashes`; jede Installation mit `--require-hashes --only-binary=:all:`, kein ungepinntes `pip --upgrade` mehr.
+- [x] Determinismus: `validate_run` FormatChecker closed-world (`formats=()` + `date-time`) — vorher hing die Menge geprüfter Schema-Formate an installierten Zusatzpaketen (8 bei Konsumenten, 20 in CI).
 - [x] Python-Floor-Drift (Doku ≥3.10/≥3.11 vs. CI 3.12) behoben und per Test an die Workflows gebunden.
 - [ ] ARK-R8-001 installierbares, attestiertes Software-Subjekt (Wheel/sdist) — Owner-Entscheid.
 - [ ] ARK-R8-005 echter Consumer-Receipt DDE→ARK→USK — Owner-Entscheid / Cross-Repo.

@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-11-10T19:29:50.478399+00:00",
+  "created_utc": "2026-11-10T19:32:48.878777+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -9,8 +9,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "14843825e31916fcc11eb3502db39632779fc73b9721551f778754a92e3709c3",
-      "bytes": 2094
+      "sha256": "e8ca22cf0c5934d85fe802083d776fe71b08e95585d45880d62620bfbe4f23a5",
+      "bytes": 2112
     },
     {
       "path": "SCHEMAS/gate_report.schema.json",
@@ -229,8 +229,8 @@
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "58a2e72e2ed7e69e2cad7b8a3485b42c9c211e04afc3946c58a4bae4da292ac1",
-      "bytes": 20556
+      "sha256": "c82c6ed2af1da8dba7664d7aac815d345723c880d07e31fa2c071b6442be8bb1",
+      "bytes": 20999
     },
     {
       "path": "VERSION",
@@ -254,8 +254,8 @@
     },
     {
       "path": "docs/POLICY_LOADING.md",
-      "sha256": "c1820eae9496b80723878fc413565cbc94c7ce25e46b134d4440fd5a0a499d59",
-      "bytes": 2455
+      "sha256": "fcbee880b43f9f44ddc5c0731e06b385005f0bed1fcf155844444f5604d15515",
+      "bytes": 2859
     },
     {
       "path": "docs/RELEASE_HARDENING.md",
@@ -399,8 +399,8 @@
     },
     {
       "path": "tests/test_validate_run_hardening.py",
-      "sha256": "b869806215a329a96461e63f0b008849109abd0b5c1d39ee8121dc4574571e4f",
-      "bytes": 4413
+      "sha256": "a549bd1b93b374ea91c4780537fff2bbe4e30713a2820809fd823aa21de24277",
+      "bytes": 6180
     },
     {
       "path": "tests/test_version_consistency.py",
