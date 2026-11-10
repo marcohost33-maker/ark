@@ -1,15 +1,17 @@
 # ARK-Core — Roadmap
 
-> Initial-Draft (2026-06-02), Stand aktualisiert 2026-10-19. Abgeleitet aus dem Freeze-Stand v1.0.5.
+> Initial-Draft (2026-06-02), Stand aktualisiert 2026-11-10. Abgeleitet aus dem Freeze-Stand v1.0.5.
 > Reihenfolge = Vorschlag, nicht Zusage. Richtung entscheidet Coworker-Research.
 
 ## Stand
 - **v1.0.5 (Freeze):** 4 JSON-Schemas, 15 Specs, 6 deterministische Python-Validatoren
   (`validate_run`, `provenance_validate`, `event_hysteresis`, `severity_mapping`,
-  `root_finding`, `contradiction_rules`) + 1 Integritäts-Tool (`freeze_manifest`),
-  Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, 74 Dateien gepinnt, Stand 2026-10-19).
-- **CI-Gates aktiv (verifiziert 2026-09-28; Zählung lokal 2026-10-19):** `ruff check .` clean · `compileall`
-  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **266 passed / 1 skipped** (lokal 2026-10-19) ·
+  `root_finding`, `contradiction_rules`) + Integritäts-/Release-Tools (`freeze_manifest`,
+  `release_gate`, `ark_semver`, `release_sbom`),
+  Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, Stand 2026-11-10).
+- **CI-Gates aktiv (verifiziert 2026-09-28; Zählung lokal 2026-11-10):** `ruff check .` clean · `compileall`
+  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **325 passed / 1 skipped** (lokal 2026-11-10) ·
+  Release-SBOM-Pfad (`release_sbom.py`, jeder PR) ·
   zizmor Workflow-Audit (required) · Dependabot (github-actions, weekly, SHA-Pins).
 
 ## Phase 1 — Repo-Init & CI-Härtung
@@ -48,6 +50,13 @@
 - [x] Release-Gate: Tag muss `v<VERSION>` sein, Manifest-Pfad aus `VERSION` statt hart kodiert; Gate-Skript mit 7 Szenarien unter `bash` und `bash -eo pipefail` getestet.
 - [x] Bump-Ablauf end-to-end in einer Repo-Kopie getestet (1.0.5 -> 1.1.0, Freeze-Gate danach in sync).
 - [x] `VERSION` im Freeze-Manifest Pflicht (Coverage-Policy).
+
+## Phase 4b — Release-Pfad (GPT-6 R8, 2026-10-21)
+- [x] **Release-Blocker behoben:** `release.yml` rief `cyclonedx-py environment --outfile …` — keine gültige Option (Exit 2); der erste Tag wäre nach den Gates und vor der Attestation gescheitert. Unentdeckt, weil der Schritt nur auf Tags lief. Jetzt `TOOLS/release_sbom.py`, in jedem PR von `ci.yml` ausgeführt.
+- [x] ARK-R8-002: Runtime-SBOM (`sbom.runtime.cdx.json`) aus sauberer venv nur mit `requirements-runtime.txt`, exakt gegen die Pins geprüft (fail-closed); Build-SBOM separat benannt. Test: jeder Drittanbieter-Import in `TOOLS/` ist gepinnt, CI testet unter genau den attestierten Versionen.
+- [x] Python-Floor-Drift (Doku ≥3.10/≥3.11 vs. CI 3.12) behoben und per Test an die Workflows gebunden.
+- [ ] ARK-R8-001 installierbares, attestiertes Software-Subjekt (Wheel/sdist) — Owner-Entscheid.
+- [ ] ARK-R8-005 echter Consumer-Receipt DDE→ARK→USK — Owner-Entscheid / Cross-Repo.
 
 ## Offen / zu entscheiden
 - **Release 1.1.0** (VERSIONING_POLICY §6): seit dem Origin-Zip kamen NEG-IDs, Verdikt-Verschärfungen/-Lockerungen und CLI-Flags dazu -> laut §3 MINOR. Es existiert noch kein einziger Tag; „v1.0.5 (Freeze)“ ist nirgends verankert.

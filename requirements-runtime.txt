@@ -1,0 +1,12 @@
+# Runtime closure of TOOLS/ (ARK-R8-002): what a consumer needs to *run* the
+# validators, nothing else. Direct: jsonschema (validate_run), scipy (root_finding);
+# the rest is their transitive closure, pinned so the runtime SBOM is reproducible.
+# Flat exact pins only (TOOLS/release_sbom.py refuses anything else); the release
+# runtime SBOM must list exactly these. requirements-ci.txt includes this file.
+attrs==26.1.0
+jsonschema==4.26.0
+jsonschema-specifications==2025.9.1
+numpy==2.5.4
+referencing==0.37.0
+rpds-py==2026.9.1
+scipy==1.17.1

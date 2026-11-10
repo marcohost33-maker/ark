@@ -45,7 +45,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-ci.txt
-          pip install cyclonedx-bom==7.3.0
 
       - name: Test suite on the release commit (includes version + release-gate tests)
         run: pytest -q
@@ -53,12 +52,15 @@ jobs:
       - name: Freeze-manifest gate (must be in sync at release)
         run: python TOOLS/freeze_manifest.py
 
-      - name: Build release artifacts (SBOM + freeze manifest)
+      - name: Build release artifacts (runtime + build SBOM, freeze manifest)
         env:
           ARK_VERSION: ${{ steps.version.outputs.version }}
+        # TOOLS/release_sbom.py (ARK-R8-002): runtime SBOM from a clean venv holding only
+        # requirements-runtime.txt, verified name==version against the pins (fail-closed),
+        # plus a separately named SBOM of this build environment. ci.yml runs the same
+        # script on every PR, so this step is not first exercised by a tag.
         run: |
-          mkdir -p dist
-          cyclonedx-py environment --output-format JSON --outfile dist/sbom.cdx.json
+          python TOOLS/release_sbom.py --out dist
           cp "artifacts/FREEZE_MANIFEST_v${ARK_VERSION}.json" dist/
           cp VERSION dist/VERSION
 
