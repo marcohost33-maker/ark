@@ -210,6 +210,20 @@ def test_every_workflow_pip_install_requires_hashes():
                 assert "--upgrade" not in line, f"{wf.name}: unpinned upgrade: {line.strip()}"
 
 
+def test_single_line_run_values_are_valid_yaml_plain_scalars():
+    """A one-line `run:` value is a YAML plain scalar: it must not contain ': ' or ' #'
+    (`--only-binary=:all: -r ...` made ci.yml unparsable, so GitHub created no jobs at all).
+    PyYAML is not in the lock; this catches the trap without a new dependency."""
+    for wf in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
+        for n, line in enumerate(wf.read_text(encoding="utf-8").splitlines(), 1):
+            m = re.match(r"^\s+(?:- )?run: (.+)$", line)
+            if not m or m.group(1).strip() in ("|", ">") or m.group(1)[0] in "'\"":
+                continue
+            value = m.group(1)
+            assert ": " not in value and " #" not in value, (
+                f"{wf.name}:{n}: plain-scalar run value breaks YAML; use `run: |`: {value}")
+
+
 def test_runtime_venv_install_is_hash_and_wheel_only():
     src = (ROOT / "TOOLS" / "release_sbom.py").read_text(encoding="utf-8")
     assert '"--require-hashes", "--only-binary=:all:"' in src

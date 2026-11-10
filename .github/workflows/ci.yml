@@ -58,7 +58,8 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: install
-        run: python -m pip install --require-hashes --only-binary=:all: -r requirements-ci.txt
+        run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-ci.txt
       - name: freeze-manifest gate (byte-identical checkout on every OS)
         run: python TOOLS/freeze_manifest.py
       - name: pytest

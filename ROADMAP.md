@@ -10,7 +10,7 @@
   `release_gate`, `ark_semver`, `release_sbom`),
   Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, Stand 2026-11-10).
 - **CI-Gates aktiv (verifiziert 2026-09-28; Zählung lokal 2026-11-10):** `ruff check .` clean · `compileall`
-  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **340 passed / 1 skipped** (lokal 2026-11-10) ·
+  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **341 passed / 1 skipped** (lokal 2026-11-10) ·
   Release-SBOM-Pfad (`release_sbom.py`, jeder PR) ·
   zizmor Workflow-Audit (required) · Dependabot (github-actions, weekly, SHA-Pins).
 
