@@ -33,3 +33,33 @@ jobs:
         run: pytest -q
       - name: release SBOM path (ARK-R8-002, same script as release.yml)
         run: python TOOLS/release_sbom.py --out "$RUNNER_TEMP/sbom"
+
+  # ARK-R8-009: the determinism claims (verdict independent of the filesystem, LF bytes via
+  # .gitattributes, freeze hashes) are exercised on the platforms consumers run, not only on
+  # Linux. Separate job so the required `gate` check keeps its name; same hash-locked install.
+  portability:
+    name: portability (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            python: "3.12"
+          - os: macos-latest
+            python: "3.12"
+          - os: ubuntu-latest
+            python: "3.13"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: install
+        run: python -m pip install --require-hashes --only-binary=:all: -r requirements-ci.txt
+      - name: freeze-manifest gate (byte-identical checkout on every OS)
+        run: python TOOLS/freeze_manifest.py
+      - name: pytest
+        run: pytest -q

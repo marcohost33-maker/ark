@@ -58,6 +58,7 @@
 - [x] Hash-Locks (OpenSSF Scorecard *Pinned-Dependencies*): `requirements-*.in` → `uv pip compile --generate-hashes`; jede Installation mit `--require-hashes --only-binary=:all:`, kein ungepinntes `pip --upgrade` mehr.
 - [x] Determinismus: `validate_run` FormatChecker closed-world (`formats=()` + `date-time`) — vorher hing die Menge geprüfter Schema-Formate an installierten Zusatzpaketen (8 bei Konsumenten, 20 in CI).
 - [x] Python-Floor-Drift (Doku ≥3.10/≥3.11 vs. CI 3.12) behoben und per Test an die Workflows gebunden.
+- [x] ARK-R8-009: CI-Job `portability` (Windows + macOS mit Python 3.12, Ubuntu mit 3.13): hash-gelockte Installation, Freeze-Gate (byte-identischer Checkout je OS), volle Testsuite. Pflicht-Check `gate` unverändert.
 - [ ] ARK-R8-001 installierbares, attestiertes Software-Subjekt (Wheel/sdist) — Owner-Entscheid.
 - [ ] ARK-R8-005 echter Consumer-Receipt DDE→ARK→USK — Owner-Entscheid / Cross-Repo.
 

@@ -236,9 +236,16 @@ def test_ci_runs_the_release_sbom_path_on_every_pr():
 
 
 def test_stated_python_floor_matches_workflows():
+    """AGENTS.md states the floor; the release job and the required gate run exactly it,
+    and no CI job tests below it."""
     agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
     m = re.search(r"Python ≥(\d+\.\d+)", agents)
     assert m, "AGENTS.md must state the Python floor"
-    for wf in (CI_WF, RELEASE_WF):
-        versions = re.findall(r'python-version:\s*"([\d.]+)"', wf.read_text(encoding="utf-8"))
-        assert versions == [m.group(1)], f"{wf.name}: {versions} vs AGENTS.md ≥{m.group(1)}"
+    floor = tuple(int(x) for x in m.group(1).split("."))
+    release = re.findall(r'python-version:\s*"([\d.]+)"', RELEASE_WF.read_text(encoding="utf-8"))
+    assert release == [m.group(1)], f"release.yml: {release} vs AGENTS.md ≥{m.group(1)}"
+    ci = CI_WF.read_text(encoding="utf-8")
+    literal = re.findall(r'python-version:\s*"([\d.]+)"', ci)
+    assert literal == [m.group(1)], f"ci.yml gate: {literal} vs AGENTS.md ≥{m.group(1)}"
+    for v in re.findall(r'^\s+python:\s*"([\d.]+)"', ci, re.M):
+        assert tuple(int(x) for x in v.split(".")) >= floor, f"ci.yml matrix tests {v} < floor"
