@@ -43,7 +43,9 @@ It does **not** run on ordinary PRs, so it never gates feature work. Steps:
 
 1. checkout (SHA-pinned, `persist-credentials: false`);
 2. freeze-manifest gate (`TOOLS/freeze_manifest.py`) — release must be in sync;
-3. build artifacts: CycloneDX SBOM (`dist/sbom.cdx.json`) + the freeze manifest;
+3. build artifacts via `TOOLS/release_sbom.py --out dist`: runtime SBOM
+   (`dist/sbom.runtime.cdx.json`), build-environment SBOM (`dist/sbom.build.cdx.json`)
+   + the freeze manifest;
 4. **`actions/attest-build-provenance`** over `dist/*` → signed build-provenance
    attestation (SLSA-style), using OIDC (`id-token: write`, `attestations: write`);
 5. upload `dist/` as a build artifact.
@@ -55,19 +57,33 @@ workflow is config-ready; enabling attestation storage is a repo-settings step
 
 ## 3. SBOM generation path
 
-An SBOM is produced by `cyclonedx-py environment` (CycloneDX JSON) over the
-pinned release environment. ARK ships **no packaged distribution** (no
-`pyproject.toml` / wheel), so the SBOM documents the *tooling/runtime*
-dependency set rather than a package's transitive tree; the source-integrity
-artifact is the freeze manifest (SHA-256 per file). If ARK is later packaged,
-switch the SBOM subject to the built wheel/sdist and attest that instead.
+`TOOLS/release_sbom.py` produces two CycloneDX JSON SBOMs, each named for its subject
+(ARK-R8-002, 2026-11-10):
+
+| File | Subject | How |
+|---|---|---|
+| `sbom.runtime.cdx.json` | what the TOOLS need to **run** | fresh venv without pip, only `requirements-runtime.txt` installed; the SBOM's component set must equal the pins exactly (name + version, nothing missing, nothing extra), else exit 1 and no runtime SBOM is left behind |
+| `sbom.build.cdx.json` | the release job's environment (test + SBOM tooling) | `cyclonedx-py environment` over the job interpreter |
+
+Both use `--output-reproducible` (same environment, same bytes). `ci.yml` runs the same
+script on every PR. Reason: the earlier inline call `cyclonedx-py environment --outfile ...`
+was never executed before a tag and would have failed on the first one (`--outfile` is not
+a cyclonedx-py option, exit 2), and its single SBOM described the build job, not the runtime.
+
+ARK still ships **no packaged distribution** (no `pyproject.toml` / wheel); the
+source-integrity artifact is the freeze manifest (SHA-256 per file). An installable,
+attested software subject (ARK-R8-001) remains an owner decision; if ARK is packaged,
+the runtime SBOM subject becomes the built wheel/sdist.
 
 ## 4. Dependency pinning / lock strategy
 
-`requirements-ci.txt` pins the four test dependencies to exact versions
-(`ruff`, `pytest`, `jsonschema`, `scipy`), all compatible with the CI Python
-matrix (>=3.11). Both `ci.yml` and `release.yml` install from it — one
-reviewable choke point. `cyclonedx-bom` is pinned inline in `release.yml`.
+`requirements-runtime.txt` pins the runtime closure of `TOOLS/` exactly (direct:
+`jsonschema`, `scipy`; plus their transitive dependencies). `requirements-ci.txt`
+includes it (`-r`) and adds the tooling pins (`ruff`, `pytest`, `cyclonedx-bom`), all for
+the CI Python 3.12. Both `ci.yml` and `release.yml` install from it — one reviewable
+choke point, and the tests run under exactly the versions the runtime SBOM attests
+(`tests/test_release_sbom.py` checks both, plus that every third-party import in
+`TOOLS/` is covered by a runtime pin).
 GitHub Actions are managed by Dependabot (`.github/dependabot.yml`, weekly,
 7-day cooldown, SHA-pin preserving).
 
@@ -86,6 +102,9 @@ grep -rEn "uses:" .github/workflows | grep -vE "@[0-9a-f]{40}" || echo "all pinn
 
 # Pinned test deps resolvable (expected: exit 0):
 python -m pip install -r requirements-ci.txt --dry-run
+
+# Release SBOM path (expected: 'sbom.runtime.cdx.json matches ...', exit 0):
+python TOOLS/release_sbom.py --out /tmp/ark-sbom
 
 # Freeze integrity (expected: 'freeze manifest in sync', exit 0):
 python TOOLS/freeze_manifest.py

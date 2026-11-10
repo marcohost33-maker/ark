@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-10-21T09:23:06.001435+00:00",
+  "created_utc": "2026-11-10T18:24:15.148869+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -9,8 +9,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "8ab6e29ec5ef8d9f74afa763d874303e6545e5a743dc75851ecbf32cff793cdf",
-      "bytes": 1736
+      "sha256": "b5a083dd6e7b19d9a6688433261d266a2c6ba5b8f598c7fe43a746655fa3e0e7",
+      "bytes": 2056
     },
     {
       "path": "SCHEMAS/gate_report.schema.json",
@@ -213,6 +213,11 @@
       "bytes": 5032
     },
     {
+      "path": "TOOLS/release_sbom.py",
+      "sha256": "845d0c7002380590dd6988bfa6ce120461844da94af63c374861c76064dff41c",
+      "bytes": 7820
+    },
+    {
       "path": "TOOLS/root_finding.py",
       "sha256": "7922654fc7c2c2e9592845fb18424fb0273d13f8b03fce2c1a0b68b62a854300",
       "bytes": 1551
@@ -254,8 +259,8 @@
     },
     {
       "path": "docs/RELEASE_HARDENING.md",
-      "sha256": "a0ac4357e18c200cbe72b31424040acd6ad629d643e190c85a83657d362c4a57",
-      "bytes": 4534
+      "sha256": "dda9e913f9907611543d64958feaa57e7ef38a870204d33caecb19fdad2e059e",
+      "bytes": 5805
     },
     {
       "path": "docs/architecture_overview.md",
@@ -314,8 +319,13 @@
     },
     {
       "path": "requirements-ci.txt",
-      "sha256": "42d74ccd8d558cc03fdd05f1f0a4846b2da6b2cab4e925ec51151329b3138885",
-      "bytes": 441
+      "sha256": "32fadebf50d183b8d7aecff7d806436fb1a229b4e36602eebc8a86fdc8056375",
+      "bytes": 547
+    },
+    {
+      "path": "requirements-runtime.txt",
+      "sha256": "1192ceadf268e1bdcaf52abb59e8ae8ebfa4d28d4c007cd5b4df9bf871a7d105",
+      "bytes": 750
     },
     {
       "path": "tests/test_example_minimal_run.py",
@@ -346,6 +356,11 @@
       "path": "tests/test_release_gate.py",
       "sha256": "a1e853a6ebd9bd710d34fe9ee2a252e738ba755741e70866ffbb591e9803744e",
       "bytes": 10927
+    },
+    {
+      "path": "tests/test_release_sbom.py",
+      "sha256": "d816781ed2e27e44ac8d7db6f924892990762de9272ec26233a9a14c2975aa0f",
+      "bytes": 8284
     },
     {
       "path": "tests/test_schema_fixtures.py",

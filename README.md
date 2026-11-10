@@ -4,7 +4,7 @@
 Contradiction- und Governance-Kernel für **reproduzierbare wissenschaftliche und Engineering-Pipelines**.
 Deterministische Python-Tools + JSON-Schemas. Coworker-Research Governance-Stack (Säule 2/4).
 
-**Status:** v1.0.5 (Freeze). Gepusht, CI grün — `compileall` OK, Freeze-Manifest-Gate (NG-002) in sync, `ruff check .` clean, `pytest` 266 passed / 1 skipped (Skip nur als root: 0444-Datei bleibt schreibbar; verifiziert lokal 2026-10-19, ruff 0.15.18).
+**Status:** v1.0.5 (Freeze). Gepusht, CI grün — `compileall` OK, Freeze-Manifest-Gate (NG-002) in sync, `ruff check .` clean, `pytest` 325 passed / 1 skipped (Skip nur als root: 0444-Datei bleibt schreibbar; verifiziert lokal 2026-11-10, Python 3.13 venv aus `requirements-ci.txt`, ruff 0.15.18).
 
 ## Inhalt
 - `SCHEMAS/` — 4 JSON-Schemas (gate_report, prov_min, report_evidence_profile, testvector).
@@ -13,7 +13,10 @@ Deterministische Python-Tools + JSON-Schemas. Coworker-Research Governance-Stack
 - `docs/API.md` — Ein-/Ausgabe-Verträge aller Tools.
 - `TOOLS/` — 6 deterministische Python-Validatoren: `validate_run`, `provenance_validate`,
   `event_hysteresis`, `severity_mapping`, `root_finding`, `contradiction_rules`;
-  plus `freeze_manifest` (Integritäts-Tool, NG-002-Gate).
+  plus `freeze_manifest` (Integritäts-Tool, NG-002-Gate), `release_gate` + `ark_semver` (Tag-/SemVer-Gate)
+  und `release_sbom` (Runtime- + Build-SBOM, ARK-R8-002).
+- `requirements-runtime.txt` — exakte Laufzeit-Pins der TOOLS (jsonschema, scipy + transitive);
+  `requirements-ci.txt` bindet sie ein und ergänzt die Werkzeug-Pins.
 - `TESTVECTORS/` — baseline/report/severity-Testfälle.
 - `artifacts/FREEZE_MANIFEST_v1.0.5.json` — SHA-256 je Datei (Integritäts-Anker).
 - `VERSION` — einzige Quelle der Release-Version; Regeln in `SPECS/VERSIONING_POLICY_v1.md`.

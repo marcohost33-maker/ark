@@ -32,3 +32,5 @@ jobs:
         run: python TOOLS/freeze_manifest.py
       - name: pytest
         run: pytest -q
+      - name: release SBOM path (ARK-R8-002, same script as release.yml)
+        run: python TOOLS/release_sbom.py --out "$RUNNER_TEMP/sbom"
