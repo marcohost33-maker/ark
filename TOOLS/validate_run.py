@@ -75,14 +75,19 @@ def _check_date_time(value):
 
 
 def strict_format_checker():
-    """FormatChecker with an explicit, dependency-free ``date-time`` enforcer.
+    """FormatChecker that enforces exactly ``date-time`` (closed world), stdlib only.
 
-    ``jsonschema`` only enforces ``format: date-time`` when an optional
-    third-party validator (``rfc3339-validator``) is installed; the ARK CI env
-    does not ship it, so we register the check here to make the schemas'
-    ``format: date-time`` load-bearing and deterministic.
+    ``FormatChecker()`` enables every format whose optional third-party checker
+    happens to be importable: 8 formats in a runtime-only install, 20 in the CI
+    env (``cyclonedx-bom`` pulls ``jsonschema[format]`` extras such as
+    ``rfc3339-validator``, ``fqdn``, ``rfc3987-syntax``). A schema ``format`` other
+    than ``date-time`` would then be enforced in CI and ignored at a consumer: the
+    verdict would depend on the environment. Starting from ``formats=()`` makes the
+    enforced set a property of this code, not of site-packages; ``date-time`` is
+    registered explicitly so the schemas' ``format: date-time`` is load-bearing.
+    A new format must be added here deliberately (with a test).
     """
-    checker = FormatChecker()
+    checker = FormatChecker(formats=())
     checker.checks("date-time", raises=(ValueError,))(_check_date_time)
     return checker
 

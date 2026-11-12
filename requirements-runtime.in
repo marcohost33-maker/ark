@@ -1,0 +1,7 @@
+# Direct runtime dependencies of TOOLS/ (input for the hash lock requirements-runtime.txt).
+# Exact pins: a bump is a deliberate edit here, then re-lock (docs/RELEASE_HARDENING.md §4).
+jsonschema==4.26.0      # validate_run
+scipy==1.17.1           # root_finding
+# referencing needs typing-extensions only on Python < 3.13; listed directly so the runtime
+# closure (and the runtime SBOM) is identical on every supported Python (ARK-R8-002).
+typing-extensions==4.16.0

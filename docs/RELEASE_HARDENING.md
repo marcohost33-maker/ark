@@ -75,17 +75,42 @@ source-integrity artifact is the freeze manifest (SHA-256 per file). An installa
 attested software subject (ARK-R8-001) remains an owner decision; if ARK is packaged,
 the runtime SBOM subject becomes the built wheel/sdist.
 
-## 4. Dependency pinning / lock strategy
+## 4. Dependency pinning / lock strategy (hash locks)
 
-`requirements-runtime.txt` pins the runtime closure of `TOOLS/` exactly (direct:
-`jsonschema`, `scipy`; plus their transitive dependencies). `requirements-ci.txt`
-includes it (`-r`) and adds the tooling pins (`ruff`, `pytest`, `cyclonedx-bom`), all for
-the CI Python 3.12. Both `ci.yml` and `release.yml` install from it — one reviewable
-choke point, and the tests run under exactly the versions the runtime SBOM attests
-(`tests/test_release_sbom.py` checks both, plus that every third-party import in
-`TOOLS/` is covered by a runtime pin).
+Every `pip install` in CI and release verifies artifact digests (OpenSSF Scorecard
+*Pinned-Dependencies*; 2026-11-10):
+
+| Input (edit by hand) | Hash lock (generated, committed) | Used by |
+|---|---|---|
+| `requirements-runtime.in` — direct runtime deps of `TOOLS/`, exact pins | `requirements-runtime.txt` — full closure, no markers | `release_sbom.py` runtime venv |
+| `requirements-ci.in` — runtime + `ruff`, `pytest`, `cyclonedx-bom` | `requirements-ci.txt` — full closure, universal markers | `ci.yml`, `release.yml` |
+
+- Install: `python -m pip install --require-hashes --only-binary=:all: -r requirements-ci.txt`.
+  `--require-hashes`: every artifact must match a recorded sha256, and every
+  dependency must be in the lock (an unlocked transitive dependency is an install
+  error). `--only-binary=:all:`: no sdist build code runs. The runner's bundled pip is
+  used as is (no unpinned `pip install --upgrade pip`); pip >= 22.3 is required for
+  `pip --python`.
+- Re-lock after editing an `.in` file (the exact command is also in each lock header):
+
+  ```sh
+  uv pip compile requirements-runtime.in --universal --python-version 3.12 --generate-hashes -o requirements-runtime.txt
+  uv pip compile requirements-ci.in -c requirements-runtime.txt --universal --python-version 3.12 --generate-hashes -o requirements-ci.txt
+  python TOOLS/freeze_manifest.py --regenerate
+  ```
+
+  The CI lock is constrained by the runtime lock, so the tests run on exactly the
+  artifacts the runtime SBOM attests. `uv` is only needed to re-lock, never in CI.
+- Why not PEP 751 `pylock.toml`: pip's support (26.1) is explicitly experimental and may
+  change without notice; a determinism kernel waits for it to stabilize.
+- Guarded by `tests/test_release_sbom.py`: locks parse as exact hashed pins (runtime lock
+  marker-free), CI lock holds the runtime closure byte-for-byte (version + sha256 set),
+  each lock is fresh for its `.in`, every workflow `pip install` uses `--require-hashes`,
+  every third-party import in `TOOLS/` has a runtime pin.
+
 GitHub Actions are managed by Dependabot (`.github/dependabot.yml`, weekly,
-7-day cooldown, SHA-pin preserving).
+7-day cooldown, SHA-pin preserving). Python locks are re-locked deliberately (above);
+Dependabot does not manage them.
 
 ## 5. Actions pinned to immutable SHAs + audit
 
@@ -101,7 +126,7 @@ Every `uses:` across `ci.yml`, `zizmor.yml`, `release.yml` is pinned to a
 grep -rEn "uses:" .github/workflows | grep -vE "@[0-9a-f]{40}" || echo "all pinned"
 
 # Pinned test deps resolvable (expected: exit 0):
-python -m pip install -r requirements-ci.txt --dry-run
+python -m pip install --require-hashes --only-binary=:all: -r requirements-ci.txt --dry-run
 
 # Release SBOM path (expected: 'sbom.runtime.cdx.json matches ...', exit 0):
 python TOOLS/release_sbom.py --out /tmp/ark-sbom

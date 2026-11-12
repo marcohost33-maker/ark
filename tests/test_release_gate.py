@@ -228,3 +228,43 @@ def test_workflow_gate_command_refuses_invalid_version(tmp_path):
     )
     rc, written, err = run_gate(repo, "tag", "v1.0.5", argv=stdlib_only, cwd=repo)
     assert rc == 0 and written == "version=1.0.5\n", err
+
+
+def _run_commands(text: str) -> list[str]:
+    """Every shell command of a workflow's ``run:`` steps, single-line and ``run: |`` block
+    lines alike, with ``--out <dir>`` dropped (the only argument that legitimately differs
+    between PR CI and the tag job)."""
+    lines = text.splitlines()
+    raw: list[str] = []
+    i = 0
+    while i < len(lines):
+        m = re.match(r"^(\s+)run: (.*)$", lines[i])
+        i += 1
+        if not m:
+            continue
+        indent, rest = len(m.group(1)), m.group(2).strip()
+        if rest != "|":
+            raw.append(rest)
+            continue
+        while i < len(lines) and (not lines[i].strip() or len(lines[i]) - len(lines[i].lstrip()) > indent):
+            if lines[i].strip() and not lines[i].strip().startswith("#"):
+                raw.append(lines[i].strip())
+            i += 1
+    cmds = []
+    for line in raw:
+        argv = shlex.split(line)
+        if "--out" in argv:
+            k = argv.index("--out")
+            del argv[k:k + 2]
+        cmds.append(" ".join(argv))
+    return cmds
+
+
+def test_tag_job_runs_every_ci_gate():
+    """ARK-R8-003: a tag pushed to a commit that never ran ci.yml must still pass every
+    PR gate. Structural, so a gate added to ci.yml later cannot be forgotten in the tag job."""
+    ci = _run_commands((ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8"))
+    release = _run_commands(_workflow())
+    assert ci, "no gate commands parsed from ci.yml"
+    missing = [c for c in ci if c not in release]
+    assert not missing, f"Expected: tag job runs every ci.yml gate; Observed: missing {missing}"

@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-11-10T18:24:15.148869+00:00",
+  "created_utc": "2026-11-10T19:38:06.144862+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -9,8 +9,8 @@
     },
     {
       "path": "README.md",
-      "sha256": "b5a083dd6e7b19d9a6688433261d266a2c6ba5b8f598c7fe43a746655fa3e0e7",
-      "bytes": 2056
+      "sha256": "0d0b390e4ea375553cf410078f5a33461e79febb77d64fce1479efb2b93f1665",
+      "bytes": 2112
     },
     {
       "path": "SCHEMAS/gate_report.schema.json",
@@ -104,8 +104,8 @@
     },
     {
       "path": "SPECS/VERSIONING_POLICY_v1.md",
-      "sha256": "3b26260f710eb25d89523435a32a1795cee0c703173afa371651d46046f9b6be",
-      "bytes": 5978
+      "sha256": "a8c19517e9bf09e81d4e9208e311056c9da15c5af9e1dcdf4aaf07efaad9eef1",
+      "bytes": 6269
     },
     {
       "path": "TESTVECTORS/baseline/baseline_missing.json",
@@ -214,8 +214,8 @@
     },
     {
       "path": "TOOLS/release_sbom.py",
-      "sha256": "845d0c7002380590dd6988bfa6ce120461844da94af63c374861c76064dff41c",
-      "bytes": 7820
+      "sha256": "289cf629ee2593fc678795371e2eb652911a0586237a561685385c15f2456603",
+      "bytes": 10217
     },
     {
       "path": "TOOLS/root_finding.py",
@@ -229,8 +229,8 @@
     },
     {
       "path": "TOOLS/validate_run.py",
-      "sha256": "58a2e72e2ed7e69e2cad7b8a3485b42c9c211e04afc3946c58a4bae4da292ac1",
-      "bytes": 20556
+      "sha256": "c82c6ed2af1da8dba7664d7aac815d345723c880d07e31fa2c071b6442be8bb1",
+      "bytes": 20999
     },
     {
       "path": "VERSION",
@@ -254,13 +254,13 @@
     },
     {
       "path": "docs/POLICY_LOADING.md",
-      "sha256": "c1820eae9496b80723878fc413565cbc94c7ce25e46b134d4440fd5a0a499d59",
-      "bytes": 2455
+      "sha256": "fcbee880b43f9f44ddc5c0731e06b385005f0bed1fcf155844444f5604d15515",
+      "bytes": 2859
     },
     {
       "path": "docs/RELEASE_HARDENING.md",
-      "sha256": "dda9e913f9907611543d64958feaa57e7ef38a870204d33caecb19fdad2e059e",
-      "bytes": 5805
+      "sha256": "007e77d9dbee9bba2014f2d1504ee7c5dcbfd1088966b4716196c22f7e4cc443",
+      "bytes": 7435
     },
     {
       "path": "docs/architecture_overview.md",
@@ -318,14 +318,24 @@
       "bytes": 4014
     },
     {
+      "path": "requirements-ci.in",
+      "sha256": "5129a72191d4481c8cd09e7565fb2ca5ccb2ba61547de6a282eb04d028130167",
+      "bytes": 292
+    },
+    {
       "path": "requirements-ci.txt",
-      "sha256": "32fadebf50d183b8d7aecff7d806436fb1a229b4e36602eebc8a86fdc8056375",
-      "bytes": 547
+      "sha256": "6e5d6e077ca06dd1cf465cd2c30f32368eddd47aa3eccab5d75408a60b0500e3",
+      "bytes": 45293
+    },
+    {
+      "path": "requirements-runtime.in",
+      "sha256": "757f073cef8e3833d03679ed1e5b08ba68614aacbbe48f49d8fb8ebc486293bc",
+      "bytes": 468
     },
     {
       "path": "requirements-runtime.txt",
-      "sha256": "1192ceadf268e1bdcaf52abb59e8ae8ebfa4d28d4c007cd5b4df9bf871a7d105",
-      "bytes": 750
+      "sha256": "01c58940c5dc117d3b15bb40a67db344cfa75f66a4bdde14d579e8ce358d4566",
+      "bytes": 22872
     },
     {
       "path": "tests/test_example_minimal_run.py",
@@ -354,13 +364,13 @@
     },
     {
       "path": "tests/test_release_gate.py",
-      "sha256": "a1e853a6ebd9bd710d34fe9ee2a252e738ba755741e70866ffbb591e9803744e",
-      "bytes": 10927
+      "sha256": "eb583b54c649f7bd5eaf20743e04d848e4aea398b49427a68204a7adb48615ed",
+      "bytes": 12545
     },
     {
       "path": "tests/test_release_sbom.py",
-      "sha256": "d816781ed2e27e44ac8d7db6f924892990762de9272ec26233a9a14c2975aa0f",
-      "bytes": 8284
+      "sha256": "4cdf46657a09dc4d6d9138c837cca513a04e05c6bd2c3758d48d9004d038882c",
+      "bytes": 12371
     },
     {
       "path": "tests/test_schema_fixtures.py",
@@ -389,8 +399,8 @@
     },
     {
       "path": "tests/test_validate_run_hardening.py",
-      "sha256": "b869806215a329a96461e63f0b008849109abd0b5c1d39ee8121dc4574571e4f",
-      "bytes": 4413
+      "sha256": "a549bd1b93b374ea91c4780537fff2bbe4e30713a2820809fd823aa21de24277",
+      "bytes": 6180
     },
     {
       "path": "tests/test_version_consistency.py",
