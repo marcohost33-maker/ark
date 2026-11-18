@@ -1,4 +1,4 @@
-# Release hardening (issue #19): SBOM + build-provenance attestation on tag.
+# Release hardening (issue #19, ARK-R8-001): software bundle + SBOM + build-provenance attestation on tag.
 # Runs only for version tags, so it does not gate normal PRs. A manual dispatch is
 # kept for re-running a tag, but the job is skipped on any non-tag ref, and the
 # release gate refuses a non-tag ref as well (cross-family review ARK-P1-02):
@@ -15,7 +15,7 @@ permissions: {}
 
 jobs:
   provenance:
-    name: sbom + attestation
+    name: bundle + sbom + attestation
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     permissions:
@@ -59,16 +59,21 @@ jobs:
       - name: Freeze-manifest gate (must be in sync at release)
         run: python TOOLS/freeze_manifest.py
 
-      - name: Build release artifacts (runtime + build SBOM, freeze manifest)
+      - name: Build release artifacts (software bundle, runtime + build SBOM, freeze manifest)
         env:
           ARK_VERSION: ${{ steps.version.outputs.version }}
         # TOOLS/release_sbom.py (ARK-R8-002): runtime SBOM from a clean venv holding only
         # requirements-runtime.txt, verified name==version against the pins (fail-closed),
-        # plus a separately named SBOM of this build environment. ci.yml runs the same
-        # script on every PR, so this step is not first exercised by a tag.
+        # plus a separately named SBOM of this build environment.
+        # TOOLS/release_bundle.py (ARK-R8-001): the software subject. Canonical archive of
+        # exactly the manifest-pinned files; refused unless its digest equals the pin
+        # committed in this tagged source (artifacts/RELEASE_BUNDLE_v<VERSION>.sha256).
+        # ci.yml runs both scripts on every PR, so this step is not first exercised by a tag.
         run: |
           python TOOLS/release_sbom.py --out dist
+          python TOOLS/release_bundle.py --out dist
           cp "artifacts/FREEZE_MANIFEST_v${ARK_VERSION}.json" dist/
+          cp "artifacts/RELEASE_BUNDLE_v${ARK_VERSION}.sha256" dist/
           cp VERSION dist/VERSION
 
       - name: Attest build provenance

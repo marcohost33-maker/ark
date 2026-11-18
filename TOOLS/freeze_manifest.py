@@ -36,6 +36,7 @@ SELF_EXCLUDE = {DEFAULT_MANIFEST.replace(os.sep, "/")}
 # Keep this in sync with docs/FREEZE_COVERAGE_POLICY.md.
 REQUIRED_EXACT_PATHS = {
     ".gitattributes",
+    "LICENSE",
     "README.md",
     "VERSION",
     "docs/FREEZE_COVERAGE_POLICY.md",
