@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 from dataclasses import dataclass
 from typing import Any, Dict, List, Tuple
 
@@ -23,6 +24,11 @@ def _is_metric_ref(x: Any) -> bool:
     return isinstance(x, str) and (x.startswith("METRIC.") or x.startswith("baseline.METRIC."))
 
 def _validate_expr_shape(expr: Any, rule_id: str|None, issues: List[RuleIssue]) -> None:
+    """Validate the whole expression tree (not only the root node).
+
+    Structural validity must not depend on metric values: a malformed branch
+    behind a short-circuiting ``all``/``any`` is still reported.
+    """
     if not isinstance(expr, dict) or len(expr) != 1:
         issues.append(RuleIssue("NEG.CONTRADICTION.INVALID_STRUCTURE", "Expression must be a one-key dict", rule_id))
         return
@@ -30,10 +36,33 @@ def _validate_expr_shape(expr: Any, rule_id: str|None, issues: List[RuleIssue]) 
     if op not in ALLOWED_COMPARISONS | ALLOWED_LOGICAL:
         issues.append(RuleIssue("NEG.CONTRADICTION.UNKNOWN_OPERATOR", f"Unknown operator: {op}", rule_id))
         return
-    if op in ALLOWED_COMPARISONS and (not isinstance(value, list) or len(value) != 2):
-        issues.append(RuleIssue("NEG.CONTRADICTION.INVALID_STRUCTURE", f"{op} expects list length 2", rule_id))
-    if op in {"all", "any"} and not isinstance(value, list):
-        issues.append(RuleIssue("NEG.CONTRADICTION.INVALID_STRUCTURE", f"{op} expects list", rule_id))
+    if op in ALLOWED_COMPARISONS:
+        if not isinstance(value, list) or len(value) != 2:
+            issues.append(RuleIssue("NEG.CONTRADICTION.INVALID_STRUCTURE", f"{op} expects list length 2", rule_id))
+            return
+        for operand in value:
+            if not (_is_numeric_literal(operand) or _is_metric_ref(operand)):
+                # repr() of a huge int can itself raise (int max str digits).
+                shown = "integer out of float range" if isinstance(operand, int) and not isinstance(operand, bool) else repr(operand)
+                issues.append(RuleIssue("NEG.CONTRADICTION.TYPE_MISMATCH", f"Invalid operand: {shown}", rule_id))
+    elif op in {"all", "any"}:
+        if not isinstance(value, list):
+            issues.append(RuleIssue("NEG.CONTRADICTION.INVALID_STRUCTURE", f"{op} expects list", rule_id))
+            return
+        for sub in value:
+            _validate_expr_shape(sub, rule_id, issues)
+    else:  # not
+        _validate_expr_shape(value, rule_id, issues)
+
+def _is_numeric_literal(x: Any) -> bool:
+    # bool is an int subclass in Python, but JSON true/false are not numbers.
+    if isinstance(x, bool) or not isinstance(x, (int, float)):
+        return False
+    try:
+        # JSON integers are unbounded; one beyond double range is not comparable.
+        return math.isfinite(float(x))
+    except OverflowError:
+        return False
 
 def _collect_metric_refs(expr: Any, out: set[str]) -> None:
     if isinstance(expr, dict):
@@ -46,7 +75,7 @@ def _collect_metric_refs(expr: Any, out: set[str]) -> None:
         out.add(expr)
 
 def _resolve_operand(x: Any, metrics: Dict[str, float], baseline: Dict[str, float]) -> float:
-    if isinstance(x, (int, float)):
+    if _is_numeric_literal(x):
         return float(x)
     if isinstance(x, str):
         if x.startswith("baseline.METRIC."):
@@ -76,15 +105,18 @@ def _eval_expr(expr: Dict[str, Any], metrics: Dict[str, float], baseline: Dict[s
 
 def validate_rule_structure(rule: Dict[str, Any], known_metrics: set[str], known_baseline_metrics: set[str]) -> List[RuleIssue]:
     issues: List[RuleIssue] = []
+    if not isinstance(rule, dict):
+        return [RuleIssue("NEG.CONTRADICTION.INVALID_STRUCTURE", "Rule must be an object")]
     rule_id = rule.get("rule_id")
     missing = {"rule_id", "when", "neg_id", "severity", "summary"} - set(rule.keys())
     if missing:
         issues.append(RuleIssue("NEG.CONTRADICTION.INVALID_STRUCTURE", f"Missing keys: {sorted(missing)}", rule_id))
         return issues
-    if rule["severity"] not in ALLOWED_SEVERITIES:
+    if not isinstance(rule["severity"], str) or rule["severity"] not in ALLOWED_SEVERITIES:
         issues.append(RuleIssue("NEG.CONTRADICTION.INVALID_SEVERITY", f"Invalid severity: {rule['severity']}", rule_id))
     _validate_expr_shape(rule["when"], rule_id, issues)
-    refs: set[str] = set(); _collect_metric_refs(rule["when"], refs)
+    refs: set[str] = set()
+    _collect_metric_refs(rule["when"], refs)
     for ref in refs:
         if ref.startswith("baseline.METRIC."):
             key = ref[len("baseline."):]
@@ -108,8 +140,12 @@ def validate_rule_structure(rule: Dict[str, Any], known_metrics: set[str], known
 def evaluate_rules(rules: List[Dict[str, Any]], metrics: Dict[str, float], baseline: Dict[str, float]) -> Tuple[List[RuleHit], List[RuleIssue]]:
     hits: List[RuleHit] = []
     issues: List[RuleIssue] = []
-    known_metrics = set(metrics.keys()); known_baseline_metrics = set(baseline.keys())
+    known_metrics = set(metrics.keys())
+    known_baseline_metrics = set(baseline.keys())
     for rule in rules:
+        if not isinstance(rule, dict):
+            issues.append(RuleIssue("NEG.CONTRADICTION.INVALID_STRUCTURE", "Rule must be an object"))
+            continue
         rule_issues = validate_rule_structure(rule, known_metrics, known_baseline_metrics)
         issues.extend(rule_issues)
         if rule_issues:

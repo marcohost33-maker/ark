@@ -1,0 +1,21 @@
+{
+  "name": "contradiction_rule_nested_malformed",
+  "inputs": {
+    "rules": [
+      {
+        "rule_id": "R-NESTED-BAD",
+        "when": {"all": [{"gt": [0, 1]}, {"exec": "__import__('os')"}]},
+        "neg_id": "NEG.CONTRADICTION.REGRESSION",
+        "severity": "SOFT_FAIL",
+        "summary": "a non-whitelisted operator behind a short-circuiting all must still be rejected"
+      }
+    ],
+    "metrics": {"METRIC.error": 0.5},
+    "baseline": {"METRIC.error": 0.2}
+  },
+  "expected": {
+    "status": "REVIEW",
+    "neg_ids": ["NEG.CONTRADICTION.UNKNOWN_OPERATOR"]
+  },
+  "tags": ["contradiction", "negative"]
+}

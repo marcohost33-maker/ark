@@ -11,7 +11,7 @@ KI-Coding-Agent-Anweisungen für dieses Repo. Reihenfolge: §1 Working agreement
 
 ## Project
 - **Was:** Audit & Research Kernel — Core: Audit/Provenance/Validierung/Event/Metrik/Contradiction/Governance-Kernel für reproduzierbare Pipelines (deterministisch, stdlib-orientiert).
-- **Stack:** Python ≥3.10. Schemas = JSON Schema. Keine ML in Validierungs-Entscheidungspfaden.
+- **Stack:** Python ≥3.12 (CI-Floor seit #23). Schemas = JSON Schema. Keine ML in Validierungs-Entscheidungspfaden.
 - **Version:** 1.0.5 (Freeze, siehe `artifacts/FREEZE_MANIFEST_v1.0.5.json`).
 
 ## Working agreements

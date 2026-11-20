@@ -1,0 +1,7 @@
+# CI / release tooling (input for the hash lock requirements-ci.txt). The runtime closure is
+# taken from requirements-runtime.txt as a constraint, so tests run under exactly the
+# versions the runtime SBOM attests.
+-r requirements-runtime.in
+ruff==0.15.18
+pytest==9.1.0
+cyclonedx-bom==7.3.0

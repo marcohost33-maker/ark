@@ -25,22 +25,36 @@ path. Policy is resolved deterministically:
 All keys are optional. The document is validated **before use** and fails closed
 (`PolicyError`) on any of:
 
+- not I-JSON (RFC 7493: duplicate member name, `NaN`/`Infinity`, surrogate or noncharacter;
+  `SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md`) — e.g. `{"waivers": ["X"], "waivers": []}`, which
+  a first-wins JSON reader would see as a waiver;
 - not a JSON object;
 - an unknown top-level key;
 - `severity_overrides` not an object, or a value outside
   `{HARD_FAIL, SOFT_FAIL, WARNING}`, or an empty key;
 - `known_issues` / `waivers` not a list of non-empty strings;
-- **an override targeting a NON_DOWNGRADABLE id** (e.g. `NEG.ROOT.UNKNOWN_METHOD`,
-  `NEG.REPORT.SCHEMA_INVALID`): such ids must never be softened by policy.
+- **any lever (`severity_overrides`, `known_issues`, `waivers`) naming a
+  non-downgradable id** — the NON_DOWNGRADABLE set (e.g. `NEG.ROOT.UNKNOWN_METHOD`,
+  `NEG.REPORT.SCHEMA_INVALID`) or any `NEG.KERNEL.*` id: such ids must never be
+  softened by policy.
+
+The policy does not select the root-finding method; that is pinned per run in
+`kernel.plan.json` (`payload.root.METHOD`, see `SPECS/ROOT_FINDING_v1.md`).
 
 ## Enforced `format: date-time`
 
 Report self-validation uses `Draft202012Validator` **plus** an explicit
 `FormatChecker`. Stock `jsonschema` only enforces `format: date-time` when the
-optional `rfc3339-validator` package is installed (it is not in ARK CI), so the
-check is registered here in-process (stdlib only, deterministic): a `date-time`
-value must parse as ISO-8601/RFC-3339 **with an explicit timezone offset**.
-`created_utc` is therefore genuinely enforced rather than silently accepted.
+optional `rfc3339-validator` package is installed, so the check is registered here
+in-process (stdlib only, deterministic): a `date-time` value must parse as
+ISO-8601/RFC-3339 **with an explicit timezone offset**. `created_utc` is therefore
+genuinely enforced rather than silently accepted.
+
+The checker is **closed-world** (`FormatChecker(formats=())` + `date-time`, 2026-11-10):
+a plain `FormatChecker()` enables whatever optional format packages are importable —
+8 formats in a runtime-only install, 20 in the CI env — so any other schema `format`
+would be enforced in one environment and ignored in another. Exactly `date-time` is
+enforced everywhere; adding a format is a deliberate code change with a test.
 
 ## Evidence commands
 
@@ -51,7 +65,7 @@ py TOOLS/validate_run.py --run examples/minimal_run
 
 # malformed policy fails closed:
 echo '{"bogus": 1}' > examples/minimal_run/policy.json
-py TOOLS/validate_run.py --run examples/minimal_run   # -> PolicyError, non-zero
+py TOOLS/validate_run.py --run examples/minimal_run   # -> REJECT report, NEG.POLICY.UNREADABLE, exit 1
 rm examples/minimal_run/policy.json
 ```
 

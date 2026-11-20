@@ -32,6 +32,10 @@ INVALID_SEMVER = [
     "01.2.3",            # leading zero in major
     "1.2",               # not enough parts
     "1.0.0-alpha_beta",  # underscore not allowed
+    "1.0.1" + chr(0xFF15),  # fullwidth digit 5: \d matched it (ARK-EQ-01)
+    "1.0.1" + chr(0x0665),  # Arabic-Indic digit 5 (ARK-EQ-01)
+    chr(0xFF11) + ".0.0",   # fullwidth major
+    "1.2.3\n",           # "$" matched before a trailing newline
 ]
 
 
@@ -62,3 +66,24 @@ def test_kernel_payload_accepts_valid_semver(validate_run_mod):
         {"content_hash": "x", "version": "1.0.0-rc.1+build.5", "payload": {}}
     )
     assert "NEG.KERNEL.INVALID_SEMVER" not in neg
+
+
+@pytest.mark.parametrize("version", ["1.0.1" + chr(0xFF15), "1.0.1" + chr(0x0665)], ids=["fullwidth-5", "arabic-indic-5"])
+def test_kernel_payload_flags_non_ascii_digits(validate_run_mod, version):
+    # ARK-EQ-01: a Unicode-aware digit class accepts U+FF15 / U+0665; SemVer is ASCII.
+    neg = validate_run_mod.check_kernel_payload({"content_hash": "x", "version": version, "payload": {}})
+    assert "NEG.KERNEL.INVALID_SEMVER" in neg, f"Expected: {version!a} rejected; Observed: accepted"
+
+
+def test_kernel_payload_flags_trailing_newline(validate_run_mod):
+    # check_kernel_payload uses SEMVER_RE.match; with "$" instead of "\Z" the
+    # pattern matched before a trailing newline and "1.2.3\n" passed.
+    neg = validate_run_mod.check_kernel_payload({"content_hash": "x", "version": "1.2.3\n", "payload": {}})
+    assert "NEG.KERNEL.INVALID_SEMVER" in neg, "Expected: '1.2.3\n' rejected; Observed: accepted"
+
+
+def test_one_grammar_for_kernel_check_and_release_gate(validate_run_mod):
+    ark_semver = importlib.import_module("ark_semver")
+    release_gate = importlib.import_module("release_gate")
+    assert validate_run_mod.SEMVER_RE is ark_semver.SEMVER_RE
+    assert release_gate.SEMVER_RE is ark_semver.SEMVER_RE
