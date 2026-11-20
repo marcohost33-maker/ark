@@ -23,6 +23,7 @@ from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
 # Official SemVer 2.0.0 regex, ASCII-only and anchored with \Z: one grammar for the
 # kernel check here and the release gate (TOOLS/ark_semver.py, ARK-EQ-01/02).
+import ark_json  # the one JSON grammar (I-JSON, RFC 7493): no duplicate names, NaN, surrogates
 from ark_semver import SEMVER_RE
 from severity_mapping import classify_neg_id, is_non_downgradable
 
@@ -59,8 +60,13 @@ def utc_now():
 
 
 def read_json(path):
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    """Kernels, policy and schemas are parsed as I-JSON (``ark_json``).
+
+    A duplicate member name would make the verdict depend on which JSON parser reads
+    the kernel; it raises ``ValueError`` like any other malformed JSON, so a kernel
+    maps to ``NEG.KERNEL.UNREADABLE`` and a policy to ``NEG.POLICY.UNREADABLE``.
+    """
+    return ark_json.load_path(path)
 
 
 def _check_date_time(value):

@@ -25,6 +25,9 @@ path. Policy is resolved deterministically:
 All keys are optional. The document is validated **before use** and fails closed
 (`PolicyError`) on any of:
 
+- not I-JSON (RFC 7493: duplicate member name, `NaN`/`Infinity`, surrogate or noncharacter;
+  `SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md`) — e.g. `{"waivers": ["X"], "waivers": []}`, which
+  a first-wins JSON reader would see as a waiver;
 - not a JSON object;
 - an unknown top-level key;
 - `severity_overrides` not an object, or a value outside

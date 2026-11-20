@@ -91,7 +91,7 @@ is therefore REJECTed by the report schema.
 |---|---|
 | `NEG.KERNEL.MISSING_<NAME>` | a required kernel file is not stored under its EXACT (case-sensitive) name (always HARD, not routable) |
 | `NEG.KERNEL.NAME_CASE_MISMATCH` | a stored name differs from a canonical kernel name (the five required ones or the spec-defined `kernel.baseline.json`) only by case (`kernel.PLAN.json`, `kernel.BASELINE.json`, `KERNEL.plan.json`) or two kernel names collide case-insensitively; same verdict on case-sensitive and case-insensitive file systems (always HARD, not routable) |
-| `NEG.KERNEL.UNREADABLE` | kernel file is not valid UTF-8 JSON, not an object, or cannot be materialised (integer beyond the int-digit limit, nesting beyond the recursion limit); also when `kernels/` cannot be listed |
+| `NEG.KERNEL.UNREADABLE` | kernel file is not valid UTF-8 I-JSON (duplicate member name, `NaN`/`Infinity`, surrogate or noncharacter: `SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md`), not an object, or cannot be materialised (integer beyond the int-digit limit, nesting beyond the recursion limit); also when `kernels/` cannot be listed |
 | `NEG.KERNEL.MISSING_HASH` / `MISSING_VERSION` / `MISSING_PAYLOAD` | field missing or empty |
 | `NEG.KERNEL.INVALID_SEMVER` | `version` is not a SemVer 2.0.0 string |
 | `NEG.ROOT.UNKNOWN_METHOD` | `kernel.plan.json` pins a malformed or non-allowlisted root method |

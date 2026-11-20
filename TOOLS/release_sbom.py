@@ -34,7 +34,6 @@ accepts exactly that shape: ``name==version`` plus one or more
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import subprocess
 import sys
@@ -43,6 +42,11 @@ import venv
 from pathlib import Path
 from dataclasses import dataclass
 from typing import Dict, FrozenSet, List, Optional
+
+# ``python -I`` implies ``-P`` (3.11+): the script's directory is not on sys.path.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import ark_json  # noqa: E402  (the one JSON grammar, I-JSON, stdlib only)
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNTIME_REQUIREMENTS = ROOT / "requirements-runtime.txt"
@@ -173,7 +177,7 @@ def generate_sbom(python: Path, outfile: Path) -> dict:
     if proc.returncode != 0:
         raise SbomError(f"cyclonedx-py exit {proc.returncode}: {proc.stderr.strip()}")
     try:
-        sbom = json.loads(outfile.read_text(encoding="utf-8"))
+        sbom = ark_json.loads(outfile.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:
         raise SbomError(f"SBOM {outfile} unreadable: {exc}") from exc
     if not isinstance(sbom, dict) or sbom.get("bomFormat") != "CycloneDX":

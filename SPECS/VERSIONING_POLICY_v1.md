@@ -92,5 +92,8 @@ no trailing newline accepted. A kernel VERSION that used non-ASCII digits or end
 now fails where it passed before (tightening, MINOR).
 The release bundle (ARK-R8-001, 2026-11-18) adds a CLI (`TOOLS/release_bundle.py`) and two NEG IDs
 (`NEG.ARCHIVE.NONCANONICAL`, `NEG.ARCHIVE.UNSAFE_MEMBER`): additions, MINOR.
+The I-JSON input grammar (2026-11-20, `TOOLS/ark_json.py`) refuses duplicate member names,
+`NaN`/`Infinity` and surrogates/noncharacters in kernels, policies and manifests that Python's
+`json` accepted: tightening, MINOR, no NEG ID added.
 Under section 3 the current tree is a MINOR release over the origin: `1.1.0` is due. The bump
 itself is an owner decision and not part of this change.
