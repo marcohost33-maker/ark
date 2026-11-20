@@ -91,7 +91,7 @@ is therefore REJECTed by the report schema.
 |---|---|
 | `NEG.KERNEL.MISSING_<NAME>` | a required kernel file is not stored under its EXACT (case-sensitive) name (always HARD, not routable) |
 | `NEG.KERNEL.NAME_CASE_MISMATCH` | a stored name differs from a canonical kernel name (the five required ones or the spec-defined `kernel.baseline.json`) only by case (`kernel.PLAN.json`, `kernel.BASELINE.json`, `KERNEL.plan.json`) or two kernel names collide case-insensitively; same verdict on case-sensitive and case-insensitive file systems (always HARD, not routable) |
-| `NEG.KERNEL.UNREADABLE` | kernel file is not valid UTF-8 JSON, not an object, or cannot be materialised (integer beyond the int-digit limit, nesting beyond the recursion limit); also when `kernels/` cannot be listed |
+| `NEG.KERNEL.UNREADABLE` | kernel file is not valid UTF-8 I-JSON (duplicate member name, `NaN`/`Infinity`, surrogate or noncharacter: `SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md`), not an object, or cannot be materialised (integer beyond the int-digit limit, nesting beyond the recursion limit); also when `kernels/` cannot be listed |
 | `NEG.KERNEL.MISSING_HASH` / `MISSING_VERSION` / `MISSING_PAYLOAD` | field missing or empty |
 | `NEG.KERNEL.INVALID_SEMVER` | `version` is not a SemVer 2.0.0 string |
 | `NEG.ROOT.UNKNOWN_METHOD` | `kernel.plan.json` pins a malformed or non-allowlisted root method |
@@ -197,3 +197,31 @@ CLI: `python TOOLS/freeze_manifest.py [--manifest PATH] [--regenerate] [--add PA
 Without flags it verifies every pinned file (SHA-256 + byte length) and the
 coverage policy; exit code non-zero on drift or an unpinned required file
 (`NEG.ARCHIVE.UNPINNED_REQUIRED_FILE`). See `docs/FREEZE_COVERAGE_POLICY.md`.
+
+---
+
+## `release_bundle` — release bundle, the software subject (ARK-R8-001)
+
+Contract: `SPECS/ARCHIVE_CONFORMANCE_v1.md`, "Release bundle". Stdlib only (`python -I -S`).
+
+```python
+build_bundle(root: Path) -> tuple[str, bytes]            # (file name, archive bytes); raises BundleError
+verify_bundle_bytes(data: bytes, expect_sha256: str | None = None) -> BundleReport
+extract_bundle(report: BundleReport, dest: Path) -> Path  # only for an accepted report
+```
+`BundleReport`: `negs` (sorted NEG IDs, empty = accepted), `details` (one line per finding),
+`version`, `files` (path -> bytes, filled only when accepted), `ok`.
+
+CLI (exactly one of `--out`, `--pin`, `--verify`):
+
+| Command | Effect |
+|---|---|
+| `python TOOLS/release_bundle.py --out DIR [--sha256 HEX]` | build `DIR/ARK-Core_v<VERSION>_freeze.tar`; writes nothing unless the digest equals `artifacts/RELEASE_BUNDLE_v<VERSION>.sha256` (or `HEX`, for a rebuild from an unpacked bundle, which holds no pin) |
+| `python TOOLS/release_bundle.py --pin` | build and (re)write the digest pin |
+| `python TOOLS/release_bundle.py --verify FILE [--sha256 HEX] [--extract DIR]` | closed-world check of `FILE`; with `--extract`, unpack an accepted bundle to `DIR/ARK-Core_v<VERSION>_freeze/` (refused if that directory exists) |
+
+Exit 0 OK; 1 check failed (tree not in sync with its manifest, digest differs from the pin,
+bundle refused, extraction failed; findings on stderr); 2 usage error or unreadable `FILE`.
+The build refuses a tree whose freeze gate is not in sync and never writes a bundle its own
+verifier would refuse. The verifier never extracts a refused bundle and does not use `tarfile`.
+Acceptance means canonical and internally consistent, not authentic (see the spec's claim ceiling).

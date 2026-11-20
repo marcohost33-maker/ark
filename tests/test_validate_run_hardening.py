@@ -121,6 +121,45 @@ def test_report_validator_enforces_date_time_format():
     assert len(list(validator.iter_errors(bad2))) >= 1
 
 
+def test_format_checker_is_closed_world():
+    """Only formats ARK registers itself are enforced, whatever packages are installed
+    (CI has jsonschema[format] extras via cyclonedx-bom, a runtime install does not)."""
+    assert set(vr.strict_format_checker().checkers) == {"date-time"}
+
+
+@pytest.mark.parametrize("fmt, value", [
+    ("ipv4", "not-an-ip"),       # stdlib checker: enforced by a plain FormatChecker() everywhere
+    ("uri", "not a uri"),        # extras checker: enforced only where rfc3987-syntax is installed
+    ("hostname", "-bad-.host"),  # extras checker (fqdn)
+])
+def test_unregistered_format_is_not_enforced_in_any_environment(fmt, value):
+    from jsonschema import Draft202012Validator
+
+    validator = Draft202012Validator({"type": "string", "format": fmt},
+                                     format_checker=vr.strict_format_checker())
+    assert validator.is_valid(value), f"format {fmt!r} enforced: verdict would depend on site-packages"
+
+
+def _schema_formats(node):
+    if isinstance(node, dict):
+        if isinstance(node.get("format"), str):
+            yield node["format"]
+        for v in node.values():
+            yield from _schema_formats(v)
+    elif isinstance(node, list):
+        for v in node:
+            yield from _schema_formats(v)
+
+
+def test_every_schema_format_is_registered():
+    """Closed world must not mean silently unenforced: each `format` used in SCHEMAS/ is
+    registered in strict_format_checker()."""
+    registered = set(vr.strict_format_checker().checkers)
+    for path in sorted((ROOT / "SCHEMAS").glob("*.json")):
+        used = set(_schema_formats(json.loads(path.read_text(encoding="utf-8"))))
+        assert used <= registered, f"{path.name}: unregistered formats {sorted(used - registered)}"
+
+
 def test_generated_report_created_utc_passes_format_check():
     validator = vr.report_schema_validator()
     # utc_now() output must itself be a valid date-time (self-consistency).

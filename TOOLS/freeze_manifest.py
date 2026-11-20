@@ -20,9 +20,15 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from fnmatch import fnmatch
 from typing import Dict, List, Set
+
+# ``python -I`` implies ``-P`` (3.11+): the script's directory is not on sys.path.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import ark_json  # noqa: E402  (the one JSON grammar, I-JSON, stdlib only)
 
 # Default freeze manifest, relative to the repository root.
 DEFAULT_MANIFEST = os.path.join("artifacts", "FREEZE_MANIFEST_v1.0.5.json")
@@ -36,6 +42,7 @@ SELF_EXCLUDE = {DEFAULT_MANIFEST.replace(os.sep, "/")}
 # Keep this in sync with docs/FREEZE_COVERAGE_POLICY.md.
 REQUIRED_EXACT_PATHS = {
     ".gitattributes",
+    "LICENSE",
     "README.md",
     "VERSION",
     "docs/FREEZE_COVERAGE_POLICY.md",
@@ -116,9 +123,14 @@ def compute_entries(root: str, paths: List[str]) -> List[Dict[str, object]]:
     return entries
 
 
+def strict_json_loads(text: str) -> object:
+    """I-JSON parse (RFC 7493), see ``ark_json``. Kept as the public name used since #45."""
+    return ark_json.loads(text)
+
+
 def load_manifest(manifest_path: str) -> Dict[str, object]:
     with open(manifest_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        return strict_json_loads(f.read())
 
 
 def verify_manifest(manifest_path: str, root: str | None = None) -> List[str]:
@@ -130,7 +142,10 @@ def verify_manifest(manifest_path: str, root: str | None = None) -> List[str]:
     neg: List[str] = []
     try:
         manifest = load_manifest(manifest_path)
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeDecodeError, ValueError, RecursionError):
+        # ValueError covers JSONDecodeError, duplicate keys and NaN/Infinity (strict_json_loads).
+        return ["NEG.ARCHIVE.MANIFEST_MISMATCH"]
+    if not isinstance(manifest, dict):
         return ["NEG.ARCHIVE.MANIFEST_MISMATCH"]
 
     files = manifest.get("files")

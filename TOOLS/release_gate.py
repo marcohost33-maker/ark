@@ -29,13 +29,13 @@ Exit 2 is a usage/environment error (e.g. ``GITHUB_OUTPUT`` unset).
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import ark_json  # noqa: E402  (the one JSON grammar, I-JSON, stdlib only)
 from ark_semver import SEMVER_RE  # noqa: E402  (single SemVer grammar, stdlib only)
 
 
@@ -77,7 +77,7 @@ def check_release(root: Path, ref_type: str | None, ref_name: str | None) -> str
         raise ReleaseGateError(f"tag {ref_name!a} does not match VERSION (expected 'v{version}')")
     manifest = root / "artifacts" / f"FREEZE_MANIFEST_v{version}.json"
     try:
-        data = json.loads(manifest.read_text(encoding="utf-8"))
+        data = ark_json.loads(manifest.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
         raise ReleaseGateError(f"no freeze manifest for VERSION {version}") from exc
     except (OSError, ValueError) as exc:

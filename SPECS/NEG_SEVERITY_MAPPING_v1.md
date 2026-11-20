@@ -26,3 +26,10 @@ unreadable or malformed, or the run directory cannot be listed so the presence
 of a `policy.json` cannot be decided -- the run-gate CLI reports REJECT with
 `NEG.POLICY.UNREADABLE`. The ID is HARD_FAIL and non-downgradable: no policy can
 waive the absence of a readable policy.
+
+## NEG.ARCHIVE.NONCANONICAL, NEG.ARCHIVE.UNSAFE_MEMBER (release bundle, ARK-R8-001)
+Reported by the release-bundle verifier (`SPECS/ARCHIVE_CONFORMANCE_v1.md`, "Release bundle"):
+`NEG.ARCHIVE.NONCANONICAL` when the archive is not the canonical encoding of its members,
+`NEG.ARCHIVE.UNSAFE_MEMBER` for a non-regular member, an unsafe member path or an oversized
+archive. Both are HARD_FAIL in every mode (listed explicitly, not left to the strict-mode
+default for unknown IDs).

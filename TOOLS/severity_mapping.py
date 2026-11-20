@@ -10,6 +10,10 @@ HARD_EXACT = {
     "NEG.ARCHIVE.CHECKSUM_FAIL",
     "NEG.ARCHIVE.CASING_FAIL",
     "NEG.ARCHIVE.MANIFEST_MISMATCH",
+    # Release bundle (SPECS/ARCHIVE_CONFORMANCE_v1.md): HARD in every mode, not only by
+    # the strict-mode default for unlisted ids.
+    "NEG.ARCHIVE.NONCANONICAL",
+    "NEG.ARCHIVE.UNSAFE_MEMBER",
     "NEG.REPORT.SCHEMA_INVALID",
     "NEG.ROOT.UNKNOWN_METHOD",
     "NEG.BASELINE.NOT_FOUND",

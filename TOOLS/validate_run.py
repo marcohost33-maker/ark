@@ -23,6 +23,7 @@ from jsonschema import Draft202012Validator, FormatChecker, ValidationError
 
 # Official SemVer 2.0.0 regex, ASCII-only and anchored with \Z: one grammar for the
 # kernel check here and the release gate (TOOLS/ark_semver.py, ARK-EQ-01/02).
+import ark_json  # the one JSON grammar (I-JSON, RFC 7493): no duplicate names, NaN, surrogates
 from ark_semver import SEMVER_RE
 from severity_mapping import classify_neg_id, is_non_downgradable
 
@@ -59,8 +60,13 @@ def utc_now():
 
 
 def read_json(path):
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    """Kernels, policy and schemas are parsed as I-JSON (``ark_json``).
+
+    A duplicate member name would make the verdict depend on which JSON parser reads
+    the kernel; it raises ``ValueError`` like any other malformed JSON, so a kernel
+    maps to ``NEG.KERNEL.UNREADABLE`` and a policy to ``NEG.POLICY.UNREADABLE``.
+    """
+    return ark_json.load_path(path)
 
 
 def _check_date_time(value):
@@ -75,14 +81,19 @@ def _check_date_time(value):
 
 
 def strict_format_checker():
-    """FormatChecker with an explicit, dependency-free ``date-time`` enforcer.
+    """FormatChecker that enforces exactly ``date-time`` (closed world), stdlib only.
 
-    ``jsonschema`` only enforces ``format: date-time`` when an optional
-    third-party validator (``rfc3339-validator``) is installed; the ARK CI env
-    does not ship it, so we register the check here to make the schemas'
-    ``format: date-time`` load-bearing and deterministic.
+    ``FormatChecker()`` enables every format whose optional third-party checker
+    happens to be importable: 8 formats in a runtime-only install, 20 in the CI
+    env (``cyclonedx-bom`` pulls ``jsonschema[format]`` extras such as
+    ``rfc3339-validator``, ``fqdn``, ``rfc3987-syntax``). A schema ``format`` other
+    than ``date-time`` would then be enforced in CI and ignored at a consumer: the
+    verdict would depend on the environment. Starting from ``formats=()`` makes the
+    enforced set a property of this code, not of site-packages; ``date-time`` is
+    registered explicitly so the schemas' ``format: date-time`` is load-bearing.
+    A new format must be added here deliberately (with a test).
     """
-    checker = FormatChecker()
+    checker = FormatChecker(formats=())
     checker.checks("date-time", raises=(ValueError,))(_check_date_time)
     return checker
 

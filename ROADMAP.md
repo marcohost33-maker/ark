@@ -1,15 +1,18 @@
 # ARK-Core — Roadmap
 
-> Initial-Draft (2026-06-02), Stand aktualisiert 2026-10-19. Abgeleitet aus dem Freeze-Stand v1.0.5.
+> Initial-Draft (2026-06-02), Stand aktualisiert 2026-11-20. Abgeleitet aus dem Freeze-Stand v1.0.5.
 > Reihenfolge = Vorschlag, nicht Zusage. Richtung entscheidet Coworker-Research.
 
 ## Stand
 - **v1.0.5 (Freeze):** 4 JSON-Schemas, 15 Specs, 6 deterministische Python-Validatoren
   (`validate_run`, `provenance_validate`, `event_hysteresis`, `severity_mapping`,
-  `root_finding`, `contradiction_rules`) + 1 Integritäts-Tool (`freeze_manifest`),
-  Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, 74 Dateien gepinnt, Stand 2026-10-19).
-- **CI-Gates aktiv (verifiziert 2026-09-28; Zählung lokal 2026-10-19):** `ruff check .` clean · `compileall`
-  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **266 passed / 1 skipped** (lokal 2026-10-19) ·
+  `root_finding`, `contradiction_rules`) + Integritäts-/Release-Tools (`freeze_manifest`,
+  `release_gate`, `ark_semver`, `release_sbom`, `release_bundle`),
+  Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, Stand 2026-11-18),
+  `RELEASE_BUNDLE_v1.0.5.sha256` (gepinnter Digest des Release-Bundles).
+- **CI-Gates aktiv (verifiziert 2026-09-28; Zählung lokal 2026-11-18):** `ruff check .` clean · `compileall`
+  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **459 passed / 1 skipped** (lokal 2026-11-20) ·
+  Release-SBOM-Pfad (`release_sbom.py`, jeder PR) · Release-Bundle gegen Digest-Pin (`release_bundle.py`, jeder PR, alle 4 Plattform-Jobs) ·
   zizmor Workflow-Audit (required) · Dependabot (github-actions, weekly, SHA-Pins).
 
 ## Phase 1 — Repo-Init & CI-Härtung
@@ -49,8 +52,24 @@
 - [x] Bump-Ablauf end-to-end in einer Repo-Kopie getestet (1.0.5 -> 1.1.0, Freeze-Gate danach in sync).
 - [x] `VERSION` im Freeze-Manifest Pflicht (Coverage-Policy).
 
+## Phase 4b — Release-Pfad (GPT-6 R8, 2026-10-21)
+- [x] **Release-Blocker behoben:** `release.yml` rief `cyclonedx-py environment --outfile …` — keine gültige Option (Exit 2); der erste Tag wäre nach den Gates und vor der Attestation gescheitert. Unentdeckt, weil der Schritt nur auf Tags lief. Jetzt `TOOLS/release_sbom.py`, in jedem PR von `ci.yml` ausgeführt.
+- [x] ARK-R8-002: Runtime-SBOM (`sbom.runtime.cdx.json`) aus sauberer venv nur mit `requirements-runtime.txt`, exakt gegen die Pins geprüft (fail-closed); Build-SBOM separat benannt. Test: jeder Drittanbieter-Import in `TOOLS/` ist gepinnt, CI testet unter genau den attestierten Versionen.
+- [x] ARK-R8-003: Tag-Job führt `ruff` + `compileall` wie `ci.yml` (#41 übernommen); struktureller Test verlangt jedes `ci.yml`-Gate auch im Tag-Job.
+- [x] Hash-Locks (OpenSSF Scorecard *Pinned-Dependencies*): `requirements-*.in` → `uv pip compile --generate-hashes`; jede Installation mit `--require-hashes --only-binary=:all:`, kein ungepinntes `pip --upgrade` mehr.
+- [x] Determinismus: `validate_run` FormatChecker closed-world (`formats=()` + `date-time`) — vorher hing die Menge geprüfter Schema-Formate an installierten Zusatzpaketen (8 bei Konsumenten, 20 in CI).
+- [x] Python-Floor-Drift (Doku ≥3.10/≥3.11 vs. CI 3.12) behoben und per Test an die Workflows gebunden.
+- [x] ARK-R8-009: CI-Job `portability` (Windows + macOS mit Python 3.12, Ubuntu mit 3.13): hash-gelockte Installation, Freeze-Gate (byte-identischer Checkout je OS), volle Testsuite. Pflicht-Check `gate` unverändert.
+- [x] ARK-R8-001 (Quellstand, 2026-11-18): Software-Subjekt im Release. `TOOLS/release_bundle.py` baut `ARK-Core_v<VERSION>_freeze.tar` — exakt die Manifest-Dateien + Manifest, eine kanonische unkomprimierte ustar-Kodierung (keine Uhr, keine Umgebungsvariable, kein zlib), bytegleich auf Linux/Windows/macOS. Digest im Repo gepinnt (`artifacts/RELEASE_BUNDLE_v<VERSION>.sha256`); `ci.yml` und `release.yml` verweigern einen abweichenden Build; `release.yml` attestiert das Bundle als Subject. Vertrag: `SPECS/ARCHIVE_CONFORMANCE_v1.md`.
+- [x] ARK-R8-004: Closed-World-Prüfung des ausgelieferten Bundles, getrennt von der bewusst selektiven Freeze-Policy: `release_bundle.py --verify` (eigener strikter Parser, kein `tarfile` auf fremden Bytes; Re-Encoding muss die Eingabe bytegenau ergeben). Negativmatrix in `tests/test_release_bundle.py` (Links, fremde/fehlende Dateien, Metadaten, Pfade, Casing, Anhänge, jede geprüfte Ein-Byte-Änderung); Konsumenten-Probe: prüfen → entpacken → entpackte Tools laufen → Rebuild bytegleich.
+- [x] Falsifikation R8-004 am Kopf `ff29b7a` (2026-11-20): ein Bundle-Manifest mit doppeltem JSON-Key (zweites `files`/`artifact`) wurde akzeptiert — Python liest den letzten Wert, andere Parser den ersten (Parser-Differenzial im Closed-World-Verifier). Jetzt I-JSON (RFC 7493) im Bundle-Verifier, im Build und im Freeze-Gate: Duplikat-Keys und `NaN`/`Infinity` -> `NEG.ARCHIVE.MANIFEST_MISMATCH`; Freeze-Gate verweigert auch ein Nicht-Objekt (vorher `AttributeError`). Member-Pfade: `COM0`/`LPT0` reserviert (OneDrive/SharePoint). 11 neue Tests, alle am alten Kopf rot. Verschärfung = MINOR (deckt sich mit dem fälligen 1.1.0).
+- [x] Selbstkritik #45 (2026-11-20): Duplikat-Keys galten nur für das Manifest; `validate_run` (Kernel/Policy), `release_gate`, `release_sbom` lasen weiter lax, und RFC 7493 verbietet zusätzlich Surrogate/Nicht-Zeichen (auch escaped). Jetzt **eine** JSON-Grammatik `TOOLS/ark_json.py` (I-JSON, stdlib, Muster `ark_semver`) für alle Entscheidungspfade; Struktur-Test verbietet `json.load(s)` sonst in `TOOLS/`. Abbildung auf bestehende IDs (`NEG.KERNEL.UNREADABLE`, `NEG.POLICY.UNREADABLE`, `NEG.ARCHIVE.MANIFEST_MISMATCH`), keine neue NEG-ID. 32 Tests, 9/9 Mutanten erkannt. Vertrag: `SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md` „Input grammar“.
+- [ ] ARK-R8-001 Rest (**nicht** durch Quellcode erfüllbar): erster echter Tag-Lauf mit Attestation und unabhängigem `gh attestation verify` inkl. Negativprobe (falsches Repo/Ref, verändertes Byte); Attestation-Speicher für das private Repo; geschützte Tags/Ruleset. Owner-/Vero-Schritte, Ablauf in `docs/RELEASE_HARDENING.md` §3a.
+- [ ] Wheel/sdist auf einem Index: weiterhin Owner-Entscheid (braucht importierbaren Paketnamen/Layout = Public-Surface-Entscheid; wäre zusätzliches Subject, kein Ersatz).
+- [ ] ARK-R8-005 echter Consumer-Receipt DDE→ARK→USK — Owner-Entscheid / Cross-Repo.
+
 ## Offen / zu entscheiden
-- **Release 1.1.0** (VERSIONING_POLICY §6): seit dem Origin-Zip kamen NEG-IDs, Verdikt-Verschärfungen/-Lockerungen und CLI-Flags dazu -> laut §3 MINOR. Es existiert noch kein einziger Tag; „v1.0.5 (Freeze)“ ist nirgends verankert.
+- **Release 1.1.0** (VERSIONING_POLICY §6): seit dem Origin-Zip kamen NEG-IDs, Verdikt-Verschärfungen/-Lockerungen und CLI-Flags dazu (zuletzt `release_bundle` + `NEG.ARCHIVE.NONCANONICAL`/`UNSAFE_MEMBER`) -> laut §3 MINOR. Der Bump erzeugt das erste Bundle `ARK-Core_v1.1.0_freeze.tar`; das Bundle `v1.0.5` des aktuellen Baums ist **nicht** das Origin-Zip `ARK-Core_v1.0.5_freeze.zip` (anderer Inhalt, nie getaggt). Es existiert noch kein einziger Tag; „v1.0.5 (Freeze)“ ist nirgends verankert.
 - VERSIONING_POLICY von PROPOSED auf ACCEPTED (Owner-Entscheid), inkl. Bump-Regel „Lockerung nie PATCH“.
 - Phase 2 Schema-Versionen (§4): `schema_version` + `tool{name,version}` im Gate-Report (SARIF-Modell) — bricht Konsumenten mit dem alten Schema (`additionalProperties: false`), braucht Migrationsplan (USK-Adapter).
 - `--strict-exit` als Default (#37, Schritt 2): erst wenn alle Aufrufer (CI, USK-Adapter, Skripte) migriert sind; offen, ob REVIEW CI rot färben soll.

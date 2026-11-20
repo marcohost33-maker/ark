@@ -25,6 +25,9 @@ path. Policy is resolved deterministically:
 All keys are optional. The document is validated **before use** and fails closed
 (`PolicyError`) on any of:
 
+- not I-JSON (RFC 7493: duplicate member name, `NaN`/`Infinity`, surrogate or noncharacter;
+  `SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md`) — e.g. `{"waivers": ["X"], "waivers": []}`, which
+  a first-wins JSON reader would see as a waiver;
 - not a JSON object;
 - an unknown top-level key;
 - `severity_overrides` not an object, or a value outside
@@ -42,10 +45,16 @@ The policy does not select the root-finding method; that is pinned per run in
 
 Report self-validation uses `Draft202012Validator` **plus** an explicit
 `FormatChecker`. Stock `jsonschema` only enforces `format: date-time` when the
-optional `rfc3339-validator` package is installed (it is not in ARK CI), so the
-check is registered here in-process (stdlib only, deterministic): a `date-time`
-value must parse as ISO-8601/RFC-3339 **with an explicit timezone offset**.
-`created_utc` is therefore genuinely enforced rather than silently accepted.
+optional `rfc3339-validator` package is installed, so the check is registered here
+in-process (stdlib only, deterministic): a `date-time` value must parse as
+ISO-8601/RFC-3339 **with an explicit timezone offset**. `created_utc` is therefore
+genuinely enforced rather than silently accepted.
+
+The checker is **closed-world** (`FormatChecker(formats=())` + `date-time`, 2026-11-10):
+a plain `FormatChecker()` enables whatever optional format packages are importable —
+8 formats in a runtime-only install, 20 in the CI env — so any other schema `format`
+would be enforced in one environment and ignored in another. Exactly `date-time` is
+enforced everywhere; adding a format is a deliberate code change with a test.
 
 ## Evidence commands
 

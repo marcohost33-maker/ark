@@ -14,6 +14,7 @@ gate (`python TOOLS/freeze_manifest.py`) is fail-closed on any drift.
 | Specs | `SPECS/*.md` | Specs are the contract source (code follows spec). |
 | Test vectors | `TESTVECTORS/**` | Golden inputs/oracles. |
 | Frozen docs/TOC | `docs/architecture_overview.md`, `docs/FREEZE_COVERAGE_POLICY.md`, `tocs/*`, `README.md`, `artifacts/FREEZE_SUMMARY_*.md` | Released documentation surface. |
+| License text | `LICENSE` | Member of every release bundle (Apache-2.0 §4: recipients get a copy); the bundle holds pinned files only, so the license must be pinned. |
 | Release identity | `VERSION` | Single source of truth for the release version (`SPECS/VERSIONING_POLICY_v1.md`); a silent edit would relabel the frozen state. |
 | Line-ending normalization | `.gitattributes` | Cross-platform determinism for byte-level hashes; without it, Windows CRLF normalization can create false or masked drift. |
 
@@ -57,3 +58,12 @@ tests forces a deliberate re-freeze and is caught by the gate otherwise.
 
 `.gitattributes` enforces `* text=auto eol=lf` so working-tree bytes are LF on every
 platform; a Windows checkout would otherwise produce CRLF bytes and false drift.
+
+## Relation to the release bundle (ARK-R8-001)
+
+The release bundle (`TOOLS/release_bundle.py`, `SPECS/ARCHIVE_CONFORMANCE_v1.md`) holds exactly
+the files this manifest pins, plus the manifest. Pinning a file therefore ships it; a file that
+must reach consumers has to be pinned. The bundle digest pin
+`artifacts/RELEASE_BUNDLE_v<VERSION>.sha256` is deliberately **not** pinned here: it records the
+digest of an archive that contains this manifest, so it cannot be inside either. After
+`--regenerate`, run `python TOOLS/release_bundle.py --pin`.

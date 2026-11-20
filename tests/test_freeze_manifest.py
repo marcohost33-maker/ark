@@ -136,6 +136,28 @@ def test_freeze_gate_red_on_malformed_manifest(freeze_mod, tmp_path):
     assert "NEG.ARCHIVE.MANIFEST_MISMATCH" in negs
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        '{"files": [], "files": [{"path": "TOOLS/known.py"}]}',  # duplicate key (I-JSON)
+        '{"artifact": NaN, "files": [{"path": "TOOLS/known.py"}]}',  # non-finite number
+        '[{"path": "TOOLS/known.py"}]',  # not an object: was an AttributeError crash
+    ],
+    ids=["duplicate-key", "nan", "not-an-object"],
+)
+def test_freeze_gate_red_on_non_strict_manifest_json(freeze_mod, tmp_path, text):
+    repo = tmp_path / "r4"
+    (repo / "artifacts").mkdir(parents=True)
+    mpath = repo / "artifacts" / "manifest.json"
+    mpath.write_text(text, encoding="utf-8")
+    assert freeze_mod.verify_manifest(str(mpath), root=str(repo)) == ["NEG.ARCHIVE.MANIFEST_MISMATCH"]
+
+
+def test_strict_json_loads_accepts_what_json_accepts_otherwise(freeze_mod):
+    text = '{"a": 1, "b": [1.5, -2, null, true], "c": {"a": "x"}}'
+    assert freeze_mod.strict_json_loads(text) == json.loads(text)
+
+
 def test_freeze_gate_red_if_manifest_pins_itself(freeze_mod, tmp_path):
     """The manifest must never pin its own path (chicken/egg) -> drift signal."""
     repo = tmp_path / "r4"
