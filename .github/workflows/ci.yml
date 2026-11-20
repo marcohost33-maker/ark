@@ -33,6 +33,8 @@ jobs:
         run: pytest -q
       - name: release SBOM path (ARK-R8-002, same script as release.yml)
         run: python TOOLS/release_sbom.py --out "$RUNNER_TEMP/sbom"
+      - name: release bundle (ARK-R8-001, software subject; must equal the committed digest pin)
+        run: python TOOLS/release_bundle.py --out "$RUNNER_TEMP/bundle"
 
   # ARK-R8-009: the determinism claims (verdict independent of the filesystem, LF bytes via
   # .gitattributes, freeze hashes) are exercised on the platforms consumers run, not only on
@@ -64,3 +66,7 @@ jobs:
         run: python TOOLS/freeze_manifest.py
       - name: pytest
         run: pytest -q
+      # Same pin on every OS: the release bundle is byte-identical across platforms.
+      - name: release bundle (ARK-R8-001, must equal the committed digest pin)
+        shell: bash
+        run: python TOOLS/release_bundle.py --out "$RUNNER_TEMP/bundle"

@@ -28,7 +28,9 @@ and by the tag gate in `.github/workflows/release.yml` (every release).
   (origin zip `ARK-Core_v1.0.5_freeze.zip`), `artifacts/FREEZE_SUMMARY_v*.md`, `tocs/*`,
   and test-vector input data.
 - A freeze is a tag `v<VERSION>` plus the attested release artifacts of that tag, not a label
-  on a moving branch.
+  on a moving branch. The software subject among them is the release bundle
+  `ARK-Core_v<VERSION>_freeze.tar` (`SPECS/ARCHIVE_CONFORMANCE_v1.md`); its digest is pinned in
+  `artifacts/RELEASE_BUNDLE_v<VERSION>.sha256` and checked on every PR and in the release job.
 
 ## 2. Public surface (what a version promises)
 Contracts in `SPECS/`, the JSON Schemas in `SCHEMAS/`, the NEG ID set and each ID's severity
@@ -73,10 +75,13 @@ therefore needs a consumer migration plan and owner approval.
    manifest and keeps its coverage): copy `artifacts/FREEZE_MANIFEST_v<OLD>.json` to
    `artifacts/FREEZE_MANIFEST_v<VERSION>.json`, set its `artifact` field and `DEFAULT_MANIFEST`,
    then run `python TOOLS/freeze_manifest.py --regenerate`. The previous manifest stays as a
-   historical record.
+   historical record. Then pin the bundle digest: `python TOOLS/release_bundle.py --pin` writes
+   `artifacts/RELEASE_BUNDLE_v<VERSION>.sha256` (re-run it after every re-freeze; CI refuses a
+   stale pin).
 4. Merge, then push the tag `v<VERSION>`; the release workflow runs the release gate
    (strict SemVer, tag ref, tag == `v<VERSION>`, manifest), the same ruff and compile checks
-   as `ci.yml`, the full test suite and the freeze gate, then attests SBOM + manifest.
+   as `ci.yml`, the full test suite and the freeze gate, then builds the release bundle (refused
+   unless it equals the pinned digest) and attests bundle + SBOMs + manifest.
 
 ## 6. Current state (2026-10-21)
 No tag exists. Since the frozen origin zip (SHA `3f515f30...`), the hardening waves added NEG IDs
@@ -85,5 +90,7 @@ No tag exists. Since the frozen origin zip (SHA `3f515f30...`), the hardening wa
 #39 tightened the kernel SemVer check: one grammar (`TOOLS/ark_semver.py`), ASCII digits only,
 no trailing newline accepted. A kernel VERSION that used non-ASCII digits or ended in a newline
 now fails where it passed before (tightening, MINOR).
+The release bundle (ARK-R8-001, 2026-11-18) adds a CLI (`TOOLS/release_bundle.py`) and two NEG IDs
+(`NEG.ARCHIVE.NONCANONICAL`, `NEG.ARCHIVE.UNSAFE_MEMBER`): additions, MINOR.
 Under section 3 the current tree is a MINOR release over the origin: `1.1.0` is due. The bump
 itself is an owner decision and not part of this change.

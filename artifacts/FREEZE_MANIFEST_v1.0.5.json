@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-11-10T19:38:06.144862+00:00",
+  "created_utc": "2026-11-18T20:40:56.779563+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -8,9 +8,14 @@
       "bytes": 645
     },
     {
+      "path": "LICENSE",
+      "sha256": "cb78486d4683caf1215942748f99d3e6bdbb9c8d47ffbca242c29495ae5c0802",
+      "bytes": 11360
+    },
+    {
       "path": "README.md",
-      "sha256": "0d0b390e4ea375553cf410078f5a33461e79febb77d64fce1479efb2b93f1665",
-      "bytes": 2112
+      "sha256": "bcd0cee463cf02b3a752aa315677af4686c83857ddb6149ed9b7d342c2359467",
+      "bytes": 2634
     },
     {
       "path": "SCHEMAS/gate_report.schema.json",
@@ -39,8 +44,8 @@
     },
     {
       "path": "SPECS/ARCHIVE_CONFORMANCE_v1.md",
-      "sha256": "8e423bad01bf45fdbcbea8dc0d0ecdea158e9d399ea31970fcfc195cc4879469",
-      "bytes": 160
+      "sha256": "5fa3e9836d8d0830df3149576562c08300ccd54bff196f422f2f37e914dd65bb",
+      "bytes": 3512
     },
     {
       "path": "SPECS/BASELINE_POLICY_v1.md",
@@ -69,8 +74,8 @@
     },
     {
       "path": "SPECS/NEG_SEVERITY_MAPPING_v1.md",
-      "sha256": "5909c0d72d4b2a0e840fd53b20041097e54c66269a591a230be51cd3d6651cab",
-      "bytes": 1160
+      "sha256": "44017b943eba8f81412fd3b5e97a2a635fe53a300610549e96e75db833ed1d89",
+      "bytes": 1638
     },
     {
       "path": "SPECS/PROVENANCE_MINIMAL_v1.md",
@@ -104,8 +109,8 @@
     },
     {
       "path": "SPECS/VERSIONING_POLICY_v1.md",
-      "sha256": "a8c19517e9bf09e81d4e9208e311056c9da15c5af9e1dcdf4aaf07efaad9eef1",
-      "bytes": 6269
+      "sha256": "7ec0373773a138dbcb6337666823736eda7b5b7d38794f8857ae4a065d49b517",
+      "bytes": 6962
     },
     {
       "path": "TESTVECTORS/baseline/baseline_missing.json",
@@ -199,13 +204,18 @@
     },
     {
       "path": "TOOLS/freeze_manifest.py",
-      "sha256": "ed0ff5f35f038bd0fa88484cd8d2d075a22a3ec94d54aaa1b22f61edae085339",
-      "bytes": 9636
+      "sha256": "9a97a88523943cd48d265b814a141f088c176cee04ddd141e047d4965c195a6e",
+      "bytes": 9651
     },
     {
       "path": "TOOLS/provenance_validate.py",
       "sha256": "0c879533fdc3808bb05796faab60544676997e7ffea3928ee34aab0ffa133ec1",
       "bytes": 2383
+    },
+    {
+      "path": "TOOLS/release_bundle.py",
+      "sha256": "ad1877c87ab85e9bd5157bf950c87b89fa40bd82c86a110b5a82b98f46fcd19e",
+      "bytes": 23270
     },
     {
       "path": "TOOLS/release_gate.py",
@@ -224,8 +234,8 @@
     },
     {
       "path": "TOOLS/severity_mapping.py",
-      "sha256": "9be8a7ff5161a74438a1e6d0ad63d4ddcfd44f5b9576b263bf64e5523332a79c",
-      "bytes": 3872
+      "sha256": "c9f11aa4c36059741d6064d8fa8e669c29725ae6e1a5ae8cb5efa1ddff336610",
+      "bytes": 4073
     },
     {
       "path": "TOOLS/validate_run.py",
@@ -244,13 +254,13 @@
     },
     {
       "path": "docs/API.md",
-      "sha256": "6dcd03975d597270b6a9f8cc5017e1954016a67d730e2ebd995e1e25996dd418",
-      "bytes": 10842
+      "sha256": "8a631e4ed834d599adad1f2158f2a81ee3825be0c7aa0ea0ed68b43e8b498234",
+      "bytes": 12600
     },
     {
       "path": "docs/FREEZE_COVERAGE_POLICY.md",
-      "sha256": "cc25a79317b1bc083e9daab561c996b329bdfa249987aae528f9a77b8d68f114",
-      "bytes": 3053
+      "sha256": "4212b18867fb71bd05d270db3343de6b72816ed48384143a5386106257c1f3a1",
+      "bytes": 3769
     },
     {
       "path": "docs/POLICY_LOADING.md",
@@ -259,8 +269,8 @@
     },
     {
       "path": "docs/RELEASE_HARDENING.md",
-      "sha256": "007e77d9dbee9bba2014f2d1504ee7c5dcbfd1088966b4716196c22f7e4cc443",
-      "bytes": 7435
+      "sha256": "1c86d913a7d6b5d8bf2a69a3b29f2110f7f200434a23d270ba3335e6e427ff14",
+      "bytes": 11055
     },
     {
       "path": "docs/architecture_overview.md",
@@ -361,6 +371,11 @@
       "path": "tests/test_kernel_gate_edges.py",
       "sha256": "0205bb009b9114c2ebae4626b27c7ba6152de23e8c98a0a4e7f6dd67b0da7620",
       "bytes": 14402
+    },
+    {
+      "path": "tests/test_release_bundle.py",
+      "sha256": "217042d8357e780bccef2a7d7fb13581be7859c18d736a0e97f6ae1b5deecc3b",
+      "bytes": 22576
     },
     {
       "path": "tests/test_release_gate.py",
