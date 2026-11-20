@@ -20,9 +20,15 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from fnmatch import fnmatch
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
+
+# ``python -I`` implies ``-P`` (3.11+): the script's directory is not on sys.path.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import ark_json  # noqa: E402  (the one JSON grammar, I-JSON, stdlib only)
 
 # Default freeze manifest, relative to the repository root.
 DEFAULT_MANIFEST = os.path.join("artifacts", "FREEZE_MANIFEST_v1.0.5.json")
@@ -117,27 +123,9 @@ def compute_entries(root: str, paths: List[str]) -> List[Dict[str, object]]:
     return entries
 
 
-def _reject_duplicate_keys(pairs: List[Tuple[str, object]]) -> Dict[str, object]:
-    obj: Dict[str, object] = {}
-    for key, value in pairs:
-        if key in obj:
-            raise ValueError(f"duplicate JSON object key {key!a}")
-        obj[key] = value
-    return obj
-
-
-def _reject_constant(name: str) -> object:
-    raise ValueError(f"non-finite JSON number {name}")
-
-
 def strict_json_loads(text: str) -> object:
-    """``json.loads`` restricted to I-JSON (RFC 7493): no duplicate object keys, no NaN/Infinity.
-
-    Python's ``json`` keeps the last of two equal keys, other readers keep the first. A
-    manifest that two parsers read differently is not one manifest, so it is refused
-    (ValueError) instead of silently resolved.
-    """
-    return json.loads(text, object_pairs_hook=_reject_duplicate_keys, parse_constant=_reject_constant)
+    """I-JSON parse (RFC 7493), see ``ark_json``. Kept as the public name used since #45."""
+    return ark_json.loads(text)
 
 
 def load_manifest(manifest_path: str) -> Dict[str, object]:

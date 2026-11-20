@@ -57,7 +57,9 @@ and extracts nothing:
 All of these are HARD_FAIL.
 
 **Strict JSON (I-JSON, RFC 7493).** The manifest, bundled or in the repository, is parsed with
-duplicate object keys and the non-finite constants `NaN`, `Infinity`, `-Infinity` refused. JSON
+the ARK input grammar (`SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md`, `TOOLS/ark_json.py`):
+duplicate object keys, the non-finite constants `NaN`, `Infinity`, `-Infinity` and surrogate or
+noncharacter code points are refused. JSON
 parsers disagree on duplicate keys (Python keeps the last, others the first), so a manifest with
 one would name different file lists to different readers; it is a
 `NEG.ARCHIVE.MANIFEST_MISMATCH`, not a document to be resolved. The freeze gate
