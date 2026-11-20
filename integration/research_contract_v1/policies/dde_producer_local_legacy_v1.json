@@ -1,0 +1,19 @@
+{
+  "schema_name": "ARKEvidenceIdentityPolicy",
+  "schema_version": "1.0.0",
+  "policy_id": "DDE-PRODUCER-LOCAL-LEGACY-v1",
+  "policy_version": "1.0.0",
+  "policy_digest": "sha256:6a9ddc7d5c090624dbfe0a16bd045e9c33a6669c23b1da70c44949693d443645",
+  "revision_binding": "EQUAL_EVIDENCE_TO_RUN",
+  "legacy_mode": "DDE_PRODUCER_LOCAL_EXPLICIT",
+  "legacy_source_repository": "marcohost33-maker/coworker-dde",
+  "legacy_verifier_versions": {
+    "dde-analytic-reference": ["3DDE_CANON_v1_2"]
+  },
+  "oracle_authorizations": [],
+  "notes": [
+    "Compatibility-only policy for Research Contract EvidenceAttestation v1.0.0.",
+    "Does not generalize producer-local revision equality to independent evidence.",
+    "Migrate independent evidence to EvidenceAttestation v1.1.0."
+  ]
+}

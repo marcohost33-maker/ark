@@ -1,0 +1,27 @@
+{
+  "schema_name": "EvidenceIdentityPolicy",
+  "schema_version": "1.0.0",
+  "policy_id": "DDE-EVIDENCE-IDENTITY-v1.1",
+  "policy_version": "1.0.0",
+  "policy_digest": "sha256:96f59bf15745d2c50c58e76fe607e69c01673cce9b680228cdb3f18332d2e1be",
+  "revision_binding": "INDEPENDENT_ALLOWED",
+  "oracle_authorizations": [
+    {
+      "oracle_id": "dde-analytic-reference",
+      "verifier_id": "jitcdde",
+      "verifier_implementation_id": "coworker-dde.solver-vs-analytic-reference.jitcdde"
+    },
+    {
+      "oracle_id": "dde-analytic-reference",
+      "verifier_id": "stdlib_method_of_steps_rk4",
+      "verifier_implementation_id": "coworker-dde.solver-vs-analytic-reference.stdlib_method_of_steps_rk4"
+    }
+  ],
+  "legacy_mode": "DISABLED",
+  "legacy_verifier_revisions": {},
+  "notes": [
+    "Producer-recommended candidate policy; a consumer must pin/select it out-of-band.",
+    "INDEPENDENT_ALLOWED permits distinct run/evidence producer revisions; it is not a sociotechnical independence claim.",
+    "Cross-route evidence is corroborating and is not authorized as the analytical oracle."
+  ]
+}

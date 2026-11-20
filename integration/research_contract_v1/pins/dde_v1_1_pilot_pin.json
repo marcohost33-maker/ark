@@ -1,0 +1,43 @@
+{
+  "schema_name": "ARKTrustedGatePin",
+  "schema_version": "2.0.0",
+  "gate_id": "GATE-DDE-PILOT-001",
+  "claim_id": "CLM-DDE-scalar_linear_constant_delay-cross-solver",
+  "run_id": "RUN-DDE-scalar_linear_constant_delay-2026-08-21T230449Z",
+  "profile_id": "DDE.GATE-EVID-001.scalar_linear_constant_delay",
+  "profile_version": "1.0.0",
+  "profile_digest": "sha256:e43f82dd2bf953334b26fb37f9e456ac5064d0202351fd7670f315facd9bac2d",
+  "input_manifest": [
+    {
+      "kind": "ModelSpec",
+      "id": "dde.scalar_linear_constant_delay"
+    },
+    {
+      "kind": "RunPlan",
+      "id": "RUN-DDE-scalar_linear_constant_delay-2026-08-21T230449Z"
+    },
+    {
+      "kind": "EvidenceAttestation",
+      "id": "EVID-DDE-scalar_linear_constant_delay-cross-route-agreement"
+    },
+    {
+      "kind": "EvidenceAttestation",
+      "id": "EVID-DDE-scalar_linear_constant_delay-external_cross_solver_optional"
+    },
+    {
+      "kind": "EvidenceAttestation",
+      "id": "EVID-DDE-scalar_linear_constant_delay-jitcdde_adaptive_rk"
+    },
+    {
+      "kind": "EvidenceAttestation",
+      "id": "EVID-DDE-scalar_linear_constant_delay-python_method_of_steps_rk4"
+    },
+    {
+      "kind": "ClaimCard",
+      "id": "CLM-DDE-scalar_linear_constant_delay-cross-solver"
+    }
+  ],
+  "scope_policy": "ALL_BUNDLE_EVIDENCE",
+  "input_digest": "sha256:994f8b45fcd249fd0dceecd7fd3a94c4323c8588cee5a5d0661c88c00c02b25c",
+  "gate_report_digest": "sha256:6949f2995b5d8e6979df98a0b9289c6fcc683748c4fe17826083bc643978e7d5"
+}

@@ -1,0 +1,94 @@
+name: research-contract-interop
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+      - name: Install test tools
+        run: python -m pip install pytest==9.1.1 ruff==0.14.0
+      - name: Compile candidate integration
+        run: python -m compileall -q integration/research_contract_v1
+      - name: Ruff candidate integration
+        run: ruff check integration/research_contract_v1 --select=F,E9
+      - name: Run normalization falsification suite
+        run: pytest -q integration/research_contract_v1/test_*.py
+
+      - name: Materialize legacy DDE normalization regression
+        run: |
+          python integration/research_contract_v1/normalize.py \
+            integration/research_contract_v1/fixtures/dde_scalar_linear_real.json \
+            --identity-policy integration/research_contract_v1/policies/dde_producer_local_legacy_v1.json \
+            --out /tmp/dde-ark-normalized-legacy.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('/tmp/dde-ark-normalized-legacy.json')
+          x = json.loads(p.read_text())
+          assert x['blocking'] is False
+          assert x['contradictions'] == []
+          assert x['contract_bindings']['evidence_identity_policy']['valid'] is True
+          assert x['contract_bindings']['evidence_identity_policy']['policy_id'] == 'DDE-PRODUCER-LOCAL-LEGACY-v1'
+          assert x['output_digest'] == 'sha256:cca370c6bec5ceae8b50b82b59c26cd8fe8d6e3fca5535c1edc6b172ece39f06'
+          print(json.dumps({'legacy_output_digest': x['output_digest']}, sort_keys=True))
+          PY
+
+      - name: Materialize real DDE v1.1 normalization output
+        run: |
+          python integration/research_contract_v1/normalize_v1_1.py \
+            integration/research_contract_v1/fixtures/dde_v1_1_real.json \
+            --identity-policy integration/research_contract_v1/policies/dde_v1_1_candidate.json \
+            --trusted-pin integration/research_contract_v1/pins/dde_v1_1_pilot_pin.json \
+            --expected-pin-sha256 sha256:16e833e262c0b06a6c46f4a57cbe3f4273a2a36d3643005085f9cf901621f9b1 \
+            --out /tmp/dde-v1_1-ark-normalized.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('/tmp/dde-v1_1-ark-normalized.json')
+          x = json.loads(p.read_text())
+          assert x['schema_version'] == '1.3.0-candidate'
+          assert x['blocking'] is False
+          assert x['contradictions'] == []
+          assert x['source']['workflow_artifact'] == 9465277007
+          assert x['source']['workflow_artifact_sha256'] == 'da22dcdbfec5e6282032aaa91a9fa07f432aca114e46ee83e4f3f400a4bddda1'
+          assert x['input_digest'] == 'sha256:25006ea40e83c5eb1b8426319edda4f5b47f763a57f6ec3945b4b29ad0d43a43'
+          policy = x['contract_bindings']['evidence_identity_policy']
+          assert policy['valid'] is True
+          assert policy['policy_id'] == 'DDE-EVIDENCE-IDENTITY-v1.1'
+          assert policy['policy_digest'] == 'sha256:96f59bf15745d2c50c58e76fe607e69c01673cce9b680228cdb3f18332d2e1be'
+          bindings = x['contract_bindings']['gate_input_materialization']
+          assert len(bindings) == 1
+          assert bindings[0]['verified'] is True
+          assert bindings[0]['input_digest'] == 'sha256:994f8b45fcd249fd0dceecd7fd3a94c4323c8588cee5a5d0661c88c00c02b25c'
+          assert bindings[0]['input_count'] == 7
+          pin = x['contract_bindings']['trusted_gate_pin']
+          assert pin['status'] == 'GATE_INPUT_BOUND_TO_CONSUMER_PIN'
+          assert pin['input_digest'] == bindings[0]['input_digest']
+          print(json.dumps({
+              'input_digest': x['input_digest'],
+              'output_digest': x['output_digest'],
+              'gate_binding': bindings[0],
+          }, sort_keys=True))
+          PY
+
+      - name: Upload ARK v1.1 normalization evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ark-dde-v1_1-normalization
+          path: /tmp/dde-v1_1-ark-normalized.json
+          if-no-files-found: error
+          retention-days: 30
