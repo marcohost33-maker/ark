@@ -1,5 +1,5 @@
 # ALGORITHM_CATALOG_v1
-Version: 1.0.5
+Version: 1.1.0
 Status: DRAFT
 
 This catalog defines the normative execution skeleton for ARK-Core:

@@ -1,5 +1,5 @@
 # VERSIONING_POLICY_v1
-Version: 1.0.5
+Version: 1.1.0
 Status: PROPOSED
 
 Answers ROADMAP "Versionierungs-Politik nach Freeze (SemVer? Schema-Version getrennt von
@@ -22,8 +22,11 @@ and by the tag gate in `.github/workflows/release.yml` (every release).
   the `Version:` header of every `SPECS/*.md`, `DEFAULT_MANIFEST` in `TOOLS/freeze_manifest.py`
   (`artifacts/FREEZE_MANIFEST_v<VERSION>.json`, which must exist and whose `artifact` field
   reads `ARK-Core_v<VERSION>_freeze`), `version` in `CITATION.cff`,
-  the version line of `AGENTS.md`, the `**Status:**` line of `README.md`, and the tool/agent
-  version claimed by `examples/minimal_run/provenance/prov.json`.
+  the version line of `AGENTS.md`, the `**Status:**` line of `README.md`, the tool/agent
+  version claimed by `examples/minimal_run/provenance/prov.json`, the bundle pin
+  `artifacts/RELEASE_BUNDLE_v<VERSION>.sha256` (exists; its digest is checked by every CI build)
+  and a `## [<VERSION>]` section in `CHANGELOG.md`. The rules are code in one place,
+  `TOOLS/version_bump.py` (`version_drift`), which the PR gate imports.
 - Historical records keep the version they describe and are NOT coupled: `SOURCES.md`
   (origin zip `ARK-Core_v1.0.5_freeze.zip`), `artifacts/FREEZE_SUMMARY_v*.md`, `tocs/*`,
   and test-vector input data.
@@ -68,32 +71,32 @@ rejected by every consumer still holding the current schema (e.g. the USK adapte
 therefore needs a consumer migration plan and owner approval.
 
 ## 5. Release procedure
-1. Classify the changes since the last tag with section 3; set `VERSION`.
-2. Update the lockstep copies listed in section 1; `pytest tests/test_version_consistency.py`
-   names every copy that is still stale.
-3. Generate the new manifest from the previous one (`--regenerate` re-freezes an existing
-   manifest and keeps its coverage): copy `artifacts/FREEZE_MANIFEST_v<OLD>.json` to
-   `artifacts/FREEZE_MANIFEST_v<VERSION>.json`, set its `artifact` field and `DEFAULT_MANIFEST`,
-   then run `python TOOLS/freeze_manifest.py --regenerate`. The previous manifest stays as a
-   historical record. Then pin the bundle digest: `python TOOLS/release_bundle.py --pin` writes
-   `artifacts/RELEASE_BUNDLE_v<VERSION>.sha256` (re-run it after every re-freeze; CI refuses a
-   stale pin).
+1. Classify the changes since the last tag with section 3 and write them as the
+   `## [<NEW>]` section of `CHANGELOG.md` (Keep a Changelog), naming every verdict loosening
+   (section 3.1) with its NEG IDs. The bump tool refuses to run without this section.
+2. `python TOOLS/version_bump.py <NEW>` moves `VERSION` and every lockstep copy of section 1,
+   writes `artifacts/FREEZE_MANIFEST_v<NEW>.json` from the previous manifest (which stays as a
+   historical record), re-freezes it (`TOOLS/freeze_manifest.py --regenerate`), pins the bundle
+   digest (`TOOLS/release_bundle.py --pin`) and removes the previous pin (a tree can build only
+   its own version). Preconditions, all checked before the first write: `<NEW>` is strict SemVer
+   with higher precedence than `VERSION` (semver.org section 11); no lockstep drift before the
+   bump; the changelog section exists; no manifest or pin for `<NEW>` exists yet.
+   `--check <V>` only reports drift against `<V>`. `tests/test_version_consistency.py` runs the
+   whole procedure on a copy of the repository: bump, freeze gate, bundle build against the new
+   pin, closed-world verify, release gate for `v<NEW>`, and the version-bound tests.
+3. After any later change before the tag: `python TOOLS/freeze_manifest.py --regenerate`, then
+   `python TOOLS/release_bundle.py --pin` (CI refuses a stale pin).
 4. Merge, then push the tag `v<VERSION>`; the release workflow runs the release gate
    (strict SemVer, tag ref, tag == `v<VERSION>`, manifest), the same ruff and compile checks
    as `ci.yml`, the full test suite and the freeze gate, then builds the release bundle (refused
-   unless it equals the pinned digest) and attests bundle + SBOMs + manifest.
+   unless it equals the pinned digest) and attests bundle + SBOMs + manifest. Set the date of
+   the changelog section in the same commit that is tagged, or leave "unreleased" and let the
+   tag date stand.
 
-## 6. Current state (2026-10-21)
-No tag exists. Since the frozen origin zip (SHA `3f515f30...`), the hardening waves added NEG IDs
-(`NEG.KERNEL.NAME_CASE_MISMATCH`, `NEG.POLICY.UNREADABLE`), tightened and loosened verdicts
-(#34: trailing separator no longer REJECTs) and added CLI flags (`--policy`, `--strict-exit`).
-#39 tightened the kernel SemVer check: one grammar (`TOOLS/ark_semver.py`), ASCII digits only,
-no trailing newline accepted. A kernel VERSION that used non-ASCII digits or ended in a newline
-now fails where it passed before (tightening, MINOR).
-The release bundle (ARK-R8-001, 2026-11-18) adds a CLI (`TOOLS/release_bundle.py`) and two NEG IDs
-(`NEG.ARCHIVE.NONCANONICAL`, `NEG.ARCHIVE.UNSAFE_MEMBER`): additions, MINOR.
-The I-JSON input grammar (2026-11-20, `TOOLS/ark_json.py`) refuses duplicate member names,
-`NaN`/`Infinity` and surrogates/noncharacters in kernels, policies and manifests that Python's
-`json` accepted: tightening, MINOR, no NEG ID added.
-Under section 3 the current tree is a MINOR release over the origin: `1.1.0` is due. The bump
-itself is an owner decision and not part of this change.
+## 6. Current state (2026-11-20)
+No tag exists. `VERSION` is `1.1.0` as a release candidate: `CHANGELOG.md` classifies the tree
+against the frozen origin zip (SHA `3f515f30...`, commit `b746b6d`) as MINOR, measured on the
+public surface (11 NEG IDs added, none removed or renamed; CLI flags only added; no schema
+changed; default exit-code contract unchanged), with several tightenings and exactly one
+verdict-loosening (#34: a run path with a trailing separator no longer REJECTs). Releasing it
+(merging the bump and pushing the tag `v1.1.0`) is the owner's decision.

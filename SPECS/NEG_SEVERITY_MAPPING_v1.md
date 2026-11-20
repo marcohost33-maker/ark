@@ -1,5 +1,5 @@
 # NEG_SEVERITY_MAPPING_v1
-Version: 1.0.5
+Version: 1.1.0
 Status: DRAFT
 
 Central mapping from NEG IDs to severity:

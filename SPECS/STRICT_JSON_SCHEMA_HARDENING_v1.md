@@ -1,5 +1,5 @@
 # STRICT_JSON_SCHEMA_HARDENING_v1
-Version: 1.0.5
+Version: 1.1.0
 Status: DRAFT
 
 Recommended hardening rules:

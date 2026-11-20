@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ark_json  # noqa: E402  (the one JSON grammar, I-JSON, stdlib only)
 
 # Default freeze manifest, relative to the repository root.
-DEFAULT_MANIFEST = os.path.join("artifacts", "FREEZE_MANIFEST_v1.0.5.json")
+DEFAULT_MANIFEST = os.path.join("artifacts", "FREEZE_MANIFEST_v1.1.0.json")
 
 # Paths (relative, POSIX-style) excluded from the manifest's own file list.
 # The manifest cannot contain its own hash (chicken/egg); excluding it is correct,
@@ -42,6 +42,7 @@ SELF_EXCLUDE = {DEFAULT_MANIFEST.replace(os.sep, "/")}
 # Keep this in sync with docs/FREEZE_COVERAGE_POLICY.md.
 REQUIRED_EXACT_PATHS = {
     ".gitattributes",
+    "CHANGELOG.md",
     "LICENSE",
     "README.md",
     "VERSION",
@@ -85,7 +86,7 @@ def discover_required_paths(root: str) -> Set[str]:
 
     This intentionally uses an explicit allowlist of integrity-relevant file classes,
     not "all files in the repo": roadmap/process/support files may change outside the
-    frozen ARK v1.0.5 evidence surface, while validators, specs, schemas, testvectors,
+    frozen ARK evidence surface, while validators, specs, schemas, testvectors,
     freeze docs, and LF normalization are load-bearing and must trip NG-002 if unpinned.
     """
     required: Set[str] = set()

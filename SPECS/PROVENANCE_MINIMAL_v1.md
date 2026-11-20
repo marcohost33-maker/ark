@@ -1,5 +1,5 @@
 # PROVENANCE_MINIMAL_v1
-Version: 1.0.5
+Version: 1.1.0
 Status: DRAFT
 
 Minimal graph:

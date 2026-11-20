@@ -4,12 +4,12 @@
 > Reihenfolge = Vorschlag, nicht Zusage. Richtung entscheidet Coworker-Research.
 
 ## Stand
-- **v1.0.5 (Freeze):** 4 JSON-Schemas, 15 Specs, 6 deterministische Python-Validatoren
-  (`validate_run`, `provenance_validate`, `event_hysteresis`, `severity_mapping`,
-  `root_finding`, `contradiction_rules`) + Integritäts-/Release-Tools (`freeze_manifest`,
-  `release_gate`, `ark_semver`, `release_sbom`, `release_bundle`),
-  Testvektoren, `FREEZE_MANIFEST_v1.0.5.json` (SHA-256 je Datei, Stand 2026-11-18),
-  `RELEASE_BUNDLE_v1.0.5.sha256` (gepinnter Digest des Release-Bundles).
+- **v1.1.0 (Release-Kandidat, nicht getaggt; Basis: Origin-Freeze v1.0.5):** 4 JSON-Schemas, 15 Specs,
+  6 deterministische Python-Validatoren (`validate_run`, `provenance_validate`, `event_hysteresis`,
+  `severity_mapping`, `root_finding`, `contradiction_rules`) + Integritäts-/Release-Tools
+  (`freeze_manifest`, `release_gate`, `ark_semver`, `ark_json`, `release_sbom`, `release_bundle`,
+  `version_bump`), Testvektoren, `FREEZE_MANIFEST_v1.1.0.json` (SHA-256 je Datei),
+  `RELEASE_BUNDLE_v1.1.0.sha256` (gepinnter Digest des Release-Bundles), `CHANGELOG.md`.
 - **CI-Gates aktiv (verifiziert 2026-09-28; Zählung lokal 2026-11-18):** `ruff check .` clean · `compileall`
   aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **459 passed / 1 skipped** (lokal 2026-11-20) ·
   Release-SBOM-Pfad (`release_sbom.py`, jeder PR) · Release-Bundle gegen Digest-Pin (`release_bundle.py`, jeder PR, alle 4 Plattform-Jobs) ·
@@ -68,8 +68,15 @@
 - [ ] Wheel/sdist auf einem Index: weiterhin Owner-Entscheid (braucht importierbaren Paketnamen/Layout = Public-Surface-Entscheid; wäre zusätzliches Subject, kein Ersatz).
 - [ ] ARK-R8-005 echter Consumer-Receipt DDE→ARK→USK — Owner-Entscheid / Cross-Repo.
 
+## Phase 5 — Release 1.1.0 vorbereitet (2026-11-20)
+- [x] Öffentliche Oberfläche seit Origin `b746b6d` **gemessen** statt erinnert: 11 NEG-IDs neu, keine entfernt/umbenannt; CLI-Flags nur ergänzt (`--policy`, `--strict-exit`); Schemas unverändert; Default-Exitvertrag unverändert (Exit 2 nur unter Opt-in) -> MINOR. Lockerungen gezielt gesucht: Closed-World-FormatChecker ist keine (Schemas nutzen nur `date-time`), Provenance ist reine Verschärfung (Origin ignorierte unbekannte Kanten/fehlende IDs); einzige Lockerung #34.
+- [x] `CHANGELOG.md` (Keep a Changelog 1.1.0) mit §3-Klassifikation, `verdict-loosening` benannt; Basis-Eintrag 1.0.5 (Origin, nie getaggt). Lockstep-Pflicht + Freeze-Coverage.
+- [x] `TOOLS/version_bump.py`: §5 als ein Befehl (alles-oder-nichts-Vorbedingungen: SemVer-Präzedenz nach semver.org §11, keine Drift vorher, Changelog-Abschnitt vorhanden, kein Manifest/Pin für NEW), Freeze/Pin als frische Prozesse (`freeze_manifest` liest seinen Pfad beim Import). Lockstep-Regeln nur noch dort, Test importiert sie.
+- [x] Prozesslücken geschlossen: E2E-Bump-Test ließ Bundle-Pin aus (Bundle-Bau wäre nach Bump gescheitert); `tests/test_freeze_manifest.py` hatte `FREEZE_MANIFEST_v1.0.5.json` fest codiert (hätte nach Bump das alte Manifest geprüft, ein Test wäre aus falschem Grund grün geblieben); README/Coverage-Doku versionsneutral. E2E-Test läuft jetzt Bump → Freeze-Gate → Bundle-Bau gegen neuen Pin → Closed-World-Verify → Release-Gate `v<NEW>` → versionsgebundene Tests.
+- [x] Bump 1.0.5 -> 1.1.0 mit dem Werkzeug selbst durchgeführt (Dogfooding).
+
 ## Offen / zu entscheiden
-- **Release 1.1.0** (VERSIONING_POLICY §6): seit dem Origin-Zip kamen NEG-IDs, Verdikt-Verschärfungen/-Lockerungen und CLI-Flags dazu (zuletzt `release_bundle` + `NEG.ARCHIVE.NONCANONICAL`/`UNSAFE_MEMBER`) -> laut §3 MINOR. Der Bump erzeugt das erste Bundle `ARK-Core_v1.1.0_freeze.tar`; das Bundle `v1.0.5` des aktuellen Baums ist **nicht** das Origin-Zip `ARK-Core_v1.0.5_freeze.zip` (anderer Inhalt, nie getaggt). Es existiert noch kein einziger Tag; „v1.0.5 (Freeze)“ ist nirgends verankert.
+- **Release 1.1.0 freigeben** (Owner): Kandidat steht (`VERSION` 1.1.0, `CHANGELOG.md` mit gemessener §3-Klassifikation MINOR und der einzigen Verdikt-Lockerung #34). Offen: Merge des Bump-PRs, Tag `v1.1.0` pushen, dann erster echter Release-Lauf mit Attestation und `gh attestation verify` inkl. Negativprobe (`docs/RELEASE_HARDENING.md` §3a).
 - VERSIONING_POLICY von PROPOSED auf ACCEPTED (Owner-Entscheid), inkl. Bump-Regel „Lockerung nie PATCH“.
 - Phase 2 Schema-Versionen (§4): `schema_version` + `tool{name,version}` im Gate-Report (SARIF-Modell) — bricht Konsumenten mit dem alten Schema (`additionalProperties: false`), braucht Migrationsplan (USK-Adapter).
 - `--strict-exit` als Default (#37, Schritt 2): erst wenn alle Aufrufer (CI, USK-Adapter, Skripte) migriert sind; offen, ob REVIEW CI rot färben soll.

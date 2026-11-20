@@ -19,7 +19,7 @@ def freeze_mod():
 
 def test_freeze_manifest_in_sync_against_repo(freeze_mod):
     """Sync case -> green: the committed manifest matches the working tree."""
-    negs = freeze_mod.verify_manifest(str(ROOT / "artifacts" / "FREEZE_MANIFEST_v1.0.5.json"))
+    negs = freeze_mod.verify_manifest(str(ROOT / freeze_mod.DEFAULT_MANIFEST))
     assert negs == [], negs
 
 
@@ -162,10 +162,12 @@ def test_freeze_gate_red_if_manifest_pins_itself(freeze_mod, tmp_path):
     """The manifest must never pin its own path (chicken/egg) -> drift signal."""
     repo = tmp_path / "r4"
     (repo / "artifacts").mkdir(parents=True)
-    real = repo / "artifacts" / "FREEZE_MANIFEST_v1.0.5.json"
+    # The manifest at the path the gate excludes as "itself" (DEFAULT_MANIFEST), pinning that path.
+    self_rel = freeze_mod.DEFAULT_MANIFEST.replace("\\", "/")
+    real = repo / self_rel
     manifest = {
         "artifact": "x",
-        "files": [{"path": "artifacts/FREEZE_MANIFEST_v1.0.5.json", "sha256": "0", "bytes": 0}],
+        "files": [{"path": self_rel, "sha256": "0", "bytes": 0}],
     }
     real.write_text(json.dumps(manifest), encoding="utf-8")
     negs = freeze_mod.verify_manifest(str(real), root=str(repo))
@@ -235,7 +237,7 @@ def test_add_paths_is_idempotent(freeze_mod, tmp_path):
 def test_committed_manifest_pins_the_integrity_tool_itself(freeze_mod):
     """Issue #9 regression: the freeze tool + its tests are pinned by their own gate."""
     manifest = freeze_mod.load_manifest(
-        str(ROOT / "artifacts" / "FREEZE_MANIFEST_v1.0.5.json")
+        str(ROOT / freeze_mod.DEFAULT_MANIFEST)
     )
     pinned = {e["path"] for e in manifest["files"]}
     for required in (
@@ -250,7 +252,7 @@ def test_committed_manifest_pins_the_integrity_tool_itself(freeze_mod):
 def test_committed_manifest_covers_every_required_policy_path(freeze_mod):
     """ARK-NG-002 coverage-policy regression: no required class may be silently unpinned."""
     manifest = freeze_mod.load_manifest(
-        str(ROOT / "artifacts" / "FREEZE_MANIFEST_v1.0.5.json")
+        str(ROOT / freeze_mod.DEFAULT_MANIFEST)
     )
     pinned = {e["path"] for e in manifest["files"]}
     required = freeze_mod.discover_required_paths(str(ROOT))

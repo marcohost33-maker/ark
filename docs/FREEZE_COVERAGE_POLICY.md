@@ -1,6 +1,6 @@
 # Freeze-Manifest Coverage Policy (ARK-NG-002)
 
-The freeze manifest (`artifacts/FREEZE_MANIFEST_v1.0.5.json`) is the integrity truth
+The freeze manifest (`artifacts/FREEZE_MANIFEST_v<VERSION>.json`, path from `DEFAULT_MANIFEST`) is the integrity truth
 for the freeze line: every listed file is pinned by SHA-256 + byte length, and the CI
 gate (`python TOOLS/freeze_manifest.py`) is fail-closed on any drift.
 
@@ -15,12 +15,13 @@ gate (`python TOOLS/freeze_manifest.py`) is fail-closed on any drift.
 | Test vectors | `TESTVECTORS/**` | Golden inputs/oracles. |
 | Frozen docs/TOC | `docs/architecture_overview.md`, `docs/FREEZE_COVERAGE_POLICY.md`, `tocs/*`, `README.md`, `artifacts/FREEZE_SUMMARY_*.md` | Released documentation surface. |
 | License text | `LICENSE` | Member of every release bundle (Apache-2.0 §4: recipients get a copy); the bundle holds pinned files only, so the license must be pinned. |
+| Release notes | `CHANGELOG.md` | Bundled with the release; carries the section-3 classification and every verdict-loosening (`SPECS/VERSIONING_POLICY_v1.md` §3.1), so it must not change unnoticed. |
 | Release identity | `VERSION` | Single source of truth for the release version (`SPECS/VERSIONING_POLICY_v1.md`); a silent edit would relabel the frozen state. |
 | Line-ending normalization | `.gitattributes` | Cross-platform determinism for byte-level hashes; without it, Windows CRLF normalization can create false or masked drift. |
 
 ## Explicit exclusion
 
-- The manifest **cannot pin its own path** (`artifacts/FREEZE_MANIFEST_v1.0.5.json`):
+- The manifest **cannot pin its own path** (`artifacts/FREEZE_MANIFEST_v<VERSION>.json`):
   writing the digest changes the digest. The verifier treats that exclusion as expected,
   and `add_paths` refuses an attempt to add it.
 
