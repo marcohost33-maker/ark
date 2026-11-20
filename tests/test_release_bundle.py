@@ -276,6 +276,30 @@ def test_manifest_edge_cases_are_refused(members):
         assert negs(encode({**files, MANIFEST_REL: raw})) == [rb.NEG_MANIFEST]
 
 
+@pytest.mark.parametrize(
+    "duplicate",
+    [
+        # A first-wins reader sees an empty/foreign file list, Python's json the real one.
+        '"files": [], ',
+        '"artifact": "ARK-Core_v0.0.0_freeze", ',
+    ],
+    ids=["files", "artifact"],
+)
+def test_manifest_with_a_duplicate_key_is_refused(members, duplicate):
+    raw = members[MANIFEST_REL].decode("utf-8")
+    assert raw.lstrip().startswith("{")
+    raw = raw.replace("{", "{" + duplicate, 1)
+    tampered = encode({**members, MANIFEST_REL: raw.encode("utf-8")})
+    assert negs(tampered) == [rb.NEG_MANIFEST]
+
+
+@pytest.mark.parametrize("constant", ["NaN", "Infinity", "-Infinity"])
+def test_manifest_with_a_non_finite_number_is_refused(members, constant):
+    tree = with_manifest(members)
+    raw = tree[MANIFEST_REL].decode("utf-8").replace("{", '{"note": %s, ' % constant, 1)
+    assert negs(encode({**tree, MANIFEST_REL: raw.encode("utf-8")})) == [rb.NEG_MANIFEST]
+
+
 def test_version_file_must_match_the_release_directory(members):
     files = with_manifest({**members, "VERSION": b"9.9.9\n"})
     assert negs(encode(files)) == [rb.NEG_MANIFEST]
@@ -294,6 +318,8 @@ def test_version_file_must_match_the_release_directory(members):
         f"{STEM}/NUL",
         f"{STEM}/docs/con.md",
         f"{STEM}/TOOLS/COM1.py",
+        f"{STEM}/docs/com0.md",  # OneDrive/SharePoint refuse COM0/LPT0
+        f"{STEM}/LPT0",
         "/etc/passwd",
         "other-dir/VERSION",
         STEM,

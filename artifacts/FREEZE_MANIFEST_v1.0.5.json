@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.0.5_freeze",
-  "created_utc": "2026-11-18T20:40:56.779563+00:00",
+  "created_utc": "2026-11-20T17:41:36.323181+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -14,7 +14,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "bcd0cee463cf02b3a752aa315677af4686c83857ddb6149ed9b7d342c2359467",
+      "sha256": "2b47792ff447a28011b09d20cc266118b6580965eb4809f8b5776788da3b1764",
       "bytes": 2634
     },
     {
@@ -44,8 +44,8 @@
     },
     {
       "path": "SPECS/ARCHIVE_CONFORMANCE_v1.md",
-      "sha256": "5fa3e9836d8d0830df3149576562c08300ccd54bff196f422f2f37e914dd65bb",
-      "bytes": 3512
+      "sha256": "04e256e64b46a0e19b1cf11579a863e96bd0c4a73ddd6a63b2d360443e6ac482",
+      "bytes": 4179
     },
     {
       "path": "SPECS/BASELINE_POLICY_v1.md",
@@ -204,8 +204,8 @@
     },
     {
       "path": "TOOLS/freeze_manifest.py",
-      "sha256": "9a97a88523943cd48d265b814a141f088c176cee04ddd141e047d4965c195a6e",
-      "bytes": 9651
+      "sha256": "b5b9d48826a76fba9e4e55ee1f1a3677a18a47840b99efccb3417c2fcf8e2761",
+      "bytes": 10736
     },
     {
       "path": "TOOLS/provenance_validate.py",
@@ -214,8 +214,8 @@
     },
     {
       "path": "TOOLS/release_bundle.py",
-      "sha256": "ad1877c87ab85e9bd5157bf950c87b89fa40bd82c86a110b5a82b98f46fcd19e",
-      "bytes": 23270
+      "sha256": "eccc0038d39c35a719648ab642bef2b4ec8b5a0e89eba5fe837b9f19fe446e61",
+      "bytes": 23488
     },
     {
       "path": "TOOLS/release_gate.py",
@@ -354,8 +354,8 @@
     },
     {
       "path": "tests/test_freeze_manifest.py",
-      "sha256": "01cbe81d668a20a823820f7ee6da4e92e2d8ff2bfc034c2a7d1f9b62c5b896a8",
-      "bytes": 9995
+      "sha256": "e87df8e0ab60e37e7a7abae2fa627afd23b6f44275fdde685b0e21865394469a",
+      "bytes": 10928
     },
     {
       "path": "tests/test_hardening_wave2.py",
@@ -374,8 +374,8 @@
     },
     {
       "path": "tests/test_release_bundle.py",
-      "sha256": "217042d8357e780bccef2a7d7fb13581be7859c18d736a0e97f6ae1b5deecc3b",
-      "bytes": 22576
+      "sha256": "4d8c412f5541e98cba43862bc2e4b418aaba911d0ce95ee5edd102735072d941",
+      "bytes": 23612
     },
     {
       "path": "tests/test_release_gate.py",

@@ -22,7 +22,7 @@ import json
 import os
 from datetime import datetime, timezone
 from fnmatch import fnmatch
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
 # Default freeze manifest, relative to the repository root.
 DEFAULT_MANIFEST = os.path.join("artifacts", "FREEZE_MANIFEST_v1.0.5.json")
@@ -117,9 +117,32 @@ def compute_entries(root: str, paths: List[str]) -> List[Dict[str, object]]:
     return entries
 
 
+def _reject_duplicate_keys(pairs: List[Tuple[str, object]]) -> Dict[str, object]:
+    obj: Dict[str, object] = {}
+    for key, value in pairs:
+        if key in obj:
+            raise ValueError(f"duplicate JSON object key {key!a}")
+        obj[key] = value
+    return obj
+
+
+def _reject_constant(name: str) -> object:
+    raise ValueError(f"non-finite JSON number {name}")
+
+
+def strict_json_loads(text: str) -> object:
+    """``json.loads`` restricted to I-JSON (RFC 7493): no duplicate object keys, no NaN/Infinity.
+
+    Python's ``json`` keeps the last of two equal keys, other readers keep the first. A
+    manifest that two parsers read differently is not one manifest, so it is refused
+    (ValueError) instead of silently resolved.
+    """
+    return json.loads(text, object_pairs_hook=_reject_duplicate_keys, parse_constant=_reject_constant)
+
+
 def load_manifest(manifest_path: str) -> Dict[str, object]:
     with open(manifest_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        return strict_json_loads(f.read())
 
 
 def verify_manifest(manifest_path: str, root: str | None = None) -> List[str]:
@@ -131,7 +154,10 @@ def verify_manifest(manifest_path: str, root: str | None = None) -> List[str]:
     neg: List[str] = []
     try:
         manifest = load_manifest(manifest_path)
-    except (OSError, json.JSONDecodeError):
+    except (OSError, UnicodeDecodeError, ValueError, RecursionError):
+        # ValueError covers JSONDecodeError, duplicate keys and NaN/Infinity (strict_json_loads).
+        return ["NEG.ARCHIVE.MANIFEST_MISMATCH"]
+    if not isinstance(manifest, dict):
         return ["NEG.ARCHIVE.MANIFEST_MISMATCH"]
 
     files = manifest.get("files")

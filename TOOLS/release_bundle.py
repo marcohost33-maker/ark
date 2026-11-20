@@ -39,7 +39,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import os
 import re
 import sys
@@ -76,9 +75,10 @@ NEG_UNSAFE = "NEG.ARCHIVE.UNSAFE_MEMBER"
 _SEGMENT_RE = re.compile(r"[A-Za-z0-9._-]+", re.ASCII)
 _SHA256_RE = re.compile(r"[0-9a-f]{64}", re.ASCII)
 _OCTAL_RE = re.compile(rb"[0-7]+", re.ASCII)
-# Names Windows resolves to devices, with or without an extension.
+# Names Windows resolves to devices, with or without an extension. COM0/LPT0 are not in the
+# Win32 list but OneDrive and SharePoint refuse them, and a consumer may unpack there.
 _WINDOWS_DEVICES = frozenset(
-    ["con", "prn", "aux", "nul"] + [f"com{i}" for i in range(1, 10)] + [f"lpt{i}" for i in range(1, 10)]
+    ["con", "prn", "aux", "nul"] + [f"com{i}" for i in range(10)] + [f"lpt{i}" for i in range(10)]
 )
 
 
@@ -232,9 +232,10 @@ class BundleReport:
 def _manifest_entries(raw: bytes, report: BundleReport) -> Optional[Dict[str, Tuple[str, int]]]:
     """``path -> (sha256, bytes)`` from the bundled manifest, or None when malformed."""
     try:
-        manifest = json.loads(raw.decode("utf-8"))
+        # I-JSON: a duplicate key would let another reader see a different file list.
+        manifest = freeze_manifest.strict_json_loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, ValueError, RecursionError) as exc:
-        report._fail(NEG_MANIFEST, f"bundled manifest is not JSON: {type(exc).__name__}")
+        report._fail(NEG_MANIFEST, f"bundled manifest is not strict JSON: {exc}")
         return None
     files = manifest.get("files") if isinstance(manifest, dict) else None
     if not isinstance(files, list) or not files:
@@ -405,7 +406,7 @@ def build_bundle(root: Path) -> Tuple[str, bytes]:
         raise BundleError(f"freeze manifest not in sync: {', '.join(negs)}")
 
     manifest_bytes = manifest_path.read_bytes()
-    manifest = json.loads(manifest_bytes.decode("utf-8"))
+    manifest = freeze_manifest.strict_json_loads(manifest_bytes.decode("utf-8"))
     stem = bundle_stem(version)
     if manifest.get("artifact") != stem:
         raise BundleError(f"freeze manifest artifact field does not name {stem}")
