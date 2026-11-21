@@ -164,6 +164,22 @@ def planned_edits(root: Path, old: str, new: str) -> Dict[str, str]:
     prov_new = re.sub(
         rf'("(?:tool_version|version)": ")({re.escape(old)})(")', lambda m: m.group(1) + new + m.group(3), prov
     )
+    # The textual edit keeps the file's layout; the structural check proves it changed
+    # exactly the fields version_drift reads (activities[*].tool_version and the version
+    # of agents of kind "tool") and nothing else, e.g. not the "version" of another agent
+    # or entity, and that it did not miss a field written in another JSON layout.
+    expected = ark_json.loads(prov)
+    for act in expected.get("activities", []):
+        if "tool_version" in act:
+            act["tool_version"] = new
+    for agent in expected.get("agents", []):
+        if agent.get("kind") == "tool":
+            agent["version"] = new
+    if ark_json.loads(prov_new) != expected:
+        raise BumpError(
+            f"{PROV_EXAMPLE}: the textual version rewrite does not equal the structural one "
+            "(a non-tool 'version' equal to the old version, or a field in another layout); edit it by hand"
+        )
     edits[PROV_EXAMPLE] = prov_new
 
     old_manifest = root / "artifacts" / f"FREEZE_MANIFEST_v{old}.json"
@@ -174,10 +190,13 @@ def planned_edits(root: Path, old: str, new: str) -> Dict[str, str]:
 
 
 def _run_tool(root: Path, *args: str) -> None:
-    proc = subprocess.run(
-        [sys.executable, "-I", str(root / "TOOLS" / args[0]), *args[1:]],
-        cwd=root, capture_output=True, text=True, timeout=300,
-    )
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-I", str(root / "TOOLS" / args[0]), *args[1:]],
+            cwd=root, capture_output=True, text=True, timeout=300,
+        )
+    except subprocess.SubprocessError as exc:  # TimeoutExpired: keep the exit-code contract
+        raise BumpError(f"{' '.join(args)} failed: {exc}") from exc
     if proc.returncode != 0:
         raise BumpError(f"{' '.join(args)} failed (exit {proc.returncode}): {proc.stderr.strip() or proc.stdout.strip()}")
 
@@ -200,21 +219,65 @@ def bump(root: Path, new: str) -> List[str]:
             raise BumpError(f"{rel} already exists")
 
     edits = planned_edits(root, old, new)  # every read and check before the first write
-    for rel, text in edits.items():
-        with open(root / rel, "w", encoding="utf-8", newline="\n") as fh:
-            fh.write(text)
-    _run_tool(root, "freeze_manifest.py", "--regenerate")
-    _run_tool(root, "release_bundle.py", "--pin")
     old_pin = root / "artifacts" / f"RELEASE_BUNDLE_v{old}.sha256"
+    # Every path this bump or its two tool processes write or remove, with its bytes
+    # before the first write (None = absent), so a later failure can put them back.
+    touched = sorted(set(edits) | {f"artifacts/RELEASE_BUNDLE_v{new}.sha256", str(old_pin.relative_to(root))})
+    snapshot = {rel: (root / rel).read_bytes() if (root / rel).is_file() else None for rel in touched}
     removed = []
-    if old_pin.exists():
-        old_pin.unlink()
-        removed.append(str(old_pin.relative_to(root)))
-    _run_tool(root, "freeze_manifest.py")
-    after = version_drift(root, new)
-    if after:
-        raise BumpError("drift after the bump: " + "; ".join(after))
+    try:
+        for rel, text in edits.items():
+            with open(root / rel, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(text)
+        _run_tool(root, "freeze_manifest.py", "--regenerate")
+        _run_tool(root, "release_bundle.py", "--pin")
+        if old_pin.exists():
+            old_pin.unlink()
+            removed.append(str(old_pin.relative_to(root)))
+        _run_tool(root, "freeze_manifest.py")
+        after = version_drift(root, new)
+        if after:
+            raise BumpError("drift after the bump: " + "; ".join(after))
+    except BaseException as exc:
+        failed = _restore(root, snapshot)
+        if failed:
+            # The original failure stays the message; the incomplete restore is named
+            # in full, never reported as a clean refusal.
+            raise BumpError(
+                f"{exc!s} -- ROLLBACK INCOMPLETE, check the tree by hand (git status): " + "; ".join(failed)
+            ) from exc
+        if isinstance(exc, Exception):
+            raise BumpError(f"{exc!s} -- every file the bump touched was restored") from exc
+        raise  # KeyboardInterrupt/SystemExit: restored, then propagated unchanged
     return sorted(edits) + [f"artifacts/RELEASE_BUNDLE_v{new}.sha256"] + [f"removed {p}" for p in removed]
+
+
+def _restore(root: Path, snapshot: Dict[str, Optional[bytes]]) -> List[str]:
+    """Put every snapshotted path back to its bytes (or absence); returns what could not be.
+
+    Best effort within this process after an ordinary failure or an interrupt: not a
+    crash-atomic multi-file transaction (SIGKILL or power loss mid-bump leave a partial
+    tree) and no lock against concurrent writers, so run the bump in a clean checkout,
+    where ``git status`` shows any leftover and ``git checkout``/``git clean`` undo it.
+    Each restore is read back, so a restore that silently did nothing is reported.
+    """
+    failed: List[str] = []
+    for rel, data in snapshot.items():
+        path = root / rel
+        try:
+            if data is None:
+                if path.is_file():
+                    path.unlink()
+                if path.exists():
+                    failed.append(f"{rel}: still exists")
+            else:
+                with open(path, "wb") as fh:
+                    fh.write(data)
+                if path.read_bytes() != data:
+                    failed.append(f"{rel}: bytes differ after restore")
+        except OSError as err:
+            failed.append(f"{rel}: {err}")
+    return failed
 
 
 def main(argv: Optional[List[str]] = None) -> int:
