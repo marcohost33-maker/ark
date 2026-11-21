@@ -191,3 +191,23 @@ def test_provenance_rewrite_of_the_shipped_example_is_structural():
     data = json.loads(edits[PROV])
     assert [a["tool_version"] for a in data["activities"] if "tool_version" in a] == ["99.0.0"]
     assert [a["version"] for a in data["agents"] if a.get("kind") == "tool"] == ["99.0.0"]
+
+
+def test_child_tool_runs_with_a_relative_root(tmp_path, monkeypatch):
+    # Codex #46 (P2): with --root given relatively, the child script path was relative to the caller's cwd
+    # while the child already ran with cwd=root, so Python looked for repo/repo/TOOLS/<tool>.
+    repo = tmp_path / "repo"
+    (repo / "TOOLS").mkdir(parents=True)
+    (repo / "TOOLS" / "probe_ok.py").write_text("import sys\nsys.exit(0)\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    version_bump._run_tool(Path("repo"), "probe_ok.py")
+
+
+def test_child_tool_failure_with_a_relative_root_is_still_reported(tmp_path, monkeypatch):
+    # Negative control: resolving the root must not swallow a real tool failure.
+    repo = tmp_path / "repo"
+    (repo / "TOOLS").mkdir(parents=True)
+    (repo / "TOOLS" / "probe_fail.py").write_text("import sys\nsys.exit(3)\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(version_bump.BumpError, match="exit 3"):
+        version_bump._run_tool(Path("repo"), "probe_fail.py")

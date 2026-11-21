@@ -196,6 +196,9 @@ def planned_edits(root: Path, old: str, new: str) -> Dict[str, str]:
 
 
 def _run_tool(root: Path, *args: str) -> None:
+    # The child runs with cwd=root, so its script path must not be relative to the caller's cwd as well
+    # (a relative --root would otherwise be applied twice: repo/repo/TOOLS/...).
+    root = Path(root).resolve()
     try:
         proc = subprocess.run(
             [sys.executable, "-I", str(root / "TOOLS" / args[0]), *args[1:]],
