@@ -251,7 +251,7 @@ if __name__ == "__main__":
 
     if args.add:
         new_manifest = add_paths(args.manifest, args.add)
-        with open(args.manifest, "w", encoding="utf-8") as f:
+        with open(args.manifest, "w", encoding="utf-8", newline="\n") as f:  # LF on every OS
             json.dump(new_manifest, f, indent=2)
             f.write("\n")
         print(f"added {len(args.add)} path(s); manifest now pins {len(new_manifest['files'])} files")
@@ -259,7 +259,7 @@ if __name__ == "__main__":
 
     if args.regenerate:
         new_manifest = regenerate_manifest(args.manifest)
-        with open(args.manifest, "w", encoding="utf-8") as f:
+        with open(args.manifest, "w", encoding="utf-8", newline="\n") as f:  # LF on every OS
             json.dump(new_manifest, f, indent=2)
             f.write("\n")
         print(f"re-froze {args.manifest} ({len(new_manifest['files'])} files)")

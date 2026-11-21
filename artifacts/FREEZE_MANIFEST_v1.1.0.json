@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.1.0_freeze",
-  "created_utc": "2026-11-21T10:23:53.902139+00:00",
+  "created_utc": "2026-11-21T10:25:49.911342+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -214,8 +214,8 @@
     },
     {
       "path": "TOOLS/freeze_manifest.py",
-      "sha256": "4a6f4258f89069d40be26d31d1420a188c0fd0bac4ca90e8be827c1f05540bf1",
-      "bytes": 10296
+      "sha256": "d26200113227f1fff4895e3b3bfe435c533591f71511167a5f577a8a823d0315",
+      "bytes": 10360
     },
     {
       "path": "TOOLS/provenance_validate.py",
@@ -439,8 +439,8 @@
     },
     {
       "path": "tests/test_version_bump_rollback.py",
-      "sha256": "e8f963f25ec859725d339db7065f902fadd15e720c9b1574e1b2fcb6a7cff9de",
-      "bytes": 7207
+      "sha256": "7c8e9db847f633e363ce21c56deb4ba7d806de7b89df2c4156def5e965582159",
+      "bytes": 8067
     },
     {
       "path": "tests/test_version_consistency.py",

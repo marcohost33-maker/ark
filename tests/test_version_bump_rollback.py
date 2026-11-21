@@ -169,6 +169,22 @@ def test_provenance_rewrite_must_equal_the_structural_edit(tmp_path, case):
     assert _snapshot(repo) == before  # refused before the first write
 
 
+@pytest.mark.parametrize("mode", [["--regenerate"], ["--add", "README.md"]])
+def test_freeze_manifest_writes_lf_bytes_on_every_os(tmp_path, mode):
+    # The bundle pin is computed over working-tree bytes; .gitattributes stores the manifest
+    # as LF. A CRLF manifest written on Windows gave a pin that a fresh checkout (and CI on
+    # every OS) could not reproduce (measured 2026-11-21: 2876a905... vs 8dc28c2e...).
+    repo = _copy_repo(tmp_path)
+    proc = subprocess.run(
+        [sys.executable, "-I", str(repo / "TOOLS" / "freeze_manifest.py"), *mode],
+        cwd=repo, capture_output=True, text=True, timeout=300,
+    )
+    assert proc.returncode == 0, proc.stderr
+    manifest = repo / "artifacts" / f"FREEZE_MANIFEST_v{release_gate.read_version(repo)}.json"
+    data = manifest.read_bytes()
+    assert b"\r" not in data and data.endswith(b"}\n")
+
+
 def test_provenance_rewrite_of_the_shipped_example_is_structural():
     old = release_gate.read_version(ROOT)
     edits = version_bump.planned_edits(ROOT, old, "99.0.0")
