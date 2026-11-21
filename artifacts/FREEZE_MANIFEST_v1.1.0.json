@@ -1,6 +1,6 @@
 {
   "artifact": "ARK-Core_v1.1.0_freeze",
-  "created_utc": "2026-11-20T19:32:17.002369+00:00",
+  "created_utc": "2026-11-21T10:23:53.902139+00:00",
   "files": [
     {
       "path": ".gitattributes",
@@ -9,8 +9,8 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "613bba689e5150ac563a442b42cfd22f53dd3cced2c6ffed086965966a9a363d",
-      "bytes": 6888
+      "sha256": "b65d64e5fcb4a9ed67db6eb8c4f0bf57f1c44fde6ed3fc407ba44d5a24e2447e",
+      "bytes": 7042
     },
     {
       "path": "LICENSE",
@@ -114,8 +114,8 @@
     },
     {
       "path": "SPECS/VERSIONING_POLICY_v1.md",
-      "sha256": "af323d1b9c43fdbf4325d5f3071a4bc1bf475bf129ef2039e9fcb5a37281c2df",
-      "bytes": 7609
+      "sha256": "d4fc9e15915368034f677090518745a000d655d888a61ce2e2b9b18c3cc5435f",
+      "bytes": 7784
     },
     {
       "path": "TESTVECTORS/baseline/baseline_missing.json",
@@ -254,8 +254,8 @@
     },
     {
       "path": "TOOLS/version_bump.py",
-      "sha256": "7890507cc816ebbb972bde670813fa960dcb20b8d7a34bd4216b745d021258a3",
-      "bytes": 11253
+      "sha256": "d4055c35a4e212cefb91d45d8faaee456eb364eddc5d25fdc4875539b5aa5be9",
+      "bytes": 15031
     },
     {
       "path": "VERSION",
@@ -436,6 +436,11 @@
       "path": "tests/test_validate_run_hardening.py",
       "sha256": "a549bd1b93b374ea91c4780537fff2bbe4e30713a2820809fd823aa21de24277",
       "bytes": 6180
+    },
+    {
+      "path": "tests/test_version_bump_rollback.py",
+      "sha256": "e8f963f25ec859725d339db7065f902fadd15e720c9b1574e1b2fcb6a7cff9de",
+      "bytes": 7207
     },
     {
       "path": "tests/test_version_consistency.py",

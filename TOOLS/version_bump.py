@@ -25,6 +25,12 @@ processes (``freeze_manifest`` derives its own path at import time), remove the 
 bundle pin (a pin only exists for the version a tree can build), and check
 :func:`version_drift` once more.
 
+A failure after the first write (a tool exit, a timeout, drift after the bump, an
+interrupt) puts every touched path back to its bytes from before the bump, reads each
+back, and names any it could not restore as ``ROLLBACK INCOMPLETE``. That is in-process
+best effort, not a crash-atomic transaction and not a lock: run the bump in a clean
+checkout, where ``git status`` shows anything a killed process left behind.
+
 The lockstep rules live here, in :func:`version_drift`; ``tests/test_version_consistency.py``
 imports them, so the tool and the PR gate cannot disagree.
 

@@ -15,7 +15,7 @@ A version is released when the tag `v<VERSION>` exists and the release workflow 
 First tagged release. Baseline: the frozen origin archive `ARK-Core_v1.0.5_freeze.zip`
 (SHA-256 `3f515f30…`, `SOURCES.md`), imported as commit `b746b6d`; 1.0.5 itself was never tagged.
 
-**Classification (VERSIONING_POLICY section 3): MINOR.** Measured against `b746b6d`: 11 NEG IDs added and
+**Classification (VERSIONING_POLICY section 3): MINOR.** Measured against `b746b6d`: 9 NEG IDs added and
 none removed or renamed; CLI flags only added; no schema in `SCHEMAS/` changed; the default exit-code
 contract of `validate_run` unchanged (0 = report written, 1 = failure; exit 2 exists only under the new
 opt-in `--strict-exit`); no non-downgradable ID became downgradable. Hence not MAJOR. Several
@@ -28,12 +28,13 @@ tightenings and exactly one verdict-loosening (below) make it more than PATCH.
   1 REJECT, 2 tool error, 3 REVIEW (#37, `SPECS/REPORTING_POLICY_v1.md`, golden vectors `TESTVECTORS/exit/`).
 - NEG IDs: `NEG.KERNEL.UNREADABLE`, `NEG.KERNEL.NAME_CASE_MISMATCH`, `NEG.POLICY.UNREADABLE`,
   `NEG.PROV.DUPLICATE_ID`, `NEG.PROV.MISSING_ID`, `NEG.PROV.UNKNOWN_EDGE_TYPE`,
-  `NEG.ARCHIVE.UNPINNED_REQUIRED_FILE`, `NEG.ARCHIVE.NONCANONICAL`, `NEG.ARCHIVE.UNSAFE_MEMBER`,
-  and the `NEG.KERNEL.MISSING_<NAME>` family.
+  `NEG.ARCHIVE.UNPINNED_REQUIRED_FILE`, `NEG.ARCHIVE.NONCANONICAL`, `NEG.ARCHIVE.UNSAFE_MEMBER`
+  (the `NEG.KERNEL.MISSING_<NAME>` family already existed in 1.0.5; only its matching changed, below).
 - Integrity and release tools (stdlib only): `freeze_manifest` (NG-002 freeze gate with a required
   coverage policy), `release_gate` (tag == `v<VERSION>`), `release_sbom` (runtime + build CycloneDX SBOMs
   checked against the hash-locked pins), `release_bundle` (canonical, byte-identical software bundle with a
-  closed-world `--verify`), `version_bump` (this release procedure as one command), and the shared grammars
+  closed-world `--verify`), `version_bump` (this release procedure as one command; a failure after its
+  first write restores every file it touched or reports `ROLLBACK INCOMPLETE`), and the shared grammars
   `ark_semver` (SemVer 2.0.0) and `ark_json` (I-JSON, RFC 7493).
 - Release workflow: build-provenance attestation over bundle, SBOMs and manifest; tag job runs every
   `ci.yml` gate first (#39, #42, #43, #44).

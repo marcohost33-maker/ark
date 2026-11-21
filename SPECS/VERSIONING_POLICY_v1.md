@@ -80,7 +80,9 @@ therefore needs a consumer migration plan and owner approval.
    digest (`TOOLS/release_bundle.py --pin`) and removes the previous pin (a tree can build only
    its own version). Preconditions, all checked before the first write: `<NEW>` is strict SemVer
    with higher precedence than `VERSION` (semver.org section 11); no lockstep drift before the
-   bump; the changelog section exists; no manifest or pin for `<NEW>` exists yet.
+   bump; the changelog section exists; no manifest or pin for `<NEW>` exists yet. A failure
+   after the first write restores every touched file (read back) or reports
+   `ROLLBACK INCOMPLETE`; this is not crash-atomic, so run the bump in a clean checkout.
    `--check <V>` only reports drift against `<V>`. `tests/test_version_consistency.py` runs the
    whole procedure on a copy of the repository: bump, freeze gate, bundle build against the new
    pin, closed-world verify, release gate for `v<NEW>`, and the version-bound tests.
