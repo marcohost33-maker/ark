@@ -11,7 +11,7 @@
   `version_bump`), Testvektoren, `FREEZE_MANIFEST_v1.1.0.json` (SHA-256 je Datei),
   `RELEASE_BUNDLE_v1.1.0.sha256` (gepinnter Digest des Release-Bundles), `CHANGELOG.md`.
 - **CI-Gates aktiv (verifiziert 2026-09-28; Zählung lokal 2026-11-18):** `ruff check .` clean · `compileall`
-  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **459 passed / 1 skipped** (lokal 2026-11-20) ·
+  aller TOOLS/tests · Freeze-Manifest-Gate (NG-002, fail-closed) · `pytest` **488 passed** (lokal 2026-11-21, Windows, py3.12) ·
   Release-SBOM-Pfad (`release_sbom.py`, jeder PR) · Release-Bundle gegen Digest-Pin (`release_bundle.py`, jeder PR, alle 4 Plattform-Jobs) ·
   zizmor Workflow-Audit (required) · Dependabot (github-actions, weekly, SHA-Pins).
 

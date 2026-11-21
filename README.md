@@ -4,7 +4,7 @@
 Contradiction- und Governance-Kernel für **reproduzierbare wissenschaftliche und Engineering-Pipelines**.
 Deterministische Python-Tools + JSON-Schemas. Coworker-Research Governance-Stack (Säule 2/4).
 
-**Status:** v1.1.0 (Release-Kandidat, noch nicht getaggt; Release-Notes: `CHANGELOG.md`). CI grün — `compileall` OK, Freeze-Manifest-Gate (NG-002) in sync, `ruff check .` clean, `pytest` 459 passed / 1 skipped (Skip nur als root: 0444-Datei bleibt schreibbar; verifiziert lokal 2026-11-20, Python 3.13 venv, hash-verifiziert aus `requirements-ci.txt`, ruff 0.15.18).
+**Status:** v1.1.0 (Release-Kandidat, noch nicht getaggt; Release-Notes: `CHANGELOG.md`). CI grün — `compileall` OK, Freeze-Manifest-Gate (NG-002) in sync, `ruff check .` clean, `pytest` 488 passed (verifiziert lokal 2026-11-21, Windows 11, Python 3.12.10 venv; als root unter Linux 1 Skip: 0444-Datei bleibt schreibbar; hash-verifiziert aus `requirements-ci.txt`, ruff 0.15.18).
 
 ## Inhalt
 - `SCHEMAS/` — 4 JSON-Schemas (gate_report, prov_min, report_evidence_profile, testvector).
