@@ -133,8 +133,14 @@ def test_tool_timeout_is_a_bump_error(tmp_path, monkeypatch):
         raise subprocess.TimeoutExpired(cmd="tool", timeout=300)
 
     monkeypatch.setattr(version_bump.subprocess, "run", timeout)
-    with pytest.raises(version_bump.BumpError, match="freeze_manifest.py --regenerate failed"):
+    caught: BaseException | None = None
+    try:
         version_bump._run_tool(tmp_path, "freeze_manifest.py", "--regenerate")
+    except BaseException as exc:  # noqa: BLE001 - the type is what is asserted
+        caught = exc
+    # main() maps BumpError to "version bump refused" + exit 1; a bare TimeoutExpired was a traceback.
+    assert isinstance(caught, version_bump.BumpError), type(caught)
+    assert "freeze_manifest.py --regenerate failed" in str(caught)
 
 
 def _set_prov(repo: Path, mutate) -> None:
