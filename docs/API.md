@@ -225,3 +225,26 @@ bundle refused, extraction failed; findings on stderr); 2 usage error or unreada
 The build refuses a tree whose freeze gate is not in sync and never writes a bundle its own
 verifier would refuse. The verifier never extracts a refused bundle and does not use `tarfile`.
 Acceptance means canonical and internally consistent, not authentic (see the spec's claim ceiling).
+
+## `ark_json` — the one JSON grammar (I-JSON, RFC 7493)
+
+```python
+loads(text: str) -> Any          # raises StrictJSONError (a ValueError) beyond I-JSON
+load_path(path: str) -> Any      # UTF-8 file -> loads()
+```
+Refused: duplicate object member names (after escape processing), `NaN`/`Infinity`/`-Infinity`,
+surrogate and noncharacter code points in names or strings. Every tool that decides on JSON uses it;
+contract: `SPECS/STRICT_JSON_SCHEMA_HARDENING_v1.md` "Input grammar".
+
+## `version_bump` — release procedure (VERSIONING_POLICY §5)
+
+CLI: `python TOOLS/version_bump.py NEW [--root DIR]` and `python TOOLS/version_bump.py V --check`.
+
+```python
+version_drift(root: Path, version: str | None = None) -> list[str]  # empty = every lockstep copy names version
+is_newer(new: str, old: str) -> bool                                # SemVer 2.0.0 precedence (semver.org §11)
+bump(root: Path, new: str) -> list[str]                             # raises BumpError before the first write
+```
+Refuses, writing nothing, when `NEW` is not strict SemVer, does not outrank `VERSION`, the tree has
+lockstep drift, `CHANGELOG.md` lacks a `## [NEW]` section, or a manifest/pin for `NEW` already exists.
+Exit codes: 0 bumped (or `--check` clean), 1 refused/failed/drift, 2 usage error.

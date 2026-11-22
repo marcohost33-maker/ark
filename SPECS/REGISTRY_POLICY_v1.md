@@ -1,5 +1,5 @@
 # REGISTRY_POLICY_v1
-Version: 1.0.5
+Version: 1.1.0
 Status: DRAFT
 
 Plugin/contract resolution policy:

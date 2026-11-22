@@ -1,5 +1,5 @@
 # BASELINE_POLICY_v1
-Version: 1.0.5
+Version: 1.1.0
 Status: DRAFT
 
 Baselines are explicit artifacts stored as `kernel.baseline.json`.

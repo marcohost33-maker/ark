@@ -1,5 +1,5 @@
 # CONTRADICTION_RULES_DSL_v1
-Version: 1.0.5
+Version: 1.1.0
 Status: DRAFT
 
 Whitelist-based JSON DSL.

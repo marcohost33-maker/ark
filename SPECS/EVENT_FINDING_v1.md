@@ -1,5 +1,5 @@
 # EVENT_FINDING_v1
-Version: 1.0.5
+Version: 1.1.0
 Status: DRAFT
 
 Two-stage event finding:
